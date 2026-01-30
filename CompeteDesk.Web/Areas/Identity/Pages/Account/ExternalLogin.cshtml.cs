@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -12,20 +13,26 @@ public class ExternalLoginModel : PageModel
 {
     private readonly SignInManager<IdentityUser> _signInManager;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IUserStore<IdentityUser> _userStore;
     private readonly IUserEmailStore<IdentityUser> _emailStore;
+    private readonly IConfiguration _config;
     private readonly ILogger<ExternalLoginModel> _logger;
 
     public ExternalLoginModel(
         SignInManager<IdentityUser> signInManager,
         UserManager<IdentityUser> userManager,
+        RoleManager<IdentityRole> roleManager,
         IUserStore<IdentityUser> userStore,
+        IConfiguration config,
         ILogger<ExternalLoginModel> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
+        _roleManager = roleManager;
         _userStore = userStore;
         _emailStore = GetEmailStore();
+        _config = config;
         _logger = logger;
     }
 
@@ -84,6 +91,15 @@ public class ExternalLoginModel : PageModel
         if (signInResult.Succeeded)
         {
             _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity?.Name, info.LoginProvider);
+
+            // Make the configured seed email the default Admin, even when signing in via Google.
+            var linkedUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (linkedUser is not null)
+            {
+                var linkedEmail = await _userManager.GetEmailAsync(linkedUser);
+                await MaybeAssignSeedAdminAsync(linkedUser, linkedEmail);
+            }
+
             return LocalRedirect(returnUrl);
         }
 
@@ -104,6 +120,9 @@ public class ExternalLoginModel : PageModel
                 {
                     await _signInManager.SignInAsync(existingUser, isPersistent: false);
                     _logger.LogInformation("Linked {LoginProvider} login for existing user {Email}.", info.LoginProvider, email);
+
+                    await MaybeAssignSeedAdminAsync(existingUser, email);
+
                     return LocalRedirect(returnUrl);
                 }
 
@@ -148,6 +167,9 @@ public class ExternalLoginModel : PageModel
             {
                 await _signInManager.SignInAsync(existingUser, isPersistent: false);
                 _logger.LogInformation("Linked {LoginProvider} login via confirmation for existing user {Email}.", info.LoginProvider, Input.Email);
+
+                await MaybeAssignSeedAdminAsync(existingUser, Input.Email);
+
                 return LocalRedirect(returnUrl);
             }
 
@@ -189,8 +211,46 @@ public class ExternalLoginModel : PageModel
 
         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
+        await MaybeAssignSeedAdminAsync(user, Input.Email);
+
         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
         return LocalRedirect(returnUrl);
+    }
+
+    private async Task MaybeAssignSeedAdminAsync(IdentityUser user, string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return;
+
+        var seedEmail = _config["AdminSeed:Email"];
+        if (string.IsNullOrWhiteSpace(seedEmail)) return;
+
+        if (!string.Equals(email.Trim(), seedEmail.Trim(), StringComparison.OrdinalIgnoreCase)) return;
+
+        const string adminRole = "Admin";
+        try
+        {
+            if (!await _roleManager.RoleExistsAsync(adminRole))
+            {
+                await _roleManager.CreateAsync(new IdentityRole(adminRole));
+            }
+
+            if (!await _userManager.IsInRoleAsync(user, adminRole))
+            {
+                var res = await _userManager.AddToRoleAsync(user, adminRole);
+                if (res.Succeeded)
+                {
+                    _logger.LogInformation("Assigned {Role} role to seed admin email {Email}.", adminRole, email);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed assigning {Role} role to {Email}: {Errors}", adminRole, email, string.Join("; ", res.Errors.Select(e => e.Code)));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error while assigning seed admin role for {Email}.", email);
+        }
     }
 
     private IdentityUser CreateUser()

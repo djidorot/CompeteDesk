@@ -28,35 +28,21 @@ public static class IdentitySeeder
         var anyAdmin = await userManager.GetUsersInRoleAsync(AdminRoleName);
         if (anyAdmin.Count > 0) return;
 
-        // 2) Config-driven seed user (optional)
+        // 2) Config-driven seed email (optional)
+        // If set, that specific email becomes the default Admin.
+        // This supports external logins (Google) where we don't have a password to pre-create the user.
         var seedEmail = config["AdminSeed:Email"];
-        var seedPassword = config["AdminSeed:Password"];
-
-        if (!string.IsNullOrWhiteSpace(seedEmail) && !string.IsNullOrWhiteSpace(seedPassword))
+        if (!string.IsNullOrWhiteSpace(seedEmail))
         {
             var seedUser = await userManager.FindByEmailAsync(seedEmail);
-            if (seedUser is null)
-            {
-                seedUser = new IdentityUser
-                {
-                    UserName = seedEmail,
-                    Email = seedEmail,
-                    EmailConfirmed = true
-                };
-
-                var createRes = await userManager.CreateAsync(seedUser, seedPassword);
-                if (!createRes.Succeeded)
-                {
-                    // If we can't create, fall through to "first user" behavior.
-                    seedUser = null;
-                }
-            }
-
             if (seedUser is not null)
             {
                 await userManager.AddToRoleAsync(seedUser, AdminRoleName);
-                return;
             }
+
+            // If the seed user doesn't exist yet, do NOT promote some other user.
+            // ExternalLogin will assign Admin automatically when this email first signs in.
+            return;
         }
 
         // 3) Fallback: promote the first registered user to Admin

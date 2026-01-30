@@ -108,6 +108,10 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await DbBootstrapper.EnsureCoreTablesAsync(app.Services);
 
+    // Ensure the Admin role exists and assign Admin to the configured seed email.
+    // (Important for Google external login scenarios where we don't pre-create a password-based user.)
+    await IdentitySeeder.EnsureAdminAsync(scope.ServiceProvider);
+
 }
 
 // Configure the HTTP request pipeline.
@@ -121,7 +125,13 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// In Development, Google external login callbacks can fail with HTTP 400 if the flow
+// is initiated on http:// but redirected mid-flight to https:// (correlation/state mismatch).
+// Keep dev stable by avoiding forced scheme changes.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseRouting();
 
