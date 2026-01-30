@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/djidorot/Downloads/CompeteDesk.Web/CompeteDesk/CompeteDesk.csproj": {}
+    "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj": {}
   },
   "projects": {
-    "/Users/djidorot/Downloads/CompeteDesk.Web/CompeteDesk/CompeteDesk.csproj": {
+    "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/djidorot/Downloads/CompeteDesk.Web/CompeteDesk/CompeteDesk.csproj",
+        "projectUniqueName": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj",
         "projectName": "CompeteDesk",
-        "projectPath": "/Users/djidorot/Downloads/CompeteDesk.Web/CompeteDesk/CompeteDesk.csproj",
+        "projectPath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj",
         "packagesPath": "/Users/djidorot/.nuget/packages/",
-        "outputPath": "/Users/djidorot/Downloads/CompeteDesk.Web/CompeteDesk/obj/",
+        "outputPath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/djidorot/.nuget/NuGet/NuGet.Config"

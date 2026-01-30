@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "w5+DiVCBPig=",
+  "dgSpecHash": "W0unj0nN28o=",
   "success": true,
-  "projectFilePath": "/Users/djidorot/Downloads/CompeteDesk.Web/CompeteDesk/CompeteDesk.csproj",
+  "projectFilePath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj",
   "expectedPackageFiles": [
     "/Users/djidorot/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/Users/djidorot/.nuget/packages/microsoft.aspnetcore.authentication.google/9.0.10/microsoft.aspnetcore.authentication.google.9.0.10.nupkg.sha512",
