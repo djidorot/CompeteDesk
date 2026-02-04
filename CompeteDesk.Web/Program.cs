@@ -91,6 +91,27 @@ builder.Services.ConfigureExternalCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
+// If CookiePolicy forces SameSite=Lax, it can break the OAuth roundtrip and cause
+// "AuthenticationFailureException: Correlation failed." Ensure None cookies remain None.
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.Unspecified;
+    options.OnAppendCookie = ctx =>
+    {
+        if (ctx.CookieOptions.SameSite == SameSiteMode.None)
+        {
+            ctx.CookieOptions.Secure = true;
+        }
+    };
+    options.OnDeleteCookie = ctx =>
+    {
+        if (ctx.CookieOptions.SameSite == SameSiteMode.None)
+        {
+            ctx.CookieOptions.Secure = true;
+        }
+    };
+});
+
 
 // External Login (Google) - only enable if credentials exist.
 // Prevents runtime crash: ArgumentException "ClientId cannot be empty".
@@ -110,6 +131,14 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
         options.ClientId = googleClientId;
         options.ClientSecret = googleClientSecret;
         // CallbackPath defaults to /signin-google (keep default)
+
+        // Make the correlation + nonce cookies compatible with modern SameSite rules.
+        // Without this, Chrome/Safari can drop the correlation cookie and the callback
+        // will fail with "Correlation failed".
+        options.CorrelationCookie.SameSite = SameSiteMode.None;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.NonceCookie.SameSite = SameSiteMode.None;
+        options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 }
 
@@ -150,6 +179,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+
+// Must be before UseAuthentication so external auth cookies keep SameSite=None.
+app.UseCookiePolicy();
 
 // IMPORTANT: Auth must run before Authorization
 app.UseAuthentication();
