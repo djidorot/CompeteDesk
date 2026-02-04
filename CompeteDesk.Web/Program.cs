@@ -132,13 +132,11 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
         options.ClientSecret = googleClientSecret;
         // CallbackPath defaults to /signin-google (keep default)
 
-        // Make the correlation + nonce cookies compatible with modern SameSite rules.
+        // Make the correlation cookie compatible with modern SameSite rules.
         // Without this, Chrome/Safari can drop the correlation cookie and the callback
         // will fail with "Correlation failed".
         options.CorrelationCookie.SameSite = SameSiteMode.None;
         options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.NonceCookie.SameSite = SameSiteMode.None;
-        options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 }
 
