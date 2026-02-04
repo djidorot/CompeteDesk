@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -100,7 +101,7 @@ public class ExternalLoginModel : PageModel
                 await MaybeAssignSeedAdminAsync(linkedUser, linkedEmail);
             }
 
-            return LocalRedirect(returnUrl);
+            return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
         }
 
         if (signInResult.IsLockedOut)
@@ -123,12 +124,49 @@ public class ExternalLoginModel : PageModel
 
                     await MaybeAssignSeedAdminAsync(existingUser, email);
 
-                    return LocalRedirect(returnUrl);
+                    return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
                 }
 
                 // If linking failed because it's already linked elsewhere, surface a friendly error.
                 foreach (var e in addLoginResult.Errors)
                     ModelState.AddModelError(string.Empty, e.Description);
+            }
+
+
+            // If user doesn't exist yet, AUTO-CREATE and sign in (skip the "associate account" screen).
+            if (existingUser == null)
+            {
+                var newUser = CreateUser();
+                await _userStore.SetUserNameAsync(newUser, email, CancellationToken.None);
+                await _emailStore.SetEmailAsync(newUser, email, CancellationToken.None);
+
+                // Treat externally authenticated emails as confirmed to avoid RequireConfirmedAccount blocking sign-in.
+                newUser.EmailConfirmed = true;
+
+                var createRes = await _userManager.CreateAsync(newUser);
+                if (createRes.Succeeded)
+                {
+                    var addLoginRes = await _userManager.AddLoginAsync(newUser, info);
+                    if (addLoginRes.Succeeded)
+                    {
+                        await MaybeAssignSeedAdminAsync(newUser, email);
+
+                        await _signInManager.SignInAsync(newUser, isPersistent: false, info.LoginProvider);
+                        _logger.LogInformation("Auto-created local user for external login {Email} via {Provider}.", email, info.LoginProvider);
+
+                        return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
+                    }
+
+                    // If linking failed, roll back the user to avoid orphan accounts.
+                    await _userManager.DeleteAsync(newUser);
+                    foreach (var err in addLoginRes.Errors)
+                        ModelState.AddModelError(string.Empty, err.Description);
+                }
+                else
+                {
+                    foreach (var err in createRes.Errors)
+                        ModelState.AddModelError(string.Empty, err.Description);
+                }
             }
 
             // Pre-fill email for the confirmation form.
@@ -170,7 +208,7 @@ public class ExternalLoginModel : PageModel
 
                 await MaybeAssignSeedAdminAsync(existingUser, Input.Email);
 
-                return LocalRedirect(returnUrl);
+                return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
             }
 
             foreach (var e in addLoginRes.Errors)
@@ -214,7 +252,7 @@ public class ExternalLoginModel : PageModel
         await MaybeAssignSeedAdminAsync(user, Input.Email);
 
         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-        return LocalRedirect(returnUrl);
+        return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
     }
 
     private async Task MaybeAssignSeedAdminAsync(IdentityUser user, string? email)
@@ -252,6 +290,19 @@ public class ExternalLoginModel : PageModel
             _logger.LogWarning(ex, "Error while assigning seed admin role for {Email}.", email);
         }
     }
+
+    private string GetPostLoginReturnUrl(string? returnUrl)
+    {
+        // If no specific return target, send users to the Dashboard by default.
+        if (string.IsNullOrWhiteSpace(returnUrl)) return "/Dashboard";
+
+        // Identity UI commonly uses "/" or "~/" for home; we want Dashboard after login.
+        if (returnUrl == "/" || returnUrl == "~/" || returnUrl == Url.Content("~/"))
+            return "/Dashboard";
+
+        return returnUrl;
+    }
+
 
     private IdentityUser CreateUser()
     {

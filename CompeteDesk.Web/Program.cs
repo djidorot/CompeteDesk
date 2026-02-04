@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
 using CompeteDesk.Services.Gemini;
@@ -71,15 +72,25 @@ builder.Services
     {
         // For consumer apps, requiring confirmed account often blocks external logins
         // unless you implement an email confirmation flow. Keep it simple for now.
-        options.SignIn.RequireConfirmedAccount = true;
+        options.SignIn.RequireConfirmedAccount = false;
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services
-    .AddAuthentication()
-    ;
+// Cookie settings for external auth (fixes "Correlation failed" on some browsers)
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
+builder.Services.ConfigureExternalCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
 
 // External Login (Google) - only enable if credentials exist.
 // Prevents runtime crash: ArgumentException "ClientId cannot be empty".
@@ -88,13 +99,18 @@ var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecr
 
 if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
 {
-    builder.Services
-        .AddAuthentication()
-        .AddGoogle(options =>
-        {
-            options.ClientId = googleClientId;
-            options.ClientSecret = googleClientSecret;
-        });
+    // IMPORTANT: Explicitly keep Identity defaults so the external sign-in cookie works reliably.
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+    })
+    .AddGoogle(options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        // CallbackPath defaults to /signin-google (keep default)
+    });
 }
 
 builder.Services.AddControllersWithViews();
