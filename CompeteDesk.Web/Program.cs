@@ -63,6 +63,7 @@ builder.Services.AddScoped<HabitsAiService>();
 builder.Services.AddScoped<StrategyCopilotAiService>();
 builder.Services.AddScoped<DecisionTraceService>();
 builder.Services.AddScoped<AiContextPackBuilder>();
+builder.Services.AddScoped<StrategyAiAssistService>();
 
 // Email/SMS providers
 builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection("SendGrid"));

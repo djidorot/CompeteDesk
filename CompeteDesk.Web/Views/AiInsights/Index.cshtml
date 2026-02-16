@@ -1,0 +1,173 @@
+@model CompeteDesk.ViewModels.AiInsights.AiInsightsViewModel
+@{
+    ViewData["Title"] = "AI Insights";
+    ViewData["LayoutFluid"] = true;
+    ViewData["UseSidebar"] = true;
+}
+
+<div class="cd-page">
+    <div class="cd-page__head">
+        <h1 class="cd-h1 mb-1">AI Insights</h1>
+        <div class="cd-sub">
+            @if (Model.WorkspaceId.HasValue)
+            {
+                <span>Workspace: <strong>@(Model.WorkspaceName ?? $"#{Model.WorkspaceId}")</strong></span>
+            }
+            else
+            {
+                <span>All workspaces</span>
+            }
+            <span class="cd-muted">•</span>
+            <span>Performance, weak areas, and recommended focus.</span>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6 mb-2">AI Performance Analysis</h2>
+                    <div class="cd-muted">Recent AI usage + readiness signals.</div>
+
+                    <div style="margin-top:14px">
+                        <div class="cd-details">
+                            <div class="cd-details__row">
+                                <div class="cd-details__label">AI traces (7d)</div>
+                                <div class="cd-details__value">@Model.Performance.TracesLast7Days</div>
+                            </div>
+                            <div class="cd-details__row">
+                                <div class="cd-details__label">AI traces (30d)</div>
+                                <div class="cd-details__value">@Model.Performance.TracesLast30Days</div>
+                            </div>
+                            <div class="cd-details__row">
+                                <div class="cd-details__label">Last AI run</div>
+                                <div class="cd-details__value">
+                                    @(Model.Performance.LastTraceAtUtc.HasValue ? Model.Performance.LastTraceAtUtc.Value.ToLocalTime().ToString("MMM d, yyyy • h:mm tt") : "—")
+                                </div>
+                            </div>
+                            <div class="cd-details__row">
+                                <div class="cd-details__label">Strategies w/ playbook</div>
+                                <div class="cd-details__value">@Model.Performance.StrategiesWithPlaybook / @Model.Performance.StrategiesTotal</div>
+                            </div>
+                            <div class="cd-details__row">
+                                <div class="cd-details__label">Open actions</div>
+                                <div class="cd-details__value">@Model.Performance.ActionsOpen</div>
+                            </div>
+                            <div class="cd-details__row">
+                                <div class="cd-details__label">Done (last 14d)</div>
+                                <div class="cd-details__value">@Model.Performance.ActionsDoneLast14Days</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                        <a class="btn btn-primary cd-btn" asp-controller="StrategyCopilot" asp-action="Index">Open Strategy Co-Pilot</a>
+                        <a class="btn btn-outline-secondary cd-btn" asp-controller="AiHistory" asp-action="Index">View AI History</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6 mb-2">Weak Area Detection</h2>
+                    <div class="cd-muted">Heuristic alerts based on your saved data.</div>
+
+                    <div style="margin-top:14px">
+                        @if (Model.WeakAreas.Count == 0)
+                        {
+                            <div class="cd-muted">No obvious weak areas detected. Keep going.</div>
+                        }
+                        else
+                        {
+                            <ul class="list-unstyled" style="margin:0">
+                                @foreach (var item in Model.WeakAreas)
+                                {
+                                    <li>
+                                        <strong>@item.Title</strong>
+                                        <div class="cd-muted">@item.Detail</div>
+                                        @if (!string.IsNullOrWhiteSpace(item.Href))
+                                        {
+                                            <a class="cd-link" href="@item.Href">Open</a>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6 mb-2">Recommended Focus Areas</h2>
+                    <div class="cd-muted">Next best actions to increase signal and execution.</div>
+
+                    <div style="margin-top:14px">
+                        <ul class="list-unstyled" style="margin:0">
+                            @foreach (var item in Model.Recommendations)
+                            {
+                                <li>
+                                    <strong>@item.Title</strong>
+                                    <div class="cd-muted">@item.Detail</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.Href))
+                                    {
+                                        <a class="cd-link" href="@item.Href">Open</a>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <div>
+                    <h2 class="h6 mb-1">Feature usage (last 30 days)</h2>
+                    <div class="cd-muted">Where AI is being used inside CompeteDesk.</div>
+                </div>
+                <a class="cd-link" asp-controller="AiHistory" asp-action="Index">See all traces →</a>
+            </div>
+
+            <div style="margin-top:14px">
+                @if (Model.FeatureUsage.Count == 0)
+                {
+                    <div class="cd-muted">No AI traces yet. Use any AI button (Search, Playbook, Assist) to start building history.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th style="width:140px">Uses (30d)</th>
+                                    <th style="width:120px"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.FeatureUsage)
+                                {
+                                    <tr>
+                                        <td>@row.Feature</td>
+                                        <td>@row.Count30Days</td>
+                                        <td>
+                                            <a class="cd-link" href="/AiHistory?feature=@Uri.EscapeDataString(row.Feature)">View</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

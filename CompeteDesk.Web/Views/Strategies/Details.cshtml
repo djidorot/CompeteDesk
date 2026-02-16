@@ -7,6 +7,7 @@
 
 <link rel="stylesheet" href="~/css/strategies.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/strategies-ai.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/strategy-assist.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/strategy-command-header.css" asp-append-version="true" />
 
 <div class="cd-page">
@@ -122,8 +123,46 @@
             <script type="application/json" data-ai-initial>@(Model.Strategy.AiInsightsJson ?? "")</script>
         </div>
     </div>
+
+    <div class="card shadow-sm" id="ai-assist">
+        <div class="card-body">
+            <div class="cd-assist__head">
+                <div>
+                    <h2 class="cd-assist__title">AI Assist</h2>
+                    <div class="cd-sub cd-assist__sub">Quick AI helpers for this strategy: SWOT, study summary, quiz, and improvement suggestions.</div>
+                </div>
+                <div>
+                    <a class="cd-link" asp-controller="AiHistory" asp-action="Index">View AI History</a>
+                </div>
+            </div>
+
+            <div data-strategy-assist data-strategy-id="@Model.Strategy.Id">
+                <form method="post" style="display:none">
+                    @Html.AntiForgeryToken()
+                </form>
+
+                <div class="cd-assist__goal">
+                    <label class="cd-label" for="assistGoal">Optional goal / focus</label>
+                    <input id="assistGoal" class="form-control cd-input" placeholder="e.g., Apply this strategy for my online coding school" data-assist-goal />
+                </div>
+
+                <div class="cd-assist__bar">
+                    <button type="button" class="btn btn-primary cd-btn" data-assist-swot>Generate SWOT</button>
+                    <button type="button" class="btn btn-outline-primary cd-btn" data-assist-study>Study summary</button>
+                    <button type="button" class="btn btn-outline-primary cd-btn" data-assist-quiz>Quiz generator</button>
+                    <button type="button" class="btn btn-outline-secondary cd-btn" data-assist-improve>Improvement suggestions</button>
+                </div>
+
+                <div class="cd-assist__status cd-muted" data-assist-status></div>
+                <a class="cd-link" href="#" data-assist-history hidden>Open the saved trace in AI History</a>
+
+                <div class="cd-assist__out" data-assist-output hidden></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script src="~/js/strategies-ai.js" asp-append-version="true"></script>
+    <script src="~/js/strategy-assist.js" asp-append-version="true"></script>
 }
