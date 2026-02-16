@@ -165,6 +165,7 @@ public class ActionsController : Controller
 
         _db.Actions.Add(model);
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Action created.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -211,6 +212,7 @@ public class ActionsController : Controller
         item.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Action updated.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -242,6 +244,7 @@ public class ActionsController : Controller
         // Soft delete (DbContext converts Deletes for ISoftDeletable entities).
         _db.Actions.Remove(item);
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Action deleted.";
         return RedirectToAction(nameof(Index));
     }
 }

@@ -3,55 +3,74 @@
 <div class="cd-form">
     <div class="row g-3">
         <div class="col-12">
-            <label class="cd-label" asp-for="Title"></label>
-            <input class="form-control cd-input" asp-for="Title" placeholder="e.g., Interview 5 customers this week" />
-            <span class="text-danger" asp-validation-for="Title"></span>
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="Title" placeholder="Action title" />
+                <label asp-for="Title" class="cd-required"></label>
+            </div>
+            <span class="invalid-feedback d-block" asp-validation-for="Title"></span>
         </div>
 
         <div class="col-12">
-            <label class="cd-label" asp-for="Description"></label>
-            <textarea class="form-control cd-input" asp-for="Description" rows="5" placeholder="What does done look like? Any notes, links, or steps…"></textarea>
-            <span class="text-danger" asp-validation-for="Description"></span>
+            <div class="form-floating">
+                <textarea class="form-control cd-input" asp-for="Description" style="height: 140px" placeholder="Description"></textarea>
+                <label asp-for="Description"></label>
+            </div>
+            <span class="invalid-feedback d-block" asp-validation-for="Description"></span>
         </div>
 
         <div class="col-md-6">
-            <label class="cd-label" asp-for="Category"></label>
-            <input class="form-control cd-input" asp-for="Category" placeholder="e.g., Sales, Product, Marketing" />
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="Category" placeholder="Category" />
+                <label asp-for="Category"></label>
+            </div>
         </div>
 
         <div class="col-md-6">
-            <label class="cd-label" asp-for="Status"></label>
-            <select class="form-select cd-input" asp-for="Status">
+            <div class="form-floating">
+                <select class="form-select cd-input" asp-for="Status">
                 <option value="Planned">Planned</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Done">Done</option>
                 <option value="Archived">Archived</option>
-            </select>
+                </select>
+                <label asp-for="Status" class="cd-required"></label>
+            </div>
+            <span class="invalid-feedback d-block" asp-validation-for="Status"></span>
         </div>
 
         <div class="col-md-4">
-            <label class="cd-label" asp-for="Priority"></label>
-            <input class="form-control cd-input" asp-for="Priority" type="number" min="0" max="100" />
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="Priority" type="number" min="0" max="100" placeholder="Priority" />
+                <label asp-for="Priority"></label>
+            </div>
         </div>
 
         <div class="col-md-4">
-            <label class="cd-label" asp-for="DueAtUtc">Due date (UTC)</label>
-            <input class="form-control cd-input" asp-for="DueAtUtc" type="date" />
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="DueAtUtc" type="date" placeholder="Due" />
+                <label asp-for="DueAtUtc">Due date (UTC)</label>
+            </div>
         </div>
 
         <div class="col-md-4">
-            <label class="cd-label" asp-for="SourceBook"></label>
-            <input class="form-control cd-input" asp-for="SourceBook" />
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="SourceBook" placeholder="Source" />
+                <label asp-for="SourceBook"></label>
+            </div>
         </div>
 
         <div class="col-md-6">
-            <label class="cd-label" asp-for="WorkspaceId">Workspace ID (optional)</label>
-            <input class="form-control cd-input" asp-for="WorkspaceId" type="number" min="1" />
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="WorkspaceId" type="number" min="1" placeholder="Workspace" />
+                <label asp-for="WorkspaceId">Workspace ID (optional)</label>
+            </div>
         </div>
 
         <div class="col-md-6">
-            <label class="cd-label" asp-for="StrategyId">Strategy ID (optional)</label>
-            <input class="form-control cd-input" asp-for="StrategyId" type="number" min="1" />
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="StrategyId" type="number" min="1" placeholder="Strategy" />
+                <label asp-for="StrategyId">Strategy ID (optional)</label>
+            </div>
         </div>
     </div>
 </div>

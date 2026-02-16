@@ -71,6 +71,36 @@
     <!-- Main Grid -->
     <div class="cd-grid mt-3">
 
+        <!-- Summary Cards -->
+        <section class="cd-panel card shadow-sm" id="overview-summary">
+            <div class="card-body">
+                <div class="cd-panel-head">
+                    <h2 class="cd-h2">Summary</h2>
+                    <div class="cd-muted">Fast counts + quick access to each module.</div>
+                </div>
+
+                <div class="cd-overview-grid">
+                    @foreach (var s in Model.OverviewSummary)
+                    {
+                        var cls = s.Disabled ? "cd-overview-card cd-overview-card--disabled" : "cd-overview-card";
+                        var href = s.Disabled ? "#" : s.Href;
+                        <a class="@cls" href="@href" aria-disabled="@(s.Disabled ? "true" : "false")">
+                            <div class="cd-overview-top">
+                                <div class="cd-overview-title">@s.Title</div>
+                                @if (!string.IsNullOrWhiteSpace(s.Badge))
+                                {
+                                    <span class="cd-overview-badge">@s.Badge</span>
+                                }
+                            </div>
+                            <div class="cd-overview-count">@s.Count</div>
+                            <div class="cd-overview-sub">@s.Subtitle</div>
+                            <div class="cd-overview-link">Open →</div>
+                        </a>
+                    }
+                </div>
+            </div>
+        </section>
+
         <!-- Platform Overview -->
         <section class="cd-panel card shadow-sm" id="platform-overview">
             <div class="card-body">

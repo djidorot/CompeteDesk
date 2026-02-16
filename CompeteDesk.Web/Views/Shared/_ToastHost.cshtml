@@ -1,0 +1,30 @@
+@{
+    var success = TempData["ToastSuccess"] as string;
+    var error = TempData["ToastError"] as string;
+    var info = TempData["ToastInfo"] as string;
+    var warning = TempData["ToastWarning"] as string;
+
+    string? msg = success ?? error ?? info ?? warning;
+    string type = success != null ? "success" : error != null ? "danger" : warning != null ? "warning" : "info";
+}
+
+<div class="cd-toastHost" aria-live="polite" aria-atomic="true">
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        @if (!string.IsNullOrWhiteSpace(msg))
+        {
+            <div class="toast cd-toast" role="alert" aria-live="assertive" aria-atomic="true"
+                 data-cd-toast data-cd-toast-type="@type">
+                <div class="toast-header">
+                    <strong class="me-auto">@(
+                        type == "success" ? "Success" :
+                        type == "danger" ? "Error" :
+                        type == "warning" ? "Notice" :
+                        "Info"
+                    )</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">@msg</div>
+            </div>
+        }
+    </div>
+</div>

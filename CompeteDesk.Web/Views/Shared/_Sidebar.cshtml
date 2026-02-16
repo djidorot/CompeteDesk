@@ -48,9 +48,11 @@
     </div>
 
     <nav class="cd-sidebar__nav" aria-label="Sidebar navigation">
+        <details class="cd-sidebar__group" open>
+            <summary class="cd-sidebar__sectionLabel">Workspace</summary>
 
-        <a class="cd-sidebar__link @(currentController == "Dashboard" ? "is-active" : "")" asp-controller="Dashboard"
-            asp-action="Index">
+            <a class="cd-sidebar__link @(currentController == "Dashboard" ? "is-active" : "")" asp-controller="Dashboard"
+                asp-action="Index">
             <span class="cd-sidebar__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -61,10 +63,14 @@
                 </svg>
             </span>
             <span class="cd-sidebar__text">Overview</span>
-        </a>
+            </a>
+        </details>
 
-        <a class="cd-sidebar__link @(currentController == "Strategies" ? "is-active" : "")" asp-controller="Strategies"
-            asp-action="Index">
+        <details class="cd-sidebar__group" open>
+            <summary class="cd-sidebar__sectionLabel">Execution</summary>
+
+            <a class="cd-sidebar__link @(currentController == "Strategies" ? "is-active" : "")" asp-controller="Strategies"
+                asp-action="Index">
             <span class="cd-sidebar__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -74,10 +80,80 @@
                 </svg>
             </span>
             <span class="cd-sidebar__text">Strategies</span>
-        </a>
+            </a>
 
-        <a class="cd-sidebar__link @(currentController == "StrategyCopilot" ? "is-active" : "")" asp-controller="StrategyCopilot"
-            asp-action="Index">
+            <a class="cd-sidebar__link @(currentController == "Actions" ? "is-active" : "")" asp-controller="Actions"
+                asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 11l3 3L22 4"></path>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </span>
+                <span class="cd-sidebar__text">Actions</span>
+            </a>
+
+            <a class="cd-sidebar__link @(currentController == "Habits" ? "is-active" : "")" asp-controller="Habits"
+                asp-action="Index"><span class="cd-sidebar__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2s4 4 4 9a4 4 0 0 1-8 0c0-5 4-9 4-9z"></path>
+                        <path d="M8.5 14.5s-1.5 1.5-1.5 3.5a5 5 0 0 0 10 0c0-2-1.5-3.5-1.5-3.5"></path>
+                    </svg>
+                </span>
+                <span class="cd-sidebar__text">Habits</span>
+            </a>
+
+            <a class="cd-sidebar__link @(currentController == "Metrics" ? "is-active" : "")" asp-controller="Metrics"
+                asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3v18h18"></path>
+                        <path d="M7 14l3-3 4 4 6-7"></path>
+                    </svg>
+                </span>
+                <span class="cd-sidebar__text">Metrics</span>
+            </a>
+        </details>
+
+        <details class="cd-sidebar__group" open>
+            <summary class="cd-sidebar__sectionLabel">Intelligence</summary>
+
+            <a class="cd-sidebar__link @(currentController == "WebsiteAnalysis" ? "is-active" : "")"
+                asp-controller="WebsiteAnalysis" asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 21l-4.3-4.3"></path>
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <path d="M11 8v6"></path>
+                        <path d="M8 11h6"></path>
+                    </svg>
+                </span>
+                <span class="cd-sidebar__text">Website Analysis</span>
+            </a>
+
+            <a class="cd-sidebar__link @(currentController == "WarRoom" ? "is-active" : "")" asp-controller="WarRoom"
+                asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z"></path>
+                        <path d="M12 8v6"></path>
+                        <path d="M12 18h.01"></path>
+                    </svg>
+                </span>
+                <span class="cd-sidebar__text">War Room</span>
+            </a>
+        </details>
+
+        <details class="cd-sidebar__group" open>
+            <summary class="cd-sidebar__sectionLabel">AI</summary>
+
+            <a class="cd-sidebar__link @(currentController == "StrategyCopilot" ? "is-active" : "")" asp-controller="StrategyCopilot"
+                asp-action="Index">
             <span class="cd-sidebar__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -87,73 +163,24 @@
                 </svg>
             </span>
             <span class="cd-sidebar__text">AI Co-Pilot</span>
-        </a>
+            </a>
 
-        <a class="cd-sidebar__link @(currentController == "Actions" ? "is-active" : "")" asp-controller="Actions"
-            asp-action="Index">
-            <span class="cd-sidebar__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 11l3 3L22 4"></path>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                </svg>
-            </span>
-            <span class="cd-sidebar__text">Actions</span>
-        </a>
+            <a class="cd-sidebar__link @(currentController == "BusinessAnalysis" ? "is-active" : "")" asp-controller="BusinessAnalysis"
+               asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3v18h18"></path>
+                        <path d="M7 13h3v5H7z"></path>
+                        <path d="M12 9h3v9h-3z"></path>
+                        <path d="M17 5h3v13h-3z"></path>
+                    </svg>
+                </span>
+                <span class="cd-sidebar__text">Business Analysis</span>
+            </a>
 
-        <a class="cd-sidebar__link @(currentController == "Habits" ? "is-active" : "")" asp-controller="Habits"
-            asp-action="Index"><span class="cd-sidebar__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2s4 4 4 9a4 4 0 0 1-8 0c0-5 4-9 4-9z"></path>
-                    <path d="M8.5 14.5s-1.5 1.5-1.5 3.5a5 5 0 0 0 10 0c0-2-1.5-3.5-1.5-3.5"></path>
-                </svg>
-            </span>
-            <span class="cd-sidebar__text">Habits</span>
-        </a>
-
-        <a class="cd-sidebar__link @(currentController == "Metrics" ? "is-active" : "")" asp-controller="Metrics"
-            asp-action="Index">
-            <span class="cd-sidebar__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 3v18h18"></path>
-                    <path d="M7 14l3-3 4 4 6-7"></path>
-                </svg>
-            </span>
-            <span class="cd-sidebar__text">Metrics</span>
-        </a>
-
-        <a class="cd-sidebar__link @(currentController == "WebsiteAnalysis" ? "is-active" : "")"
-            asp-controller="WebsiteAnalysis" asp-action="Index">
-            <span class="cd-sidebar__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 21l-4.3-4.3"></path>
-                    <circle cx="11" cy="11" r="7"></circle>
-                    <path d="M11 8v6"></path>
-                    <path d="M8 11h6"></path>
-                </svg>
-            </span>
-            <span class="cd-sidebar__text">Website Analysis</span>
-        </a>
-
-        <a class="cd-sidebar__link @(currentController == "WarRoom" ? "is-active" : "")" asp-controller="WarRoom"
-            asp-action="Index">
-            <span class="cd-sidebar__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z"></path>
-                    <path d="M12 8v6"></path>
-                    <path d="M12 18h.01"></path>
-                </svg>
-            </span>
-            <span class="cd-sidebar__text">War Room</span>
-        </a>
-
-
-        <a class="cd-sidebar__link @(currentController == "AiHistory" ? "is-active" : "")" asp-controller="AiHistory"
-            asp-action="Index">
+            <a class="cd-sidebar__link @(currentController == "AiHistory" ? "is-active" : "")" asp-controller="AiHistory"
+                asp-action="Index">
             <span class="cd-sidebar__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -163,7 +190,8 @@
                 </svg>
             </span>
             <span class="cd-sidebar__text">AI History</span>
-        </a>
+            </a>
+        </details>
 
         @if (User?.IsInRole("Admin") == true)
         {

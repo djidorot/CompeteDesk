@@ -398,6 +398,7 @@ public class HabitsController : Controller
 
         _db.Habits.Add(vm.Habit);
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Habit created.";
         return RedirectToAction(nameof(Index), new { workspaceId = vm.Habit.WorkspaceId });
     }
 
@@ -525,6 +526,7 @@ public class HabitsController : Controller
         habit.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Habit updated.";
         return RedirectToAction(nameof(Index), new { workspaceId = habit.WorkspaceId });
     }
 
@@ -555,6 +557,7 @@ public class HabitsController : Controller
 
         _db.Habits.Remove(habit);
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Habit deleted.";
         return RedirectToAction(nameof(Index));
     }
 

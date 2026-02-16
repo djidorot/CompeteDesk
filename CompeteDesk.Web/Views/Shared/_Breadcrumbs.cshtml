@@ -1,0 +1,50 @@
+@{
+    // Auto breadcrumbs from route data.
+    // Pages can override with ViewData["Breadcrumbs"] = List<(string Text, string? Href)>.
+    var crumbs = ViewData["Breadcrumbs"] as IEnumerable<(string Text, string? Href)>;
+
+    if (crumbs == null)
+    {
+        var controller = (ViewContext.RouteData.Values["controller"]?.ToString() ?? "").Trim();
+        var action = (ViewContext.RouteData.Values["action"]?.ToString() ?? "").Trim();
+
+        var list = new List<(string Text, string? Href)>();
+        list.Add(("Dashboard", "/Dashboard"));
+
+        if (!string.IsNullOrWhiteSpace(controller) && !string.Equals(controller, "Dashboard", StringComparison.OrdinalIgnoreCase))
+        {
+            list.Add((controller, $"/{controller}"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(action)
+            && !string.Equals(action, "Index", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(action, "Dashboard", StringComparison.OrdinalIgnoreCase))
+        {
+            list.Add((action, null));
+        }
+
+        crumbs = list;
+    }
+}
+
+@{
+    var crumbList = crumbs.ToList();
+}
+
+<nav class="cd-breadcrumbs" aria-label="Breadcrumb">
+    <ol class="breadcrumb mb-3">
+        @for (var i = 0; i < crumbList.Count; i++)
+        {
+            var c = crumbList[i];
+            var isLast = i == crumbList.Count - 1;
+            if (!string.IsNullOrWhiteSpace(c.Href) && !isLast)
+            {
+                <li class="breadcrumb-item"><a href="@c.Href">@c.Text</a></li>
+            }
+            else
+            {
+                <li class="breadcrumb-item active" aria-current="page">@c.Text</li>
+            }
+        }
+    </ol>
+</nav>

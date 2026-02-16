@@ -121,7 +121,16 @@
                     }
 
                     <div class="cd-action__bottom">
-                        <div class="cd-muted">@a.Status</div>
+                        @{
+                            var statusClass = a.Status switch
+                            {
+                                "Done" => "badge text-bg-success",
+                                "In Progress" => "badge text-bg-primary",
+                                "Archived" => "badge text-bg-dark",
+                                _ => "badge text-bg-secondary"
+                            };
+                        }
+                        <span class="@statusClass">@a.Status</span>
                         <a class="cd-link" asp-action="Delete" asp-route-id="@a.Id">Delete</a>
                     </div>
                 </div>

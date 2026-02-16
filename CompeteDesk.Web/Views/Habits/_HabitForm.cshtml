@@ -3,62 +3,76 @@
 <div class="cd-form">
     <div class="row g-3">
         <div class="col-12">
-            <label class="cd-label" asp-for="Habit.Title">Title</label>
-            <input class="form-control cd-input" asp-for="Habit.Title" placeholder="e.g., Publish 1 short post" />
-            <span class="text-danger" asp-validation-for="Habit.Title"></span>
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="Habit.Title" placeholder="Habit title" />
+                <label class="cd-required" asp-for="Habit.Title">Title</label>
+            </div>
+            <span class="invalid-feedback d-block" asp-validation-for="Habit.Title"></span>
         </div>
 
         <div class="col-12">
-            <label class="cd-label" asp-for="Habit.Description">Description (optional)</label>
-            <textarea class="form-control cd-input" asp-for="Habit.Description" rows="4" placeholder="What does success look like? Any notes…"></textarea>
-            <span class="text-danger" asp-validation-for="Habit.Description"></span>
+            <div class="form-floating">
+                <textarea class="form-control cd-input" asp-for="Habit.Description" style="height: 120px" placeholder="Description"></textarea>
+                <label asp-for="Habit.Description">Description (optional)</label>
+            </div>
+            <span class="invalid-feedback d-block" asp-validation-for="Habit.Description"></span>
         </div>
 
         <div class="col-md-6">
-            <label class="cd-label" asp-for="Habit.WorkspaceId">Workspace</label>
-            <select class="form-select cd-input" asp-for="Habit.WorkspaceId">
+            <div class="form-floating">
+                <select class="form-select cd-input" asp-for="Habit.WorkspaceId">
                 <option value="0">Select a workspace…</option>
                 @foreach (var ws in Model.Workspaces)
                 {
                     <option value="@ws.Id" selected="@(Model.Habit.WorkspaceId == ws.Id)">@ws.Name</option>
                 }
-            </select>
-            <span class="text-danger" asp-validation-for="Habit.WorkspaceId"></span>
+                </select>
+                <label class="cd-required" asp-for="Habit.WorkspaceId">Workspace</label>
+            </div>
+            <span class="invalid-feedback d-block" asp-validation-for="Habit.WorkspaceId"></span>
         </div>
 
         <div class="col-md-6">
-            <label class="cd-label" asp-for="Habit.StrategyId">Strategy (optional)</label>
-            <select class="form-select cd-input" asp-for="Habit.StrategyId">
+            <div class="form-floating">
+                <select class="form-select cd-input" asp-for="Habit.StrategyId">
                 <option value="">None</option>
                 @foreach (var st in Model.Strategies)
                 {
                     <option value="@st.Id" selected="@(Model.Habit.StrategyId == st.Id)">@st.Name</option>
                 }
-            </select>
-            <span class="text-danger" asp-validation-for="Habit.StrategyId"></span>
+                </select>
+                <label asp-for="Habit.StrategyId">Strategy (optional)</label>
+            </div>
+            <span class="invalid-feedback d-block" asp-validation-for="Habit.StrategyId"></span>
         </div>
 
         <div class="col-md-4">
-            <label class="cd-label" asp-for="Habit.Frequency">Frequency</label>
-            <select class="form-select cd-input" asp-for="Habit.Frequency">
+            <div class="form-floating">
+                <select class="form-select cd-input" asp-for="Habit.Frequency">
                 <option value="Daily">Daily</option>
                 <option value="Weekly">Weekly</option>
-            </select>
-            <span class="text-danger" asp-validation-for="Habit.Frequency"></span>
+                </select>
+                <label class="cd-required" asp-for="Habit.Frequency">Frequency</label>
+            </div>
+            <span class="invalid-feedback d-block" asp-validation-for="Habit.Frequency"></span>
         </div>
 
         <div class="col-md-4">
-            <label class="cd-label" asp-for="Habit.TargetCount">Target</label>
-            <input class="form-control cd-input" asp-for="Habit.TargetCount" type="number" min="1" max="100" />
+            <div class="form-floating">
+                <input class="form-control cd-input" asp-for="Habit.TargetCount" type="number" min="1" max="100" placeholder="Target" />
+                <label asp-for="Habit.TargetCount">Target</label>
+            </div>
             <div class="cd-muted mt-1">Daily = per day, Weekly = per week.</div>
         </div>
 
         <div class="col-md-4">
-            <label class="cd-label" asp-for="Habit.IsActive">Status</label>
-            <select class="form-select cd-input" asp-for="Habit.IsActive">
+            <div class="form-floating">
+                <select class="form-select cd-input" asp-for="Habit.IsActive">
                 <option value="true">Active</option>
                 <option value="false">Paused</option>
-            </select>
+                </select>
+                <label asp-for="Habit.IsActive">Status</label>
+            </div>
         </div>
     </div>
 </div>

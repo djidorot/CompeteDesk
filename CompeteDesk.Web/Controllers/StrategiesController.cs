@@ -219,6 +219,7 @@ public class StrategiesController : Controller
 
         _db.Strategies.Add(model);
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Strategy created.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -268,6 +269,7 @@ public class StrategiesController : Controller
         item.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Strategy updated.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -300,6 +302,7 @@ public class StrategiesController : Controller
 
         _db.Strategies.Remove(item);
         await _db.SaveChangesAsync();
+        TempData["ToastSuccess"] = "Strategy deleted.";
         return RedirectToAction(nameof(Index));
     }
 

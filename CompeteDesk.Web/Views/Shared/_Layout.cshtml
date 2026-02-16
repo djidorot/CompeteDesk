@@ -58,6 +58,7 @@
         <link rel="stylesheet" href="~/css/sidebar.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/topbar.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/topbar-ai-search.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/toasts.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/CompeteDesk.styles.css" asp-append-version="true" />
 
         @* Allow pages to inject page-specific CSS into the HEAD *@
@@ -178,12 +179,18 @@
                 }
 
                 <div class="@containerClass">
+                    @if (useSidebar)
+                    {
+                        <partial name="_Breadcrumbs" />
+                    }
                     <main role="main" class="pb-3 cd-main">
                         @RenderBody()
                     </main>
                 </div>
             </div>
         </div>
+
+        <partial name="_ToastHost" />
 
         @* Footer is rendered inside the sidebar for sidebar-layout pages *@
         @if (!useSidebar)
@@ -201,6 +208,7 @@
         <script src="~/js/site.js" asp-append-version="true"></script>
         <script src="~/js/sidebar.js" asp-append-version="true"></script>
         <script src="~/js/topbar-ai-search.js" asp-append-version="true"></script>
+        <script src="~/js/toasts.js" asp-append-version="true"></script>
 
         @RenderSection("Scripts", required: false)
     </body>
