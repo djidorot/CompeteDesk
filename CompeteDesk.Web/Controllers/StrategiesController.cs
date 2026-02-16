@@ -175,6 +175,7 @@ public class StrategiesController : Controller
     }
 
     // GET: /Strategies/Create
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Create()
     {
         ViewData["Title"] = "New Strategy";
@@ -198,6 +199,7 @@ public class StrategiesController : Controller
 
     // POST: /Strategies/Create
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Strategy model)
     {
@@ -224,6 +226,7 @@ public class StrategiesController : Controller
     }
 
     // GET: /Strategies/Edit/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -239,6 +242,7 @@ public class StrategiesController : Controller
 
     // POST: /Strategies/Edit/5
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Strategy model)
     {
@@ -274,6 +278,7 @@ public class StrategiesController : Controller
     }
 
     // GET: /Strategies/Delete/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -291,6 +296,7 @@ public class StrategiesController : Controller
 
     // POST: /Strategies/Delete/5
     [HttpPost, ActionName("Delete")]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -309,6 +315,7 @@ public class StrategiesController : Controller
     // POST: /Strategies/SeedFromBook
     // Inserts the strategy titles (as "Active") if the user has none yet.
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SeedFromBook()
     {
@@ -387,6 +394,7 @@ public class StrategiesController : Controller
     // AI: Generate a competitive playbook for a strategy
     // ------------------------------------------------------------
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GenerateAiPlaybook(int id, [FromBody] StrategyAiRequest req, CancellationToken ct)
     {
@@ -545,6 +553,7 @@ Rules:
     }
 
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateActionsFromAi(int id, CancellationToken ct)
     {

@@ -10,7 +10,16 @@ namespace CompeteDesk.Data;
 /// </summary>
 public static class IdentitySeeder
 {
-    private const string AdminRoleName = "Admin";
+    public const string AdminRoleName = "Admin";
+    public const string EditorRoleName = "Editor";
+    public const string ReadOnlyRoleName = "ReadOnly";
+
+    private static readonly string[] BaselineRoles = new[]
+    {
+        AdminRoleName,
+        EditorRoleName,
+        ReadOnlyRoleName
+    };
 
     public static async Task EnsureAdminAsync(IServiceProvider services)
     {
@@ -18,10 +27,13 @@ public static class IdentitySeeder
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
         var config = services.GetRequiredService<IConfiguration>();
 
-        // 1) Ensure role exists
-        if (!await roleManager.RoleExistsAsync(AdminRoleName))
+        // 1) Ensure baseline roles exist
+        foreach (var role in BaselineRoles)
         {
-            await roleManager.CreateAsync(new IdentityRole(AdminRoleName));
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+            }
         }
 
         // If someone is already an Admin, we're done.
@@ -56,5 +68,19 @@ public static class IdentitySeeder
         {
             await userManager.AddToRoleAsync(firstUser, AdminRoleName);
         }
+    }
+
+    /// <summary>
+    /// Ensures that a signed-in user has at least one application role.
+    /// Default role is Editor (so they can use CRUD features).
+    /// </summary>
+    public static async Task EnsureUserHasDefaultRoleAsync(IServiceProvider services, IdentityUser user)
+    {
+        var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+
+        var roles = await userManager.GetRolesAsync(user);
+        if (roles is not null && roles.Count > 0) return;
+
+        await userManager.AddToRoleAsync(user, EditorRoleName);
     }
 }

@@ -84,6 +84,18 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+// Authorization policies (granular permissions)
+builder.Services.AddAuthorization(options =>
+{
+    // CanEdit: allow creating/updating/deleting core data
+    options.AddPolicy("CanEdit", policy =>
+        policy.RequireRole(IdentitySeeder.AdminRoleName, IdentitySeeder.EditorRoleName));
+
+    // Read-only users can still view app pages (authenticated) but can't POST/edit
+    options.AddPolicy("ReadOnly", policy =>
+        policy.RequireRole(IdentitySeeder.ReadOnlyRoleName));
+});
+
 // Cookie settings for external auth (fixes "Correlation failed" on some browsers)
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -196,6 +208,39 @@ app.UseCookiePolicy();
 
 // IMPORTANT: Auth must run before Authorization
 app.UseAuthentication();
+
+// Ensure every signed-in user has a baseline role (Editor by default).
+// Also supports config-driven Admin promotion for the seed email.
+app.Use(async (context, next) =>
+{
+    if (context.User?.Identity?.IsAuthenticated == true)
+    {
+        using var scope = context.RequestServices.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+        var user = await userManager.GetUserAsync(context.User);
+        if (user is not null)
+        {
+            // Promote configured seed email to Admin when it first signs in.
+            var seedEmail = config["AdminSeed:Email"];
+            if (!string.IsNullOrWhiteSpace(seedEmail)
+                && string.Equals(user.Email, seedEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                var roles = await userManager.GetRolesAsync(user);
+                if (!roles.Contains(IdentitySeeder.AdminRoleName, StringComparer.OrdinalIgnoreCase))
+                {
+                    await userManager.AddToRoleAsync(user, IdentitySeeder.AdminRoleName);
+                }
+            }
+
+            await IdentitySeeder.EnsureUserHasDefaultRoleAsync(scope.ServiceProvider, user);
+        }
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 
 // ------------------------------------------------------------

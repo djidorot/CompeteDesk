@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
 using CompeteDesk.Models;
 using CompeteDesk.Models.Common;
 
@@ -12,6 +13,7 @@ namespace CompeteDesk.Data;
 public class ApplicationDbContext : IdentityDbContext
 {
     private readonly IHttpContextAccessor? _httpContextAccessor;
+    private bool _isSavingAudit;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -49,6 +51,10 @@ public class ApplicationDbContext : IdentityDbContext
     // AI/Data controls
     public DbSet<UserAiPreferences> UserAiPreferences => Set<UserAiPreferences>();
     public DbSet<UserDataControls> UserDataControls => Set<UserDataControls>();
+
+    // Security + audit
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<EntityChangeHistory> EntityChangeHistories => Set<EntityChangeHistory>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -335,18 +341,230 @@ public class ApplicationDbContext : IdentityDbContext
             b.HasIndex(x => new { x.WorkspaceId, x.OwnerId });
             b.HasIndex(x => new { x.OwnerId, x.Feature });
         });
+
+        builder.Entity<AuditLog>(b =>
+        {
+            b.ToTable("AuditLogs");
+            b.Property(x => x.Action).IsRequired().HasMaxLength(40);
+            b.Property(x => x.EntityType).HasMaxLength(80);
+            b.Property(x => x.EntityId).HasMaxLength(128);
+            b.Property(x => x.ActorEmail).HasMaxLength(256);
+            b.Property(x => x.ActorUserId).HasMaxLength(128);
+            b.Property(x => x.OwnerId).HasMaxLength(128);
+            b.Property(x => x.IpAddress).HasMaxLength(64);
+            b.Property(x => x.UserAgent).HasMaxLength(512);
+            b.Property(x => x.Summary).HasMaxLength(400);
+            b.HasIndex(x => new { x.OwnerId, x.CreatedAtUtc });
+            b.HasIndex(x => new { x.EntityType, x.EntityId, x.CreatedAtUtc });
+        });
+
+        builder.Entity<EntityChangeHistory>(b =>
+        {
+            b.ToTable("EntityChangeHistories");
+            b.Property(x => x.EntityType).IsRequired().HasMaxLength(80);
+            b.Property(x => x.EntityId).IsRequired().HasMaxLength(128);
+            b.Property(x => x.Action).IsRequired().HasMaxLength(40);
+            b.Property(x => x.ActorEmail).HasMaxLength(256);
+            b.Property(x => x.ActorUserId).HasMaxLength(128);
+            b.Property(x => x.OwnerId).HasMaxLength(128);
+            b.HasIndex(x => new { x.OwnerId, x.ChangedAtUtc });
+            b.HasIndex(x => new { x.EntityType, x.EntityId, x.ChangedAtUtc });
+        });
     }
 
     public override int SaveChanges()
     {
-        ApplyAuditAndSoftDeleteRules();
-        return base.SaveChanges();
+        return SaveChangesWithAuditAsync(isAsync: false).GetAwaiter().GetResult();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        return SaveChangesWithAuditAsync(isAsync: true, cancellationToken);
+    }
+
+    private async Task<int> SaveChangesWithAuditAsync(bool isAsync, CancellationToken cancellationToken = default)
+    {
+        // Avoid recursion when persisting audit rows.
+        if (_isSavingAudit)
+        {
+            ApplyAuditAndSoftDeleteRules();
+            return isAsync
+                ? await base.SaveChangesAsync(cancellationToken)
+                : base.SaveChanges();
+        }
+
+        var auditCandidates = CaptureAuditCandidates();
+
         ApplyAuditAndSoftDeleteRules();
-        return base.SaveChangesAsync(cancellationToken);
+
+        var result = isAsync
+            ? await base.SaveChangesAsync(cancellationToken)
+            : base.SaveChanges();
+
+        if (auditCandidates.Count > 0)
+        {
+            _isSavingAudit = true;
+            try
+            {
+                // After the main save, keys are available (for Added entities too).
+                var (auditLogs, historyRows) = MaterializeAuditRows(auditCandidates);
+
+                if (auditLogs.Count > 0) AuditLogs.AddRange(auditLogs);
+                if (historyRows.Count > 0) EntityChangeHistories.AddRange(historyRows);
+
+                if (auditLogs.Count > 0 || historyRows.Count > 0)
+                {
+                    if (isAsync)
+                        await base.SaveChangesAsync(cancellationToken);
+                    else
+                        base.SaveChanges();
+                }
+            }
+            finally
+            {
+                _isSavingAudit = false;
+            }
+        }
+
+        return result;
+    }
+
+    private sealed record AuditCandidate(
+        string Action,
+        string EntityType,
+        Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry Entry,
+        string? BeforeJson,
+        string? AfterJson);
+
+    private List<AuditCandidate> CaptureAuditCandidates()
+    {
+        var list = new List<AuditCandidate>();
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted))
+                continue;
+
+            // Don't self-audit audit tables.
+            if (entry.Entity is AuditLog || entry.Entity is EntityChangeHistory)
+                continue;
+
+            // Only audit app/domain entities (skip Identity entities).
+            var ns = entry.Entity.GetType().Namespace ?? string.Empty;
+            if (!ns.StartsWith("CompeteDesk.Models", StringComparison.Ordinal))
+                continue;
+
+            var entityType = entry.Entity.GetType().Name;
+            var action = entry.State switch
+            {
+                EntityState.Added => "Created",
+                EntityState.Modified => "Updated",
+                EntityState.Deleted => "Deleted",
+                _ => "Changed"
+            };
+
+            string? before = null;
+            string? after = null;
+
+            try
+            {
+                if (entry.State == EntityState.Modified)
+                {
+                    before = JsonSerializer.Serialize(entry.OriginalValues.ToObject());
+                    after = JsonSerializer.Serialize(entry.CurrentValues.ToObject());
+                }
+                else if (entry.State == EntityState.Added)
+                {
+                    after = JsonSerializer.Serialize(entry.CurrentValues.ToObject());
+                }
+                else if (entry.State == EntityState.Deleted)
+                {
+                    before = JsonSerializer.Serialize(entry.OriginalValues.ToObject());
+                }
+            }
+            catch
+            {
+                // Ignore serialization issues; keep audit lightweight.
+            }
+
+            list.Add(new AuditCandidate(action, entityType, entry, before, after));
+        }
+
+        return list;
+    }
+
+    private (List<AuditLog> auditLogs, List<EntityChangeHistory> histories) MaterializeAuditRows(List<AuditCandidate> candidates)
+    {
+        var auditLogs = new List<AuditLog>();
+        var histories = new List<EntityChangeHistory>();
+
+        var now = DateTime.UtcNow;
+
+        var http = _httpContextAccessor?.HttpContext;
+        var actorUserId = http?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var actorEmail = http?.User?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                         ?? http?.User?.FindFirst("email")?.Value
+                         ?? http?.User?.Identity?.Name;
+
+        var ip = http?.Connection?.RemoteIpAddress?.ToString();
+        var ua = http?.Request?.Headers["User-Agent"].ToString();
+
+        foreach (var c in candidates)
+        {
+            var entityId = "";
+            try
+            {
+                var pk = c.Entry.Metadata.FindPrimaryKey();
+                if (pk is not null)
+                {
+                    var keyValues = pk.Properties.Select(p => c.Entry.Property(p.Name).CurrentValue?.ToString() ?? string.Empty);
+                    entityId = string.Join("|", keyValues);
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            // Best-effort owner id resolution (many entities have OwnerId)
+            string? ownerId = null;
+            try
+            {
+                var prop = c.Entry.Properties.FirstOrDefault(p => string.Equals(p.Metadata.Name, "OwnerId", StringComparison.OrdinalIgnoreCase));
+                ownerId = prop?.CurrentValue?.ToString();
+            }
+            catch { }
+
+            auditLogs.Add(new AuditLog
+            {
+                OwnerId = ownerId,
+                ActorUserId = actorUserId,
+                ActorEmail = actorEmail,
+                Action = c.Action,
+                EntityType = c.EntityType,
+                EntityId = string.IsNullOrWhiteSpace(entityId) ? null : entityId,
+                Summary = $"{c.Action} {c.EntityType}",
+                IpAddress = ip,
+                UserAgent = ua,
+                CreatedAtUtc = now
+            });
+
+            // Version history per entity
+            histories.Add(new EntityChangeHistory
+            {
+                OwnerId = ownerId,
+                ActorUserId = actorUserId,
+                ActorEmail = actorEmail,
+                EntityType = c.EntityType,
+                EntityId = string.IsNullOrWhiteSpace(entityId) ? "" : entityId,
+                Action = c.Action,
+                BeforeJson = c.BeforeJson,
+                AfterJson = c.AfterJson,
+                ChangedAtUtc = now
+            });
+        }
+
+        return (auditLogs, histories);
     }
 
     private void ApplyAuditAndSoftDeleteRules()

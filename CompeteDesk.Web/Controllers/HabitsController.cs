@@ -210,6 +210,7 @@ public class HabitsController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AiSuggest([FromForm] AiSuggestRequest req)
     {
@@ -239,6 +240,7 @@ public class HabitsController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AiCreate([FromBody] AiCreateRequest req)
     {
@@ -312,6 +314,7 @@ public class HabitsController : Controller
     }
 
     // GET: /Habits/Create
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Create(int? workspaceId, int? strategyId, string? frequency)
     {
         ViewData["Title"] = "New Habit";
@@ -355,6 +358,7 @@ public class HabitsController : Controller
 
     // POST: /Habits/Create
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(HabitEditViewModel vm)
     {
@@ -448,6 +452,7 @@ public class HabitsController : Controller
     }
 
     // GET: /Habits/Edit/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -479,6 +484,7 @@ public class HabitsController : Controller
 
     // POST: /Habits/Edit/5
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, HabitEditViewModel vm)
     {
@@ -531,6 +537,7 @@ public class HabitsController : Controller
     }
 
     // GET: /Habits/Delete/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -548,6 +555,7 @@ public class HabitsController : Controller
 
     // POST: /Habits/Delete/5
     [HttpPost, ActionName("Delete")]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -563,6 +571,7 @@ public class HabitsController : Controller
 
     // POST: /Habits/Checkin/5
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Checkin(int id)
     {
@@ -606,6 +615,7 @@ public class HabitsController : Controller
 
     // POST: /Habits/ToggleActive/5
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleActive(int id)
     {

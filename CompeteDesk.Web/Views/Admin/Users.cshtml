@@ -1,0 +1,54 @@
+@model CompeteDesk.ViewModels.Admin.AdminUsersViewModel
+
+@{
+    ViewData["Title"] = "User Roles";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h4 mb-0">User Roles</h1>
+        <div class="text-muted">Assign Admin, Editor, or ReadOnly permissions.</div>
+    </div>
+    <a class="btn btn-sm btn-outline-secondary" asp-controller="Admin" asp-action="Index">Back to Admin</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>UserName</th>
+                        <th style="width:220px;">Role</th>
+                        <th style="width:120px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.Users)
+                    {
+                        <tr>
+                            <td>@u.Email</td>
+                            <td class="text-muted">@u.UserName</td>
+                            <td>
+                                <form class="d-flex gap-2" asp-controller="Admin" asp-action="SetRole" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <select class="form-select form-select-sm" name="role">
+                                        <option value="Admin" selected="@(u.Role=="Admin")">Admin</option>
+                                        <option value="Editor" selected="@(u.Role=="Editor")">Editor</option>
+                                        <option value="ReadOnly" selected="@(u.Role=="ReadOnly")">ReadOnly</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                                </form>
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-secondary" asp-controller="Activity" asp-action="Index">Logs</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -93,6 +93,7 @@ public class WarRoomController : Controller
     // --------------------------
 
     // GET: /WarRoom/IntelCreate
+    [Authorize(Policy = "CanEdit")]
     public IActionResult IntelCreate()
     {
         ViewData["Title"] = "New Intel";
@@ -108,6 +109,7 @@ public class WarRoomController : Controller
 
     // POST: /WarRoom/IntelCreate
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> IntelCreate(WarIntel model)
     {
@@ -144,6 +146,7 @@ public class WarRoomController : Controller
     }
 
     // GET: /WarRoom/IntelEdit/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> IntelEdit(int? id)
     {
         if (id == null) return NotFound();
@@ -159,6 +162,7 @@ public class WarRoomController : Controller
 
     // POST: /WarRoom/IntelEdit/5
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> IntelEdit(int id, WarIntel model)
     {
@@ -190,6 +194,7 @@ public class WarRoomController : Controller
     }
 
     // GET: /WarRoom/IntelDelete/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> IntelDelete(int? id)
     {
         if (id == null) return NotFound();
@@ -205,6 +210,7 @@ public class WarRoomController : Controller
 
     // POST: /WarRoom/IntelDelete/5
     [HttpPost, ActionName("IntelDelete")]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> IntelDeleteConfirmed(int id)
     {
@@ -222,6 +228,7 @@ public class WarRoomController : Controller
     // --------------------------
 
     // GET: /WarRoom/PlanCreate
+    [Authorize(Policy = "CanEdit")]
     public IActionResult PlanCreate()
     {
         ViewData["Title"] = "New Plan";
@@ -237,6 +244,7 @@ public class WarRoomController : Controller
 
     // POST: /WarRoom/PlanCreate
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PlanCreate(WarPlan model)
     {
@@ -275,6 +283,7 @@ public class WarRoomController : Controller
     }
 
     // GET: /WarRoom/PlanEdit/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> PlanEdit(int? id)
     {
         if (id == null) return NotFound();
@@ -290,6 +299,7 @@ public class WarRoomController : Controller
 
     // POST: /WarRoom/PlanEdit/5
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PlanEdit(int id, WarPlan model)
     {
@@ -323,6 +333,7 @@ public class WarRoomController : Controller
     }
 
     // GET: /WarRoom/PlanDelete/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> PlanDelete(int? id)
     {
         if (id == null) return NotFound();
@@ -338,6 +349,7 @@ public class WarRoomController : Controller
 
     // POST: /WarRoom/PlanDelete/5
     [HttpPost, ActionName("PlanDelete")]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PlanDeleteConfirmed(int id)
     {

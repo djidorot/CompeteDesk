@@ -1,0 +1,63 @@
+@model CompeteDesk.ViewModels.Activity.ActivityLogViewModel
+
+@{
+    ViewData["Title"] = "Activity Log";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h4 mb-0">Activity Log</h1>
+        <div class="text-muted">@Model.ScopeLabel</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (Model.Items.Count == 0)
+        {
+            <div class="text-muted">No activity yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:170px;">When (UTC)</th>
+                            <th style="width:140px;">Action</th>
+                            <th style="width:160px;">Entity</th>
+                            <th>Summary</th>
+                            <th style="width:220px;">Actor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="text-muted">@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <span class="badge text-bg-light">@item.Action</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.EntityType) && !string.IsNullOrWhiteSpace(item.EntityId))
+                                    {
+                                        <a class="text-decoration-none" asp-controller="Activity" asp-action="History"
+                                           asp-route-entityType="@item.EntityType" asp-route-entityId="@item.EntityId">
+                                            @item.EntityType #@item.EntityId
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>@item.Summary</td>
+                                <td class="text-muted">@item.ActorEmail</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

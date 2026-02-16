@@ -50,6 +50,7 @@ public class WorkspacesController : Controller
     }
 
     // GET: /Workspaces/Create
+    [Authorize(Policy = "CanEdit")]
     public IActionResult Create()
     {
         ViewData["Title"] = "New Workspace";
@@ -61,6 +62,7 @@ public class WorkspacesController : Controller
 
     // POST: /Workspaces/Create
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateWorkspaceViewModel vm)
     {

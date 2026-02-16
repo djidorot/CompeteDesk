@@ -466,6 +466,7 @@ public sealed class MetricsController : Controller
     // Metrics & Momentum (Key Metrics)
     // -------------------------
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveKeyMetricsConfig(string? range, string? from, string? to, CancellationToken ct)
     {
@@ -503,6 +504,7 @@ public sealed class MetricsController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddKeyMetricEntry(int definitionId, string? date, decimal value, string? range, string? from, string? to, CancellationToken ct)
     {

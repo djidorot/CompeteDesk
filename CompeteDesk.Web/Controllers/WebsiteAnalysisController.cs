@@ -64,6 +64,7 @@ public sealed class WebsiteAnalysisController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Analyze(WebsiteAnalysisIndexViewModel input, CancellationToken ct)
     {

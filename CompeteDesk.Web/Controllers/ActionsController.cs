@@ -127,6 +127,7 @@ public class ActionsController : Controller
     }
 
     // GET: /Actions/Create
+    [Authorize(Policy = "CanEdit")]
     public IActionResult Create()
     {
         ViewData["Title"] = "New Action";
@@ -145,6 +146,7 @@ public class ActionsController : Controller
 
     // POST: /Actions/Create
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ActionItem model)
     {
@@ -170,6 +172,7 @@ public class ActionsController : Controller
     }
 
     // GET: /Actions/Edit/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -185,6 +188,7 @@ public class ActionsController : Controller
 
     // POST: /Actions/Edit/5
     [HttpPost]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ActionItem model)
     {
@@ -217,6 +221,7 @@ public class ActionsController : Controller
     }
 
     // GET: /Actions/Delete/5
+    [Authorize(Policy = "CanEdit")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -234,6 +239,7 @@ public class ActionsController : Controller
 
     // POST: /Actions/Delete/5
     [HttpPost, ActionName("Delete")]
+    [Authorize(Policy = "CanEdit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

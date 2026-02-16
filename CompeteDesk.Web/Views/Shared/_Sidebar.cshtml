@@ -11,6 +11,7 @@
     ?? email;
 
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 }
 
 <aside class="cd-sidebar" data-cd-sidebar>
@@ -34,18 +35,21 @@
 
     @* NOTE: Removed sidebar search to avoid duplicate search UI (topbar already has search). *@
 
-    <div class="cd-sidebar__cta">
-        <a class="cd-btn cd-btn--primary cd-btn--block" asp-controller="Workspaces" asp-action="Create">
-            <span class="cd-btn__ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" class="cd-ico" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 5v14"></path>
-                    <path d="M5 12h14"></path>
-                </svg>
-            </span>
-            New Workspace
-        </a>
-    </div>
+    @if (User?.IsInRole("ReadOnly") != true)
+    {
+        <div class="cd-sidebar__cta">
+            <a class="cd-btn cd-btn--primary cd-btn--block" asp-controller="Workspaces" asp-action="Create">
+                <span class="cd-btn__ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-ico" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5v14"></path>
+                        <path d="M5 12h14"></path>
+                    </svg>
+                </span>
+                New Workspace
+            </a>
+        </div>
+    }
 
     <nav class="cd-sidebar__nav" aria-label="Sidebar navigation">
         <details class="cd-sidebar__group" open>
@@ -222,6 +226,53 @@
                 </span>
                 <span class="cd-sidebar__text">Dashboard</span>
             </a>
+
+            <a class="cd-sidebar__link @(currentController == "Admin" && currentAction == "Users" ? "is-active" : "")" asp-controller="Admin"
+               asp-action="Users">
+                <span class="cd-sidebar__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </span>
+                <span class="cd-sidebar__text">User Roles</span>
+            </a>
+
+            <a class="cd-sidebar__link @(currentController == "Activity" ? "is-active" : "")" asp-controller="Activity"
+               asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 8v5l3 3"></path>
+                        <path d="M3 12a9 9 0 1 0 9-9"></path>
+                        <path d="M3 5v7h7"></path>
+                    </svg>
+                </span>
+                <span class="cd-sidebar__text">Activity Log</span>
+            </a>
+        }
+
+        @* Non-admin users can still view their own activity log *@
+        @if (User?.Identity?.IsAuthenticated == true && User?.IsInRole("Admin") != true)
+        {
+            <details class="cd-sidebar__group" open>
+                <summary class="cd-sidebar__sectionLabel">Security</summary>
+                <a class="cd-sidebar__link @(currentController == "Activity" ? "is-active" : "")" asp-controller="Activity"
+                   asp-action="Index">
+                    <span class="cd-sidebar__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="cd-navico" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 8v5l3 3"></path>
+                            <path d="M3 12a9 9 0 1 0 9-9"></path>
+                            <path d="M3 5v7h7"></path>
+                        </svg>
+                    </span>
+                    <span class="cd-sidebar__text">My Activity</span>
+                </a>
+            </details>
         }
 
         <a class="cd-sidebar__link @(currentController == "Settings" ? "is-active" : "")" asp-controller="Settings" asp-action="Index">

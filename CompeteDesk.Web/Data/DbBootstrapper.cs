@@ -43,7 +43,93 @@ namespace CompeteDesk.Data
             await EnsureUserDataControlsTableAsync(db);
             await EnsureUserProfilesTableAsync(db);
 
+            // Security & audit
+            await EnsureAuditLogsTableAsync(db);
+            await EnsureEntityChangeHistoryTableAsync(db);
+
             await NormalizeSourceBooksAsync(db);
+        }
+
+        private static async Task EnsureAuditLogsTableAsync(ApplicationDbContext db)
+        {
+            if (!await TableExistsAsync(db, "AuditLogs"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE AuditLogs (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    OwnerId TEXT NULL,
+    ActorUserId TEXT NULL,
+    ActorEmail TEXT NULL,
+    Action TEXT NOT NULL,
+    EntityType TEXT NULL,
+    EntityId TEXT NULL,
+    Summary TEXT NULL,
+    IpAddress TEXT NULL,
+    UserAgent TEXT NULL,
+    CreatedAtUtc TEXT NOT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "AuditLogs", "OwnerId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "ActorUserId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "ActorEmail", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "Action", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "EntityType", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "EntityId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "Summary", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "IpAddress", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "UserAgent", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "AuditLogs", "CreatedAtUtc", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_AuditLogs_OwnerId_CreatedAtUtc
+ON AuditLogs (OwnerId, CreatedAtUtc);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_AuditLogs_Entity_CreatedAtUtc
+ON AuditLogs (EntityType, EntityId, CreatedAtUtc);");
+        }
+
+        private static async Task EnsureEntityChangeHistoryTableAsync(ApplicationDbContext db)
+        {
+            if (!await TableExistsAsync(db, "EntityChangeHistories"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE EntityChangeHistories (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    OwnerId TEXT NULL,
+    ActorUserId TEXT NULL,
+    ActorEmail TEXT NULL,
+    EntityType TEXT NOT NULL,
+    EntityId TEXT NOT NULL,
+    Action TEXT NOT NULL,
+    BeforeJson TEXT NULL,
+    AfterJson TEXT NULL,
+    ChangedAtUtc TEXT NOT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "EntityChangeHistories", "OwnerId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "EntityChangeHistories", "ActorUserId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "EntityChangeHistories", "ActorEmail", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "EntityChangeHistories", "EntityType", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "EntityChangeHistories", "EntityId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "EntityChangeHistories", "Action", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "EntityChangeHistories", "BeforeJson", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "EntityChangeHistories", "AfterJson", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "EntityChangeHistories", "ChangedAtUtc", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_EntityChangeHistories_OwnerId_ChangedAtUtc
+ON EntityChangeHistories (OwnerId, ChangedAtUtc);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_EntityChangeHistories_Entity_ChangedAtUtc
+ON EntityChangeHistories (EntityType, EntityId, ChangedAtUtc);");
         }
 
         private static async Task EnsureWarIntelTableAsync(ApplicationDbContext db)
