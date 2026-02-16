@@ -63,8 +63,13 @@ CREATE TABLE WarIntel (
     Tags TEXT NULL,
     Notes TEXT NULL,
     ObservedAtUtc TEXT NULL,
-    CreatedAtUtc TEXT NOT NULL,
-    UpdatedAtUtc TEXT NULL,
+	    CreatedAtUtc TEXT NOT NULL,
+	    UpdatedAtUtc TEXT NULL,
+	    CreatedById TEXT NULL,
+	    UpdatedById TEXT NULL,
+	    IsDeleted INTEGER NOT NULL DEFAULT 0,
+	    DeletedAtUtc TEXT NULL,
+	    DeletedById TEXT NULL,
     FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE SET NULL
 );");
             }
@@ -82,11 +87,22 @@ CREATE TABLE WarIntel (
                 await EnsureColumnAsync(db, "WarIntel", "ObservedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "WarIntel", "CreatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "WarIntel", "UpdatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "WarIntel", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WarIntel", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WarIntel", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "WarIntel", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WarIntel", "DeletedById", "TEXT", nullable: true);
             }
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_WarIntel_OwnerId_Confidence
 ON WarIntel (OwnerId, Confidence);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_WarIntel_OwnerId_IsDeleted_Confidence
+ON WarIntel (OwnerId, IsDeleted, Confidence);");
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_WarIntel_WorkspaceId_OwnerId
@@ -112,8 +128,13 @@ CREATE TABLE WarPlans (
     StartAtUtc TEXT NULL,
     EndAtUtc TEXT NULL,
     SourceBook TEXT NULL,
-    CreatedAtUtc TEXT NOT NULL,
-    UpdatedAtUtc TEXT NULL,
+	    CreatedAtUtc TEXT NOT NULL,
+	    UpdatedAtUtc TEXT NULL,
+	    CreatedById TEXT NULL,
+	    UpdatedById TEXT NULL,
+	    IsDeleted INTEGER NOT NULL DEFAULT 0,
+	    DeletedAtUtc TEXT NULL,
+	    DeletedById TEXT NULL,
     FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE SET NULL
 );");
             }
@@ -133,11 +154,22 @@ CREATE TABLE WarPlans (
                 await EnsureColumnAsync(db, "WarPlans", "SourceBook", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "WarPlans", "CreatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "WarPlans", "UpdatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "WarPlans", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WarPlans", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WarPlans", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "WarPlans", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WarPlans", "DeletedById", "TEXT", nullable: true);
             }
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_WarPlans_OwnerId_Status
 ON WarPlans (OwnerId, Status);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_WarPlans_OwnerId_IsDeleted_Status
+ON WarPlans (OwnerId, IsDeleted, Status);");
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_WarPlans_WorkspaceId_OwnerId
@@ -158,7 +190,12 @@ CREATE TABLE KeyMetricDefinitions (
     IsEnabled INTEGER NOT NULL DEFAULT 1,
     SortOrder INTEGER NOT NULL DEFAULT 0,
     CreatedAtUtc TEXT NULL,
-    UpdatedAtUtc TEXT NULL
+	UpdatedAtUtc TEXT NULL,
+	CreatedById TEXT NULL,
+	UpdatedById TEXT NULL,
+	IsDeleted INTEGER NOT NULL DEFAULT 0,
+	DeletedAtUtc TEXT NULL,
+	DeletedById TEXT NULL
 );");
             }
             else
@@ -171,6 +208,13 @@ CREATE TABLE KeyMetricDefinitions (
                 await EnsureColumnAsync(db, "KeyMetricDefinitions", "SortOrder", "INTEGER", nullable: false, defaultSql: "0");
                 await EnsureColumnAsync(db, "KeyMetricDefinitions", "CreatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "KeyMetricDefinitions", "UpdatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "KeyMetricDefinitions", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "KeyMetricDefinitions", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "KeyMetricDefinitions", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "KeyMetricDefinitions", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "KeyMetricDefinitions", "DeletedById", "TEXT", nullable: true);
             }
 
             await db.Database.ExecuteSqlRawAsync(@"
@@ -180,6 +224,10 @@ ON KeyMetricDefinitions (OwnerId, Key);");
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_KeyMetricDefinitions_OwnerId_Enabled_Order
 ON KeyMetricDefinitions (OwnerId, IsEnabled, SortOrder);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_KeyMetricDefinitions_OwnerId_IsDeleted
+ON KeyMetricDefinitions (OwnerId, IsDeleted);");
 
             if (!await TableExistsAsync(db, "KeyMetricEntries"))
             {
@@ -191,7 +239,12 @@ CREATE TABLE KeyMetricEntries (
     DateUtc TEXT NOT NULL,
     Value REAL NOT NULL DEFAULT 0,
     CreatedAtUtc TEXT NULL,
-    UpdatedAtUtc TEXT NULL
+	UpdatedAtUtc TEXT NULL,
+	CreatedById TEXT NULL,
+	UpdatedById TEXT NULL,
+	IsDeleted INTEGER NOT NULL DEFAULT 0,
+	DeletedAtUtc TEXT NULL,
+	DeletedById TEXT NULL
 );");
             }
             else
@@ -202,6 +255,13 @@ CREATE TABLE KeyMetricEntries (
                 await EnsureColumnAsync(db, "KeyMetricEntries", "Value", "REAL", nullable: false, defaultSql: "0");
                 await EnsureColumnAsync(db, "KeyMetricEntries", "CreatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "KeyMetricEntries", "UpdatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "KeyMetricEntries", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "KeyMetricEntries", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "KeyMetricEntries", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "KeyMetricEntries", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "KeyMetricEntries", "DeletedById", "TEXT", nullable: true);
             }
 
             await db.Database.ExecuteSqlRawAsync(@"
@@ -211,6 +271,10 @@ ON KeyMetricEntries (OwnerId, DefinitionId, DateUtc);");
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_KeyMetricEntries_Owner_Date
 ON KeyMetricEntries (OwnerId, DateUtc);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_KeyMetricEntries_Owner_IsDeleted_Date
+ON KeyMetricEntries (OwnerId, IsDeleted, DateUtc);");
         }
 
         private static async Task EnsureWorkspacesTableAsync(ApplicationDbContext db)
@@ -228,8 +292,13 @@ CREATE TABLE Workspaces (
     BusinessType TEXT NULL,
     Country TEXT NULL,
     BusinessProfileUpdatedAtUtc TEXT NULL,
-    CreatedAtUtc TEXT NOT NULL,
-    UpdatedAtUtc TEXT NULL
+	    CreatedAtUtc TEXT NOT NULL,
+	    UpdatedAtUtc TEXT NULL,
+	    CreatedById TEXT NULL,
+	    UpdatedById TEXT NULL,
+	    IsDeleted INTEGER NOT NULL DEFAULT 0,
+	    DeletedAtUtc TEXT NULL,
+	    DeletedById TEXT NULL
 );");
             }
             else
@@ -242,6 +311,13 @@ CREATE TABLE Workspaces (
                 await EnsureColumnAsync(db, "Workspaces", "OwnerId", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Workspaces", "CreatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Workspaces", "UpdatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "Workspaces", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Workspaces", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Workspaces", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "Workspaces", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Workspaces", "DeletedById", "TEXT", nullable: true);
 
                 // Business profile
                 await EnsureColumnAsync(db, "Workspaces", "BusinessType", "TEXT", nullable: true);
@@ -266,6 +342,10 @@ WHERE OwnerId IS NULL;" );
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_Workspaces_OwnerId_Name
 ON Workspaces (OwnerUserId, Name);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_Workspaces_OwnerId_IsDeleted
+ON Workspaces (OwnerUserId, IsDeleted);");
         }
 
         private static async Task EnsureBusinessAnalysisReportsTableAsync(ApplicationDbContext db)
@@ -281,6 +361,12 @@ CREATE TABLE BusinessAnalysisReports (
     Country TEXT NOT NULL,
     AiInsightsJson TEXT NOT NULL,
     CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NULL,
+    CreatedById TEXT NULL,
+    UpdatedById TEXT NULL,
+    IsDeleted INTEGER NOT NULL DEFAULT 0,
+    DeletedAtUtc TEXT NULL,
+    DeletedById TEXT NULL,
     FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE CASCADE
 );");
             }
@@ -292,11 +378,23 @@ CREATE TABLE BusinessAnalysisReports (
                 await EnsureColumnAsync(db, "BusinessAnalysisReports", "Country", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "BusinessAnalysisReports", "AiInsightsJson", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "BusinessAnalysisReports", "CreatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "BusinessAnalysisReports", "UpdatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BusinessAnalysisReports", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BusinessAnalysisReports", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BusinessAnalysisReports", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "BusinessAnalysisReports", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BusinessAnalysisReports", "DeletedById", "TEXT", nullable: true);
             }
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_BusinessAnalysisReports_Owner_CreatedAtUtc
 ON BusinessAnalysisReports (OwnerId, CreatedAtUtc);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_BusinessAnalysisReports_Owner_IsDeleted_CreatedAtUtc
+ON BusinessAnalysisReports (OwnerId, IsDeleted, CreatedAtUtc);");
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_BusinessAnalysisReports_WorkspaceId
@@ -318,9 +416,14 @@ CREATE TABLE Habits (
     Description TEXT NULL,
     Frequency TEXT NOT NULL,
     TargetCount INTEGER NOT NULL DEFAULT 1,
-    IsActive INTEGER NOT NULL DEFAULT 1,
-    CreatedAtUtc TEXT NOT NULL,
-    UpdatedAtUtc TEXT NULL,
+	    IsActive INTEGER NOT NULL DEFAULT 1,
+	    CreatedAtUtc TEXT NOT NULL,
+	    UpdatedAtUtc TEXT NULL,
+	    CreatedById TEXT NULL,
+	    UpdatedById TEXT NULL,
+	    IsDeleted INTEGER NOT NULL DEFAULT 0,
+	    DeletedAtUtc TEXT NULL,
+	    DeletedById TEXT NULL,
     FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE CASCADE,
     FOREIGN KEY (StrategyId) REFERENCES Strategies (Id) ON DELETE SET NULL
 );");
@@ -337,11 +440,22 @@ CREATE TABLE Habits (
                 await EnsureColumnAsync(db, "Habits", "IsActive", "INTEGER", nullable: true);
                 await EnsureColumnAsync(db, "Habits", "CreatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Habits", "UpdatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "Habits", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Habits", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Habits", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "Habits", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Habits", "DeletedById", "TEXT", nullable: true);
             }
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_Habits_OwnerId_IsActive
 ON Habits (OwnerId, IsActive);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_Habits_OwnerId_IsDeleted_IsActive
+ON Habits (OwnerId, IsDeleted, IsActive);");
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_Habits_WorkspaceId_OwnerId
@@ -433,6 +547,13 @@ CREATE TABLE Strategies (
                 await EnsureColumnAsync(db, "Strategies", "AiUpdatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Strategies", "CreatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Strategies", "UpdatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "Strategies", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Strategies", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Strategies", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "Strategies", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Strategies", "DeletedById", "TEXT", nullable: true);
             }
 
             // Backfill legacy rows if the column was previously added as NULL.
@@ -442,6 +563,10 @@ CREATE TABLE Strategies (
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_Strategies_OwnerId_Status
 ON Strategies (OwnerId, Status);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_Strategies_OwnerId_IsDeleted_Status
+ON Strategies (OwnerId, IsDeleted, Status);");
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_Strategies_WorkspaceId_OwnerId
@@ -464,9 +589,14 @@ CREATE TABLE Actions (
     Status TEXT NOT NULL,
     Priority INTEGER NOT NULL DEFAULT 0,
     DueAtUtc TEXT NULL,
-    SourceBook TEXT NULL,
-    CreatedAtUtc TEXT NOT NULL,
-    UpdatedAtUtc TEXT NULL,
+	    SourceBook TEXT NULL,
+	    CreatedAtUtc TEXT NOT NULL,
+	    UpdatedAtUtc TEXT NULL,
+	    CreatedById TEXT NULL,
+	    UpdatedById TEXT NULL,
+	    IsDeleted INTEGER NOT NULL DEFAULT 0,
+	    DeletedAtUtc TEXT NULL,
+	    DeletedById TEXT NULL,
     FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE SET NULL,
     FOREIGN KEY (StrategyId) REFERENCES Strategies (Id) ON DELETE SET NULL
 );");
@@ -485,11 +615,22 @@ CREATE TABLE Actions (
                 await EnsureColumnAsync(db, "Actions", "SourceBook", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Actions", "CreatedAtUtc", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Actions", "UpdatedAtUtc", "TEXT", nullable: true);
+
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "Actions", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Actions", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Actions", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "Actions", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Actions", "DeletedById", "TEXT", nullable: true);
             }
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_Actions_OwnerId_Status
 ON Actions (OwnerId, Status);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_Actions_OwnerId_IsDeleted_Status
+ON Actions (OwnerId, IsDeleted, Status);");
 
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_Actions_StrategyId_OwnerId
@@ -613,8 +754,14 @@ CREATE TABLE WebsiteAnalysisReports (
     HasCspHeader INTEGER NOT NULL DEFAULT 0,
     HasHstsHeader INTEGER NOT NULL DEFAULT 0,
     AiInsightsJson TEXT NULL,
-    AiSummary TEXT NULL,
-    CreatedAtUtc TEXT NOT NULL,
+	    AiSummary TEXT NULL,
+	    CreatedAtUtc TEXT NOT NULL,
+	    UpdatedAtUtc TEXT NULL,
+	    CreatedById TEXT NULL,
+	    UpdatedById TEXT NULL,
+	    IsDeleted INTEGER NOT NULL DEFAULT 0,
+	    DeletedAtUtc TEXT NULL,
+	    DeletedById TEXT NULL,
     FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE SET NULL
 );");
 
@@ -623,6 +770,9 @@ CREATE TABLE WebsiteAnalysisReports (
                     "WebsiteAnalysisReports", "(OwnerId, CreatedAtUtc)");
                 await EnsureIndexAsync(db, "IX_WebsiteAnalysisReports_Owner_Url",
                     "WebsiteAnalysisReports", "(OwnerId, Url)");
+
+                await EnsureIndexAsync(db, "IX_WebsiteAnalysisReports_Owner_IsDeleted_CreatedAtUtc",
+                    "WebsiteAnalysisReports", "(OwnerId, IsDeleted, CreatedAtUtc)");
             }
             else
             {
@@ -653,10 +803,21 @@ CREATE TABLE WebsiteAnalysisReports (
                 await EnsureColumnAsync(db, "WebsiteAnalysisReports", "AiSummary", "TEXT", true);
                 await EnsureColumnAsync(db, "WebsiteAnalysisReports", "CreatedAtUtc", "TEXT", false);
 
+                // Audit + soft delete
+                await EnsureColumnAsync(db, "WebsiteAnalysisReports", "UpdatedAtUtc", "TEXT", true);
+                await EnsureColumnAsync(db, "WebsiteAnalysisReports", "CreatedById", "TEXT", true);
+                await EnsureColumnAsync(db, "WebsiteAnalysisReports", "UpdatedById", "TEXT", true);
+                await EnsureColumnAsync(db, "WebsiteAnalysisReports", "IsDeleted", "INTEGER", false, "0");
+                await EnsureColumnAsync(db, "WebsiteAnalysisReports", "DeletedAtUtc", "TEXT", true);
+                await EnsureColumnAsync(db, "WebsiteAnalysisReports", "DeletedById", "TEXT", true);
+
                 await EnsureIndexAsync(db, "IX_WebsiteAnalysisReports_Owner_CreatedAtUtc",
                     "WebsiteAnalysisReports", "(OwnerId, CreatedAtUtc)");
                 await EnsureIndexAsync(db, "IX_WebsiteAnalysisReports_Owner_Url",
                     "WebsiteAnalysisReports", "(OwnerId, Url)");
+
+                await EnsureIndexAsync(db, "IX_WebsiteAnalysisReports_Owner_IsDeleted_CreatedAtUtc",
+                    "WebsiteAnalysisReports", "(OwnerId, IsDeleted, CreatedAtUtc)");
             }
         }
 

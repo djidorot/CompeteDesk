@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Models;
 
@@ -7,7 +8,7 @@ namespace CompeteDesk.Models;
 /// A Workspace is the top-level container in CompeteDesk.
 /// Everything else (Strategies, Actions, Habits, Metrics, War Room intel) will hang off a Workspace.
 /// </summary>
-public class Workspace
+public class Workspace : IAuditableEntity, ISoftDeletable
 {
     public int Id { get; set; }
 
@@ -26,6 +27,13 @@ public class Workspace
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAtUtc { get; set; }
+
+    public string? CreatedById { get; set; }
+    public string? UpdatedById { get; set; }
+
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAtUtc { get; set; }
+    public string? DeletedById { get; set; }
 
     // ------------------------------------------------------------
     // Business profile (used for AI SWOT + Porter Five Forces)

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Models;
 
@@ -8,7 +9,7 @@ namespace CompeteDesk.Models;
 /// In CompeteDesk, you can create strategies inspired by books like
 /// Capture strategies and adapt them to your business context.
 /// </summary>
-public class Strategy
+public class Strategy : IAuditableEntity, ISoftDeletable
 {
     public int Id { get; set; }
 
@@ -66,6 +67,13 @@ public class Strategy
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAtUtc { get; set; }
+
+    public string? CreatedById { get; set; }
+    public string? UpdatedById { get; set; }
+
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAtUtc { get; set; }
+    public string? DeletedById { get; set; }
 
     // ------------------------------------------------------------
     // AI (Competitive Playbook)

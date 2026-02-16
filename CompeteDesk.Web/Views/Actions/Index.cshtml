@@ -6,6 +6,9 @@
 
     var q = (string)(ViewBag.Query ?? "");
     var status = (string)(ViewBag.Status ?? "Planned");
+    var workspaceId = (int?)(ViewBag.WorkspaceId ?? null);
+    var strategyId = (int?)(ViewBag.StrategyId ?? null);
+    var sort = (string)(ViewBag.Sort ?? "due");
 }
 
 <link rel="stylesheet" href="~/css/actions.css" asp-append-version="true" />
@@ -38,6 +41,30 @@
                             <option value="In Progress" selected="@(status == "In Progress")">In Progress</option>
                             <option value="Done" selected="@(status == "Done")">Done</option>
                             <option value="Archived" selected="@(status == "Archived")">Archived</option>
+                        </select>
+                    </div>
+
+                    <div class="cd-field">
+                        <label class="cd-label" for="workspaceId">Workspace</label>
+                        <select id="workspaceId" name="workspaceId" class="form-select cd-input" asp-items="ViewBag.Workspaces">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+
+                    <div class="cd-field">
+                        <label class="cd-label" for="strategyId">Strategy</label>
+                        <select id="strategyId" name="strategyId" class="form-select cd-input" asp-items="ViewBag.Strategies">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+
+                    <div class="cd-field">
+                        <label class="cd-label" for="sort">Sort</label>
+                        <select id="sort" name="sort" class="form-select cd-input">
+                            <option value="due" selected="@(sort == "due")">Due date</option>
+                            <option value="priority" selected="@(sort == "priority")">Priority</option>
+                            <option value="newest" selected="@(sort == "newest")">Newest</option>
+                            <option value="alpha" selected="@(sort == "alpha")">A → Z</option>
                         </select>
                     </div>
 

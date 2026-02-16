@@ -14,6 +14,7 @@ using CompeteDesk.Services.OpenAI;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CompeteDesk.ViewModels.Strategies;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CompeteDesk.Controllers;
 
@@ -38,7 +39,7 @@ public class StrategiesController : Controller
     }
 
     // GET: /Strategies
-    public async Task<IActionResult> Index(string? q, string status = "Active")
+    public async Task<IActionResult> Index(string? q, string status = "Active", int? workspaceId = null, string sort = "priority")
     {
         ViewData["Title"] = "Strategies";
         ViewData["LayoutFluid"] = true;
@@ -51,9 +52,24 @@ public class StrategiesController : Controller
             .AsNoTracking()
             .Where(x => x.OwnerId == userId);
 
+        // Workspaces for filter dropdown
+        var workspaces = await _db.Workspaces
+            .AsNoTracking()
+            .Where(w => w.OwnerId == userId)
+            .OrderBy(w => w.Name)
+            .Select(w => new { w.Id, w.Name })
+            .ToListAsync();
+
+        ViewBag.Workspaces = new SelectList(workspaces, "Id", "Name", workspaceId);
+
         if (!string.IsNullOrWhiteSpace(status))
         {
             query = query.Where(x => x.Status == status);
+        }
+
+        if (workspaceId != null)
+        {
+            query = query.Where(x => x.WorkspaceId == workspaceId);
         }
 
         if (!string.IsNullOrWhiteSpace(q))
@@ -65,14 +81,24 @@ public class StrategiesController : Controller
                 (x.Category != null && x.Category.Contains(term)));
         }
 
-        var items = await query
-            .OrderByDescending(x => x.Priority)
-            .ThenByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
-            .ThenBy(x => x.Name)
-            .ToListAsync();
+        query = sort switch
+        {
+            "newest" => query.OrderByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc),
+            "alpha" => query.OrderBy(x => x.Name),
+            "priority" => query.OrderByDescending(x => x.Priority)
+                .ThenByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
+                .ThenBy(x => x.Name),
+            _ => query.OrderByDescending(x => x.Priority)
+                .ThenByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
+                .ThenBy(x => x.Name)
+        };
+
+        var items = await query.ToListAsync();
 
         ViewBag.Query = q ?? string.Empty;
         ViewBag.Status = status;
+        ViewBag.WorkspaceId = workspaceId;
+        ViewBag.Sort = sort;
 
         return View(items);
     }

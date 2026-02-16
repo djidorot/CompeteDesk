@@ -1,12 +1,13 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Models;
 
 /// <summary>
 /// User-configurable "Key Metrics" definition for the Metrics & Momentum dashboard.
 /// </summary>
-public sealed class KeyMetricDefinition
+public sealed class KeyMetricDefinition : IAuditableEntity, ISoftDeletable
 {
     public int Id { get; set; }
 
@@ -37,4 +38,11 @@ public sealed class KeyMetricDefinition
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAtUtc { get; set; }
+
+    public string? CreatedById { get; set; }
+    public string? UpdatedById { get; set; }
+
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAtUtc { get; set; }
+    public string? DeletedById { get; set; }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Models;
 
@@ -7,7 +8,7 @@ namespace CompeteDesk.Models;
 /// Persisted website analysis report for a given URL.
 /// Includes raw metrics + AI structured insights.
 /// </summary>
-public sealed class WebsiteAnalysisReport
+public sealed class WebsiteAnalysisReport : IAuditableEntity, ISoftDeletable
 {
     public int Id { get; set; }
 
@@ -60,6 +61,15 @@ public sealed class WebsiteAnalysisReport
     public string OwnerId { get; set; } = string.Empty;
 
     public int? WorkspaceId { get; set; }
+    public Workspace? Workspace { get; set; }
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    public DateTime? UpdatedAtUtc { get; set; }
+    public string? CreatedById { get; set; }
+    public string? UpdatedById { get; set; }
+
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAtUtc { get; set; }
+    public string? DeletedById { get; set; }
 }

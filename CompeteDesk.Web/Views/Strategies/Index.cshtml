@@ -6,6 +6,8 @@
 
     var q = (string)(ViewBag.Query ?? "");
     var status = (string)(ViewBag.Status ?? "Active");
+    var workspaceId = (int?)(ViewBag.WorkspaceId ?? null);
+    var sort = (string)(ViewBag.Sort ?? "priority");
 }
 
 <link rel="stylesheet" href="~/css/strategies.css" asp-append-version="true" />
@@ -36,6 +38,22 @@
                         <select id="status" name="status" class="form-select cd-input">
                             <option value="Active" selected="@(status == "Active")">Active</option>
                             <option value="Archived" selected="@(status == "Archived")">Archived</option>
+                        </select>
+                    </div>
+
+                    <div class="cd-field">
+                        <label class="cd-label" for="workspaceId">Workspace</label>
+                        <select id="workspaceId" name="workspaceId" class="form-select cd-input" asp-items="ViewBag.Workspaces">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+
+                    <div class="cd-field">
+                        <label class="cd-label" for="sort">Sort</label>
+                        <select id="sort" name="sort" class="form-select cd-input">
+                            <option value="priority" selected="@(sort == "priority")">Priority</option>
+                            <option value="newest" selected="@(sort == "newest")">Newest</option>
+                            <option value="alpha" selected="@(sort == "alpha")">A → Z</option>
                         </select>
                     </div>
 

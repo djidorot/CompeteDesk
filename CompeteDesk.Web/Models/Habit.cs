@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Models;
 
@@ -7,7 +8,7 @@ namespace CompeteDesk.Models;
 /// A repeatable routine tied to a Workspace and (optionally) a Strategy.
 /// Frequency is stored as a short string ("Daily" / "Weekly") for SQLite friendliness.
 /// </summary>
-public class Habit
+public class Habit : IAuditableEntity, ISoftDeletable
 {
     public int Id { get; set; }
 
@@ -15,6 +16,9 @@ public class Habit
     public int WorkspaceId { get; set; }
 
     public int? StrategyId { get; set; }
+
+    public Workspace? Workspace { get; set; }
+    public Strategy? Strategy { get; set; }
 
     [Required]
     public string OwnerId { get; set; } = string.Empty;
@@ -40,4 +44,11 @@ public class Habit
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAtUtc { get; set; }
+
+    public string? CreatedById { get; set; }
+    public string? UpdatedById { get; set; }
+
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAtUtc { get; set; }
+    public string? DeletedById { get; set; }
 }

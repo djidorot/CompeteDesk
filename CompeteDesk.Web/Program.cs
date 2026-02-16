@@ -24,6 +24,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
+// Needed for audit trail (CreatedBy/UpdatedBy) in ApplicationDbContext.
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // ------------------------------------------------------------

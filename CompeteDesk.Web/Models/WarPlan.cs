@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Models;
 
@@ -7,11 +8,12 @@ namespace CompeteDesk.Models;
 /// "War Room" plan: an actionable operational plan informed by intelligence.
 /// MVP keeps this as a single record with concise fields.
 /// </summary>
-public class WarPlan
+public class WarPlan : IAuditableEntity, ISoftDeletable
 {
     public int Id { get; set; }
 
     public int? WorkspaceId { get; set; }
+    public Workspace? Workspace { get; set; }
 
     [Required]
     public string OwnerId { get; set; } = string.Empty;
@@ -51,4 +53,11 @@ public class WarPlan
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAtUtc { get; set; }
+
+    public string? CreatedById { get; set; }
+    public string? UpdatedById { get; set; }
+
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAtUtc { get; set; }
+    public string? DeletedById { get; set; }
 }

@@ -1,14 +1,27 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using CompeteDesk.Models;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Data;
 
 public class ApplicationDbContext : IdentityDbContext
 {
+    private readonly IHttpContextAccessor? _httpContextAccessor;
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
+    }
+
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor httpContextAccessor)
+        : base(options)
+    {
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public DbSet<Workspace> Workspaces => Set<Workspace>();
@@ -41,6 +54,20 @@ public class ApplicationDbContext : IdentityDbContext
     {
         base.OnModelCreating(builder);
 
+        // ------------------------------------------------------------
+        // Global query filters (soft delete)
+        // ------------------------------------------------------------
+        builder.Entity<Workspace>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<Strategy>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<ActionItem>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<WarIntel>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<WarPlan>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<WebsiteAnalysisReport>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<BusinessAnalysisReport>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<Habit>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<KeyMetricDefinition>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<KeyMetricEntry>().HasQueryFilter(x => !x.IsDeleted);
+
         builder.Entity<Workspace>(b =>
         {
             b.Property(x => x.Name).IsRequired().HasMaxLength(120);
@@ -56,6 +83,7 @@ public class ApplicationDbContext : IdentityDbContext
             b.Property(x => x.BusinessType).HasMaxLength(120);
             b.Property(x => x.Country).HasMaxLength(80);
             b.HasIndex(x => new { x.OwnerId, x.Name });
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted });
         });
 
         builder.Entity<Strategy>(b =>
@@ -71,6 +99,12 @@ public class ApplicationDbContext : IdentityDbContext
 
             b.HasIndex(x => new { x.OwnerId, x.Status });
             b.HasIndex(x => new { x.WorkspaceId, x.OwnerId });
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.Status });
+
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<ActionItem>(b =>
@@ -86,6 +120,17 @@ public class ApplicationDbContext : IdentityDbContext
             b.HasIndex(x => new { x.OwnerId, x.Status });
             b.HasIndex(x => new { x.StrategyId, x.OwnerId });
             b.HasIndex(x => new { x.WorkspaceId, x.OwnerId });
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.Status });
+
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            b.HasOne(x => x.Strategy)
+                .WithMany()
+                .HasForeignKey(x => x.StrategyId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<KeyMetricDefinition>(b =>
@@ -97,6 +142,7 @@ public class ApplicationDbContext : IdentityDbContext
             b.Property(x => x.Unit).IsRequired().HasMaxLength(24);
             b.HasIndex(x => new { x.OwnerId, x.Key }).IsUnique();
             b.HasIndex(x => new { x.OwnerId, x.IsEnabled, x.SortOrder });
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted });
         });
 
         builder.Entity<KeyMetricEntry>(b =>
@@ -106,11 +152,61 @@ public class ApplicationDbContext : IdentityDbContext
             b.Property(x => x.DateUtc).IsRequired();
             b.Property(x => x.Value).HasColumnType("REAL");
             b.HasIndex(x => new { x.OwnerId, x.DefinitionId, x.DateUtc }).IsUnique();
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.DateUtc });
 
             b.HasOne(x => x.Definition)
                 .WithMany()
                 .HasForeignKey(x => x.DefinitionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<WarIntel>(b =>
+        {
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.SetNull);
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.Confidence });
+        });
+
+        builder.Entity<WarPlan>(b =>
+        {
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.SetNull);
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.Status });
+        });
+
+        builder.Entity<WebsiteAnalysisReport>(b =>
+        {
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.SetNull);
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.CreatedAtUtc });
+        });
+
+        builder.Entity<BusinessAnalysisReport>(b =>
+        {
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.CreatedAtUtc });
+        });
+
+        builder.Entity<Habit>(b =>
+        {
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(x => x.Strategy)
+                .WithMany()
+                .HasForeignKey(x => x.StrategyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.IsActive });
         });
 
         builder.Entity<UserAiPreferences>(b =>
@@ -239,5 +335,60 @@ public class ApplicationDbContext : IdentityDbContext
             b.HasIndex(x => new { x.WorkspaceId, x.OwnerId });
             b.HasIndex(x => new { x.OwnerId, x.Feature });
         });
+    }
+
+    public override int SaveChanges()
+    {
+        ApplyAuditAndSoftDeleteRules();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ApplyAuditAndSoftDeleteRules();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void ApplyAuditAndSoftDeleteRules()
+    {
+        var now = DateTime.UtcNow;
+
+        var userId = _httpContextAccessor?.HttpContext?.User?
+            .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.Entity is IAuditableEntity auditable)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    if (auditable.CreatedAtUtc == default) auditable.CreatedAtUtc = now;
+                    auditable.UpdatedAtUtc = now;
+                    auditable.CreatedById ??= userId;
+                    auditable.UpdatedById ??= userId;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    auditable.UpdatedAtUtc = now;
+                    auditable.UpdatedById = userId;
+                }
+            }
+
+            if (entry.Entity is ISoftDeletable soft && entry.State == EntityState.Deleted)
+            {
+                // Convert hard delete to soft delete.
+                entry.State = EntityState.Modified;
+                soft.IsDeleted = true;
+                soft.DeletedAtUtc = now;
+                soft.DeletedById = userId;
+
+                // Keep audit in sync.
+                if (entry.Entity is IAuditableEntity aud)
+                {
+                    aud.UpdatedAtUtc = now;
+                    aud.UpdatedById = userId;
+                }
+            }
+        }
     }
 }

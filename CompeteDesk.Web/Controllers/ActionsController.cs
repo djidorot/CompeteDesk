@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
 using CompeteDesk.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CompeteDesk.Controllers;
 
@@ -29,7 +30,7 @@ public class ActionsController : Controller
     }
 
     // GET: /Actions
-    public async Task<IActionResult> Index(string? q, string status = "Planned")
+    public async Task<IActionResult> Index(string? q, string status = "Planned", int? workspaceId = null, int? strategyId = null, string sort = "due")
     {
         ViewData["Title"] = "Actions";
         ViewData["LayoutFluid"] = true;
@@ -42,9 +43,36 @@ public class ActionsController : Controller
             .AsNoTracking()
             .Where(x => x.OwnerId == userId);
 
+        // Filter dropdown data
+        var workspaces = await _db.Workspaces
+            .AsNoTracking()
+            .Where(w => w.OwnerId == userId)
+            .OrderBy(w => w.Name)
+            .Select(w => new { w.Id, w.Name })
+            .ToListAsync();
+        ViewBag.Workspaces = new SelectList(workspaces, "Id", "Name", workspaceId);
+
+        var strategies = await _db.Strategies
+            .AsNoTracking()
+            .Where(s => s.OwnerId == userId && (workspaceId == null || s.WorkspaceId == workspaceId))
+            .OrderBy(s => s.Name)
+            .Select(s => new { s.Id, s.Name })
+            .ToListAsync();
+        ViewBag.Strategies = new SelectList(strategies, "Id", "Name", strategyId);
+
         if (!string.IsNullOrWhiteSpace(status))
         {
             query = query.Where(x => x.Status == status);
+        }
+
+        if (workspaceId != null)
+        {
+            query = query.Where(x => x.WorkspaceId == workspaceId);
+        }
+
+        if (strategyId != null)
+        {
+            query = query.Where(x => x.StrategyId == strategyId);
         }
 
         if (!string.IsNullOrWhiteSpace(q))
@@ -56,15 +84,28 @@ public class ActionsController : Controller
                 (x.Category != null && x.Category.Contains(term)));
         }
 
-        var items = await query
-            .OrderByDescending(x => x.Priority)
-            .ThenBy(x => x.DueAtUtc ?? DateTime.MaxValue)
-            .ThenByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
-            .ThenBy(x => x.Title)
-            .ToListAsync();
+        query = sort switch
+        {
+            "newest" => query.OrderByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc),
+            "alpha" => query.OrderBy(x => x.Title),
+            "priority" => query.OrderByDescending(x => x.Priority)
+                .ThenBy(x => x.DueAtUtc ?? DateTime.MaxValue)
+                .ThenByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
+                .ThenBy(x => x.Title),
+            // default: due date first (nulls last)
+            _ => query.OrderBy(x => x.DueAtUtc ?? DateTime.MaxValue)
+                .ThenByDescending(x => x.Priority)
+                .ThenByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
+                .ThenBy(x => x.Title)
+        };
+
+        var items = await query.ToListAsync();
 
         ViewBag.Query = q ?? string.Empty;
         ViewBag.Status = status;
+        ViewBag.WorkspaceId = workspaceId;
+        ViewBag.StrategyId = strategyId;
+        ViewBag.Sort = sort;
 
         return View(items);
     }
@@ -198,6 +239,7 @@ public class ActionsController : Controller
         var item = await _db.Actions.FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId);
         if (item == null) return NotFound();
 
+        // Soft delete (DbContext converts Deletes for ISoftDeletable entities).
         _db.Actions.Remove(item);
         await _db.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
