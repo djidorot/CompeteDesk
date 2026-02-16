@@ -40,7 +40,10 @@ public sealed class GeminiClient
     /// </summary>
     public async Task<string> GenerateAiOverviewJsonAsync(string query, CancellationToken ct = default)
     {
-        // We intentionally do NOT ask a follow-up question for ambiguous single-word queries.
+        
+        if (!IsConfigured)
+            throw new InvalidOperationException("Gemini is not configured. Set Gemini:ApiKey in appsettings or user-secrets.");
+// We intentionally do NOT ask a follow-up question for ambiguous single-word queries.
         // Default to the most common meaning and present an overview like Google "AI Overview".
         var prompt =
             "Create an AI Overview for the query below. " +
@@ -66,7 +69,10 @@ public sealed class GeminiClient
         if (string.IsNullOrWhiteSpace(userQuery))
             throw new ArgumentException("Query is required.", nameof(userQuery));
 
-        if (string.IsNullOrWhiteSpace(_opt.ApiKey))
+        
+        if (!IsConfigured)
+            throw new InvalidOperationException("Gemini is not configured. Set Gemini:ApiKey in appsettings or user-secrets.");
+if (string.IsNullOrWhiteSpace(_opt.ApiKey))
             throw new InvalidOperationException("Gemini API key is missing. Set Gemini:ApiKey in configuration.");
 
         var model = NormalizeModel(_opt.Model);

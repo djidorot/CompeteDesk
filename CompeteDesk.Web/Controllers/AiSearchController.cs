@@ -83,6 +83,11 @@ public sealed class AiSearchController : ControllerBase
                 // ignore parse error, fall back to raw
             }
         }
+        catch (InvalidOperationException ex)
+        {
+            // Typically thrown when Gemini/OpenAI API keys are missing.
+            return StatusCode(503, new { error = ex.Message, code = "AI_NOT_CONFIGURED" });
+        }
         catch (Exception ex)
         {
             return StatusCode(500, new { error = ex.Message });

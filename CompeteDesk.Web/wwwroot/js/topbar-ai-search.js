@@ -43,8 +43,18 @@
 
       const text = await res.text();
       if (!res.ok) {
+        // Best-effort parse error payload
+        let msg = text;
+        try {
+          const j = JSON.parse(text);
+          if (j && j.error) msg = j.error;
+          if (j && j.code === "AI_NOT_CONFIGURED") {
+            msg = (j.error || "AI is not configured.") + " Add your Gemini/OpenAI API key in appsettings.json or user-secrets.";
+          }
+        } catch { /* ignore */ }
+
         panel.querySelector(".cd-aiSearchPanel__body").innerHTML =
-          `<div class="cd-aiSearchPanel__muted">Request failed (${res.status}).</div><div class="cd-aiSearchPanel__muted">${escapeHtml(text)}</div>`;
+          `<div class="cd-aiSearchPanel__muted">Request failed (${res.status}).</div><div class="cd-aiSearchPanel__muted">${escapeHtml(msg)}</div>`;
         return;
       }
 

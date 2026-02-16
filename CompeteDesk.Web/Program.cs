@@ -15,6 +15,8 @@ using CompeteDesk.Services.Notifications;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var isDev = builder.Environment.IsDevelopment();
+
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -81,14 +83,17 @@ builder.Services
 // Cookie settings for external auth (fixes "Correlation failed" on some browsers)
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    // In Development we often run on http://localhost; Secure cookies would not be sent.
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = isDev ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 });
 
 builder.Services.ConfigureExternalCookie(options =>
 {
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // External auth cookies: SameSite=None is required for cross-site OAuth in production,
+    // but browsers require Secure for SameSite=None. For local dev over http, use Lax.
+    options.Cookie.SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None;
+    options.Cookie.SecurePolicy = isDev ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 });
 
 // If CookiePolicy forces SameSite=Lax, it can break the OAuth roundtrip and cause
@@ -96,16 +101,20 @@ builder.Services.ConfigureExternalCookie(options =>
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.Unspecified;
+
+    // Only force Secure when the cookie is SameSite=None AND we're on https.
+    // (In local dev on http, forcing Secure breaks login persistence.)
     options.OnAppendCookie = ctx =>
     {
-        if (ctx.CookieOptions.SameSite == SameSiteMode.None)
+        if (!isDev && ctx.CookieOptions.SameSite == SameSiteMode.None)
         {
             ctx.CookieOptions.Secure = true;
         }
     };
+
     options.OnDeleteCookie = ctx =>
     {
-        if (ctx.CookieOptions.SameSite == SameSiteMode.None)
+        if (!isDev && ctx.CookieOptions.SameSite == SameSiteMode.None)
         {
             ctx.CookieOptions.Secure = true;
         }
@@ -135,8 +144,8 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
         // Make the correlation cookie compatible with modern SameSite rules.
         // Without this, Chrome/Safari can drop the correlation cookie and the callback
         // will fail with "Correlation failed".
-        options.CorrelationCookie.SameSite = SameSiteMode.None;
-        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.CorrelationCookie.SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None;
+        options.CorrelationCookie.SecurePolicy = isDev ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
     });
 }
 
