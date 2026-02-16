@@ -159,8 +159,8 @@ public sealed class AiInsightsController : Controller
         var lowConfidenceIntel = await _db.WarIntel.AsNoTracking()
             .Where(i => i.OwnerId == userId
                         && (!wsId.HasValue || i.WorkspaceId == wsId.Value)
-                        && i.Confidence.HasValue
-                        && i.Confidence.Value <= 0.5)
+                        // Confidence is stored as 1-5 (low to high)
+                        && i.Confidence <= 2)
             .CountAsync(ct);
 
         if (lowConfidenceIntel > 0)

@@ -99,6 +99,8 @@ public sealed class MetricsController : Controller
         var totalWorkspaces = await _db.Workspaces.AsNoTracking().CountAsync(w => w.OwnerId == userId, ct);
         var totalStrategies = await _db.Strategies.AsNoTracking().CountAsync(s => s.OwnerId == userId, ct);
         var totalActions = await _db.ActionItems.AsNoTracking().CountAsync(a => a.OwnerId == userId, ct);
+        var totalActionsDone = await _db.ActionItems.AsNoTracking().CountAsync(a => a.OwnerId == userId && a.Status == "Done", ct);
+        var totalActionsOpen = await _db.ActionItems.AsNoTracking().CountAsync(a => a.OwnerId == userId && a.Status != "Done" && a.Status != "Archived", ct);
         var totalHabits = await _db.Habits.AsNoTracking().CountAsync(h => h.OwnerId == userId, ct);
         var totalWarIntel = await _db.WarIntel.AsNoTracking().CountAsync(i => i.OwnerId == userId, ct);
         var totalWarPlans = await _db.WarPlans.AsNoTracking().CountAsync(p => p.OwnerId == userId, ct);
@@ -130,6 +132,12 @@ public sealed class MetricsController : Controller
             .CountAsync(a => a.OwnerId == userId && a.CreatedAtUtc >= startUtc && a.CreatedAtUtc < endUtc, ct);
         var priorActions = await _db.ActionItems.AsNoTracking()
             .CountAsync(a => a.OwnerId == userId && a.CreatedAtUtc >= priorStartUtc && a.CreatedAtUtc < priorEndUtc, ct);
+
+        // Completion in selected range (based on items created in-range)
+        var newActionsDone = await _db.ActionItems.AsNoTracking()
+            .CountAsync(a => a.OwnerId == userId && a.CreatedAtUtc >= startUtc && a.CreatedAtUtc < endUtc && a.Status == "Done", ct);
+        var priorActionsDone = await _db.ActionItems.AsNoTracking()
+            .CountAsync(a => a.OwnerId == userId && a.CreatedAtUtc >= priorStartUtc && a.CreatedAtUtc < priorEndUtc && a.Status == "Done", ct);
 
         var newAiTraces = await _db.DecisionTraces.AsNoTracking()
             .CountAsync(t => t.OwnerId == userId && t.CreatedAtUtc >= startUtc && t.CreatedAtUtc < endUtc, ct);
@@ -409,6 +417,22 @@ public sealed class MetricsController : Controller
                     Label = "Actions",
                     ValueText = totalActions.ToString("N0", CultureInfo.InvariantCulture),
                     DeltaPct = PctDelta(newActions, priorActions)
+                },
+                new MetricsKpiCard
+                {
+                    Icon = "%",
+                    Label = "Completion",
+                    ValueText = totalActions == 0
+                        ? "0%"
+                        : $"{(double)totalActionsDone * 100d / totalActions:0.#}%",
+                    DeltaPct = PctDelta(newActionsDone, priorActionsDone)
+                },
+                new MetricsKpiCard
+                {
+                    Icon = "⏳",
+                    Label = "Open actions",
+                    ValueText = totalActionsOpen.ToString("N0", CultureInfo.InvariantCulture),
+                    DeltaPct = 0
                 },
                 new MetricsKpiCard
                 {
