@@ -110,6 +110,13 @@ body.cd-has-sidebar{
   color: var(--cd-muted);
 }
 
+.cd-sidebar__collapseBtn:focus,
+.cd-sidebar__collapseBtn:active,
+.cd-sidebar__collapseBtn:focus-visible{
+  outline: none;
+  box-shadow: none;
+}
+
 .cd-ico{
   width: 18px;
   height: 18px;
@@ -420,6 +427,18 @@ body.cd-sidebar-collapsed .cd-sidebar__icon{
     width: min(var(--cd-sidebar-w), 88vw);
     max-width: 88vw;
     box-shadow: 18px 0 42px rgba(15, 23, 42, .18);
+  }
+
+  /* Mobile: sidebar left-arrow button should be icon-only (no outline/border/background) */
+  .cd-sidebar__collapseBtn,
+  .cd-sidebar__collapseBtn:hover,
+  .cd-sidebar__collapseBtn:active,
+  .cd-sidebar__collapseBtn:focus,
+  .cd-sidebar__collapseBtn:focus-visible{
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
   }
 
   /* Ensure "collapsed" desktop state doesn't create a huge empty rail on phones */
