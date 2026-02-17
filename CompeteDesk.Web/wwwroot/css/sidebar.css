@@ -49,6 +49,8 @@ body.cd-has-sidebar{
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* Prevent the whole sidebar from scrolling; let the nav area scroll instead */
+  overflow: hidden;
 }
 
 /* Backdrop (mobile overlay) */
@@ -177,6 +179,12 @@ body.cd-has-sidebar{
   flex-direction: column;
   gap: 6px;
   padding-top: 6px;
+  /* Mobile/short screens: allow scrolling to reach all menu items */
+  flex: 1 1 auto;
+  min-height: 0; /* required for overflow in flex children */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px; /* room for scrollbar without clipping */
 }
 
 /* Section groups (details/summary)

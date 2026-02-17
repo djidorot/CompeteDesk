@@ -101,6 +101,19 @@
   border-color: var(--cd-border);
 }
 
+/* Mobile hamburger: remove the button border "outline" (keep tap target) */
+@media (max-width: 767.98px){
+  .cd-topbar__iconBtn[data-cd-sidebar-open]{
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .cd-topbar__iconBtn[data-cd-sidebar-open]:hover{
+    border-color: transparent;
+    background: rgba(15, 23, 42, .04);
+  }
+}
+
 .cd-topico{
   width: 18px;
   height: 18px;
