@@ -43,11 +43,274 @@ namespace CompeteDesk.Data
             await EnsureUserDataControlsTableAsync(db);
             await EnsureUserProfilesTableAsync(db);
 
+            // Strategic upgrades
+            await EnsureStudyPlannerTablesAsync(db);
+            await EnsureGamificationTablesAsync(db);
+
             // Security & audit
             await EnsureAuditLogsTableAsync(db);
             await EnsureEntityChangeHistoryTableAsync(db);
 
             await NormalizeSourceBooksAsync(db);
+        }
+
+        private static async Task EnsureStudyPlannerTablesAsync(ApplicationDbContext db)
+        {
+            if (!await TableExistsAsync(db, "StudyPlans"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE StudyPlans (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    WorkspaceId INTEGER NULL,
+    OwnerId TEXT NOT NULL,
+    Title TEXT NOT NULL,
+    WeekStartUtc TEXT NOT NULL,
+    WeeklyMinutesTarget INTEGER NOT NULL,
+    AiRoadmapJson TEXT NULL,
+        CreatedAtUtc TEXT NOT NULL,
+        UpdatedAtUtc TEXT NULL,
+        CreatedById TEXT NULL,
+        UpdatedById TEXT NULL,
+        IsDeleted INTEGER NOT NULL DEFAULT 0,
+        DeletedAtUtc TEXT NULL,
+        DeletedById TEXT NULL,
+    FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE SET NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "StudyPlans", "WorkspaceId", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "OwnerId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "Title", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "WeekStartUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "WeeklyMinutesTarget", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "AiRoadmapJson", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "UpdatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "StudyPlans", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlans", "DeletedById", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_StudyPlans_Owner_Workspace_Week
+ON StudyPlans (OwnerId, WorkspaceId, WeekStartUtc);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_StudyPlans_Owner_IsDeleted_Week
+ON StudyPlans (OwnerId, IsDeleted, WeekStartUtc);");
+
+            if (!await TableExistsAsync(db, "StudyPlanItems"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE StudyPlanItems (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    StudyPlanId INTEGER NOT NULL,
+    OwnerId TEXT NOT NULL,
+    ScheduledOnUtc TEXT NOT NULL,
+    Title TEXT NOT NULL,
+    Notes TEXT NULL,
+    Minutes INTEGER NOT NULL,
+    ItemType TEXT NOT NULL,
+    SourceEntityId INTEGER NULL,
+    SourceEntityType TEXT NULL,
+        CreatedAtUtc TEXT NOT NULL,
+        UpdatedAtUtc TEXT NULL,
+        CreatedById TEXT NULL,
+        UpdatedById TEXT NULL,
+        IsDeleted INTEGER NOT NULL DEFAULT 0,
+        DeletedAtUtc TEXT NULL,
+        DeletedById TEXT NULL,
+    FOREIGN KEY (StudyPlanId) REFERENCES StudyPlans (Id) ON DELETE CASCADE
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "StudyPlanItems", "StudyPlanId", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "OwnerId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "ScheduledOnUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "Title", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "Notes", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "Minutes", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "ItemType", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "SourceEntityId", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "SourceEntityType", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "UpdatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "UpdatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "IsDeleted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "StudyPlanItems", "DeletedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StudyPlanItems", "DeletedById", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_StudyPlanItems_Owner_Plan_Date
+ON StudyPlanItems (OwnerId, StudyPlanId, ScheduledOnUtc);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_StudyPlanItems_Owner_IsDeleted_Date
+ON StudyPlanItems (OwnerId, IsDeleted, ScheduledOnUtc);");
+        }
+
+        private static async Task EnsureGamificationTablesAsync(ApplicationDbContext db)
+        {
+            if (!await TableExistsAsync(db, "UserGamificationProfiles"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE UserGamificationProfiles (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    OwnerId TEXT NOT NULL,
+    TotalXp INTEGER NOT NULL DEFAULT 0,
+    Level INTEGER NOT NULL DEFAULT 1,
+    Rank TEXT NOT NULL DEFAULT 'Rookie',
+    CurrentStreakDays INTEGER NOT NULL DEFAULT 0,
+    LongestStreakDays INTEGER NOT NULL DEFAULT 0,
+    LastActivityUtc TEXT NULL,
+        CreatedAtUtc TEXT NOT NULL,
+        UpdatedAtUtc TEXT NULL,
+        CreatedById TEXT NULL,
+        UpdatedById TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "OwnerId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "TotalXp", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "Level", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "Rank", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "CurrentStreakDays", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "LongestStreakDays", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "LastActivityUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "UpdatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserGamificationProfiles", "UpdatedById", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE UNIQUE INDEX IF NOT EXISTS IX_UserGamificationProfiles_OwnerId
+ON UserGamificationProfiles (OwnerId);");
+
+            if (!await TableExistsAsync(db, "BadgeDefinitions"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE BadgeDefinitions (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Key TEXT NOT NULL,
+    Name TEXT NOT NULL,
+    Description TEXT NULL,
+    Icon TEXT NULL,
+    XpReward INTEGER NOT NULL DEFAULT 0,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+        CreatedAtUtc TEXT NOT NULL,
+        UpdatedAtUtc TEXT NULL,
+        CreatedById TEXT NULL,
+        UpdatedById TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "BadgeDefinitions", "Key", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "Name", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "Description", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "Icon", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "XpReward", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "IsActive", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "UpdatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "BadgeDefinitions", "UpdatedById", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE UNIQUE INDEX IF NOT EXISTS IX_BadgeDefinitions_Key
+ON BadgeDefinitions (Key);");
+
+            if (!await TableExistsAsync(db, "UserBadges"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE UserBadges (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    OwnerId TEXT NOT NULL,
+    BadgeKey TEXT NOT NULL,
+    BadgeName TEXT NOT NULL,
+    BadgeIcon TEXT NULL,
+    EarnedAtUtc TEXT NOT NULL,
+        CreatedAtUtc TEXT NOT NULL,
+        UpdatedAtUtc TEXT NULL,
+        CreatedById TEXT NULL,
+        UpdatedById TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "UserBadges", "OwnerId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserBadges", "BadgeKey", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserBadges", "BadgeName", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserBadges", "BadgeIcon", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserBadges", "EarnedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserBadges", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserBadges", "UpdatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserBadges", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserBadges", "UpdatedById", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE UNIQUE INDEX IF NOT EXISTS IX_UserBadges_Owner_BadgeKey
+ON UserBadges (OwnerId, BadgeKey);");
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_UserBadges_Owner_EarnedAt
+ON UserBadges (OwnerId, EarnedAtUtc);");
+
+            if (!await TableExistsAsync(db, "XpEvents"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE XpEvents (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    OwnerId TEXT NOT NULL,
+    Xp INTEGER NOT NULL,
+    Reason TEXT NOT NULL,
+    SourceType TEXT NULL,
+    SourceId INTEGER NULL,
+    OccurredAtUtc TEXT NOT NULL,
+        CreatedAtUtc TEXT NOT NULL,
+        UpdatedAtUtc TEXT NULL,
+        CreatedById TEXT NULL,
+        UpdatedById TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "XpEvents", "OwnerId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "Xp", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "Reason", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "SourceType", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "SourceId", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "OccurredAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "UpdatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "CreatedById", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "XpEvents", "UpdatedById", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_XpEvents_Owner_OccurredAt
+ON XpEvents (OwnerId, OccurredAtUtc);");
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_XpEvents_Owner_Source
+ON XpEvents (OwnerId, SourceType, SourceId);");
+
+            // Seed a few default badges (idempotent).
+            await db.Database.ExecuteSqlRawAsync(@"
+INSERT OR IGNORE INTO BadgeDefinitions (Key, Name, Description, Icon, XpReward, IsActive, CreatedAtUtc)
+VALUES
+  ('first_checkin', 'First Check-in', 'Logged your first habit check-in.', '✅', 10, 1, strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  ('first_action_done', 'First Action Completed', 'Completed your first action item.', '🏁', 20, 1, strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  ('week_streak', '7-Day Streak', 'Stayed active for 7 days in a row.', '🔥', 30, 1, strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  ('month_streak', '30-Day Streak', 'Stayed active for 30 days in a row.', '💪', 100, 1, strftime('%Y-%m-%dT%H:%M:%fZ','now'));");
         }
 
         private static async Task EnsureAuditLogsTableAsync(ApplicationDbContext db)

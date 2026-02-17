@@ -229,6 +229,13 @@ body.cd-has-sidebar{
   color: var(--cd-accent);
 }
 
+.cd-sidebar__divider{
+  height: 1px;
+  margin: 10px 10px;
+  background: rgba(15, 23, 42, .10);
+  border-radius: 999px;
+}
+
 /* Bottom user area */
 .cd-sidebar__bottom{
   margin-top: auto;

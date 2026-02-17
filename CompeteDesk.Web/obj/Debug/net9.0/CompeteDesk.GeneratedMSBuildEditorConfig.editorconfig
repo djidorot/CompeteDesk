@@ -112,6 +112,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRGFzaGJvYXJkL0luZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Gamification/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvR2FtaWZpY2F0aW9uL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Habits/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSGFiaXRzL0NyZWF0ZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -158,6 +162,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Onboarding/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvT25ib2FyZGluZy9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Recommendations/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUmVjb21tZW5kYXRpb25zL0luZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Settings/Index.cshtml]
@@ -226,6 +234,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/StrategyCopilot/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU3RyYXRlZ3lDb3BpbG90L0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/StudyPlanner/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU3R1ZHlQbGFubmVyL0luZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/WarRoom/IndexIntel.cshtml]

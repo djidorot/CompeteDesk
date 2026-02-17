@@ -120,6 +120,32 @@
                 </span>
                 <span class="cd-sidebar__text">Metrics</span>
             </a>
+
+            <div class="cd-sidebar__divider"></div>
+
+            <a class="cd-sidebar__link @(currentController == "StudyPlanner" ? "is-active" : "")" asp-controller="StudyPlanner"
+               asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">📅</span>
+                <span class="cd-sidebar__text">Study Planner</span>
+            </a>
+
+            <a class="cd-sidebar__link @(currentController == "Recommendations" ? "is-active" : "")" asp-controller="Recommendations"
+               asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">✨</span>
+                <span class="cd-sidebar__text">Recommendations</span>
+            </a>
+
+            <a class="cd-sidebar__link @(currentController == "Gamification" ? "is-active" : "")" asp-controller="Gamification"
+               asp-action="Index">
+                <span class="cd-sidebar__icon" aria-hidden="true">🏅</span>
+                <span class="cd-sidebar__text">Gamification</span>
+            </a>
+
+            <a class="cd-sidebar__link @(currentController == "Exports" ? "is-active" : "")" asp-controller="Exports"
+               asp-action="CompetencySummaryPdf">
+                <span class="cd-sidebar__icon" aria-hidden="true">📄</span>
+                <span class="cd-sidebar__text">Export PDF</span>
+            </a>
         </details>
 
         <details class="cd-sidebar__group" open>

@@ -11,6 +11,7 @@ using CompeteDesk.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Caching.Memory;
 using CompeteDesk.Models.Common;
+using CompeteDesk.Services.Gamification;
 
 namespace CompeteDesk.Controllers;
 
@@ -20,12 +21,14 @@ public class ActionsController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IMemoryCache _cache;
+    private readonly GamificationService _gamification;
 
-    public ActionsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, IMemoryCache cache)
+    public ActionsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, IMemoryCache cache, GamificationService gamification)
     {
         _db = db;
         _userManager = userManager;
         _cache = cache;
+        _gamification = gamification;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -226,6 +229,8 @@ public class ActionsController : Controller
 
         if (!ModelState.IsValid) return View(model);
 
+        var previousStatus = item.Status;
+
         item.Title = model.Title;
         item.Description = model.Description;
         item.Category = model.Category;
@@ -238,6 +243,18 @@ public class ActionsController : Controller
         item.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+
+        // Gamification: award XP when an action is marked completed.
+        if (!string.Equals(previousStatus, "Completed", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(item.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+        {
+            var userId = await GetUserIdAsync();
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                await _gamification.AwardXpAsync(userId, xp: 25, reason: "Completed an action", sourceType: "Action", sourceId: item.Id, CancellationToken.None);
+            }
+        }
+
         TempData["ToastSuccess"] = "Action updated.";
         return RedirectToAction(nameof(Index));
     }

@@ -1,0 +1,56 @@
+@model CompeteDesk.Controllers.RecommendationsController.IndexVm
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="cd-pageHeader">
+    <div>
+        <h1 class="cd-pageTitle">Smart Recommendations</h1>
+        <div class="cd-pageSub">
+            Actionable focus suggestions based on your habits, actions, and recent activity.
+            @if (Model.WorkspaceName is { Length: > 0 })
+            {
+                <span class="ms-2 badge text-bg-dark">@Model.WorkspaceName</span>
+            }
+        </div>
+    </div>
+    <div class="cd-pageActions">
+        <a class="btn btn-outline-secondary" asp-controller="Exports" asp-action="ProgressReportPdf" asp-route-workspaceId="@Model.WorkspaceId">Export Progress PDF</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recommendations</h5>
+                    <div class="small text-muted">AI: @(Model.AiEnabled ? "Enabled" : "Not configured")</div>
+                </div>
+
+                @if (Model.Items.Length == 0)
+                {
+                    <div class="text-muted mt-3">No recommendations yet. Add a few actions/habits to get started.</div>
+                }
+                else
+                {
+                    <div class="row g-3 mt-1">
+                        @foreach (var r in Model.Items)
+                        {
+                            <div class="col-12 col-lg-6">
+                                <div class="border rounded-4 p-3 h-100">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="fw-semibold">@r.Title</div>
+                                        <span class="badge text-bg-light">@r.Type</span>
+                                    </div>
+                                    <div class="text-muted mt-2">@r.Message</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

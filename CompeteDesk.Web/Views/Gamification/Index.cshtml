@@ -1,0 +1,105 @@
+@model CompeteDesk.Controllers.GamificationController.IndexVm
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="cd-pageHeader">
+    <div>
+        <h1 class="cd-pageTitle">Gamification</h1>
+        <div class="cd-pageSub">XP, badges, and rank based on your real progress.</div>
+    </div>
+</div>
+
+@if (Model.Profile == null)
+{
+    <div class="text-muted">No profile.</div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Profile</h5>
+                        <span class="badge text-bg-dark">@Model.Profile.Rank</span>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between"><span class="text-muted">Level</span><strong>@Model.Profile.Level</strong></div>
+                        <div class="d-flex justify-content-between"><span class="text-muted">Total XP</span><strong>@Model.Profile.TotalXp</strong></div>
+                        <div class="d-flex justify-content-between"><span class="text-muted">Streak</span><strong>@Model.Profile.CurrentStreakDays day(s)</strong></div>
+                        <div class="d-flex justify-content-between"><span class="text-muted">Longest streak</span><strong>@Model.Profile.LongestStreakDays day(s)</strong></div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="small text-muted">XP to next level (@Model.NextLevel): <strong>@Model.XpToNextLevel</strong></div>
+                        <div class="progress mt-2" role="progressbar" aria-label="XP" aria-valuenow="@Model.Profile.TotalXp" aria-valuemin="0" aria-valuemax="100">
+                            @{ var pct = (Model.Profile.TotalXp % 100); }
+                            <div class="progress-bar" style="width:@pct%">@pct%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Badges</h6>
+                    @if (Model.Badges.Length == 0)
+                    {
+                        <div class="text-muted">No badges yet. Complete actions or check in habits.</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var b in Model.Badges)
+                            {
+                                <div class="border rounded-3 px-2 py-1 small">
+                                    <span class="me-1">@(string.IsNullOrWhiteSpace(b.BadgeIcon) ? "🏅" : b.BadgeIcon)</span>
+                                    <strong>@b.BadgeName</strong>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Recent XP</h5>
+                    @if (Model.RecentXp.Length == 0)
+                    {
+                        <div class="text-muted">No XP events yet.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Reason</th>
+                                    <th class="text-end">XP</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var e in Model.RecentXp)
+                                {
+                                    <tr>
+                                        <td class="text-muted">@e.OccurredAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>@e.Reason</td>
+                                        <td class="text-end"><span class="badge text-bg-light">+@e.Xp</span></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

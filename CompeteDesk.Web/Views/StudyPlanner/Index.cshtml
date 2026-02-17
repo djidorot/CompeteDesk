@@ -1,0 +1,126 @@
+@model CompeteDesk.Controllers.StudyPlannerController.IndexVm
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="cd-pageHeader">
+    <div>
+        <h1 class="cd-pageTitle">Study Planner</h1>
+        <div class="cd-pageSub">
+            Generate a weekly plan from your current habits and actions.
+            @if (Model.WorkspaceName is { Length: > 0 })
+            {
+                <span class="ms-2 badge text-bg-dark">@Model.WorkspaceName</span>
+            }
+        </div>
+    </div>
+    <div class="cd-pageActions">
+        <a class="btn btn-outline-primary" asp-controller="Exports" asp-action="ProgressReportPdf" asp-route-workspaceId="@Model.WorkspaceId">
+            Export Progress PDF
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Generate plan</h5>
+                <form asp-action="Generate" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="WorkspaceId" />
+
+                    <div class="mb-2">
+                        <label class="form-label">Week start (UTC)</label>
+                        <input class="form-control" asp-for="WeekStartUtc" type="date" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label">Weekly minutes target</label>
+                        <input class="form-control" asp-for="WeeklyMinutesTarget" type="number" min="60" max="3360" step="15" />
+                        <div class="form-text">Example: 300 minutes = 5 hours/week.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Goal (optional)</label>
+                        <textarea class="form-control" asp-for="Goal" rows="3" placeholder="What are you aiming to achieve this month?"></textarea>
+                    </div>
+
+                    <button class="btn btn-primary w-100" type="submit">Generate weekly plan</button>
+                </form>
+
+                <div class="mt-3 small text-muted">
+                    AI Roadmap: @(Model.AiEnabled ? "Enabled" : "Not configured")
+                </div>
+            </div>
+        </div>
+
+        @if (Model.LatestPlan != null && Model.Roadmap != null)
+        {
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h6 class="card-title mb-2">AI Roadmap (JSON)</h6>
+                    <pre class="mb-0" style="white-space: pre-wrap; font-size: 12px;">@System.Text.Json.JsonSerializer.Serialize(Model.Roadmap, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-12 col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Latest weekly plan</h5>
+                    @if (Model.LatestPlan != null)
+                    {
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Exports" asp-action="CompetencySummaryPdf" asp-route-workspaceId="@Model.WorkspaceId">Export Summary PDF</a>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.LatestPlan == null)
+                {
+                    <div class="text-muted mt-3">No plan yet. Generate one on the left.</div>
+                }
+                else
+                {
+                    <div class="mt-3">
+                        @for (var i = 0; i < 7; i++)
+                        {
+                            var day = Model.LatestPlan.WeekStartUtc.Date.AddDays(i);
+                            var dayItems = Model.ItemsByDay?[day].ToList() ?? new List<CompeteDesk.Models.StudyPlanItem>();
+
+                            <div class="mb-3">
+                                <div class="fw-bold">@day.ToString("ddd, yyyy-MM-dd")</div>
+                                @if (dayItems.Count == 0)
+                                {
+                                    <div class="text-muted small">No items.</div>
+                                }
+                                else
+                                {
+                                    <ul class="list-group list-group-flush">
+                                        @foreach (var it in dayItems)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <div class="fw-semibold">@it.Title</div>
+                                                    @if (!string.IsNullOrWhiteSpace(it.Notes))
+                                                    {
+                                                        <div class="text-muted small">@it.Notes</div>
+                                                    }
+                                                </div>
+                                                <span class="badge text-bg-light">@it.ItemType • @it.Minutes min</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CompeteDesk.Data;
 using CompeteDesk.Models;
 using CompeteDesk.Services.Habits;
+using CompeteDesk.Services.Gamification;
 using CompeteDesk.ViewModels.Habits;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,12 +21,14 @@ public class HabitsController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly HabitsAiService _ai;
+    private readonly GamificationService _gamification;
 
-    public HabitsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, HabitsAiService ai)
+    public HabitsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, HabitsAiService ai, GamificationService gamification)
     {
         _db = db;
         _userManager = userManager;
         _ai = ai;
+        _gamification = gamification;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -586,6 +590,8 @@ public class HabitsController : Controller
         var existing = await _db.HabitCheckins
             .FirstOrDefaultAsync(c => c.HabitId == id && c.OwnerId == userId && c.OccurredOnUtc == today);
 
+        var createdNew = false;
+
         if (existing == null)
         {
             _db.HabitCheckins.Add(new HabitCheckin
@@ -596,6 +602,7 @@ public class HabitsController : Controller
                 Count = 1,
                 CreatedAtUtc = DateTime.UtcNow
             });
+            createdNew = true;
         }
         else
         {
@@ -608,6 +615,12 @@ public class HabitsController : Controller
         }
 
         await _db.SaveChangesAsync();
+
+        // Gamification: award XP for a new check-in day.
+        if (createdNew)
+        {
+            await _gamification.AwardXpAsync(userId, xp: 5, reason: "Habit check-in", sourceType: "Habit", sourceId: id, CancellationToken.None);
+        }
 
         // Keep user on index with filters (workspace/strategy)
         return RedirectToAction(nameof(Index), new { workspaceId = habit.WorkspaceId });

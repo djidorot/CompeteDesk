@@ -68,6 +68,12 @@ builder.Services.AddScoped<DecisionTraceService>();
 builder.Services.AddScoped<AiContextPackBuilder>();
 builder.Services.AddScoped<StrategyAiAssistService>();
 
+// Strategic upgrades
+builder.Services.AddScoped<CompeteDesk.Services.Gamification.GamificationService>();
+builder.Services.AddScoped<CompeteDesk.Services.StudyPlanner.StudyPlannerService>();
+builder.Services.AddScoped<CompeteDesk.Services.Recommendations.RecommendationsService>();
+builder.Services.AddScoped<CompeteDesk.Services.Exports.ExportReportService>();
+
 // Email/SMS providers
 builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection("SendGrid"));
 builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();

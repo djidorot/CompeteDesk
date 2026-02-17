@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using CompeteDesk.Models;
 using CompeteDesk.Models.Common;
+using CompeteDesk.Models.Gamification;
 
 namespace CompeteDesk.Data;
 
@@ -52,6 +53,16 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<UserAiPreferences> UserAiPreferences => Set<UserAiPreferences>();
     public DbSet<UserDataControls> UserDataControls => Set<UserDataControls>();
 
+    // Study planner
+    public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
+    public DbSet<StudyPlanItem> StudyPlanItems => Set<StudyPlanItem>();
+
+    // Gamification
+    public DbSet<UserGamificationProfile> UserGamificationProfiles => Set<UserGamificationProfile>();
+    public DbSet<BadgeDefinition> BadgeDefinitions => Set<BadgeDefinition>();
+    public DbSet<UserBadge> UserBadges => Set<UserBadge>();
+    public DbSet<XpEvent> XpEvents => Set<XpEvent>();
+
     // Security + audit
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<EntityChangeHistory> EntityChangeHistories => Set<EntityChangeHistory>();
@@ -73,6 +84,9 @@ public class ApplicationDbContext : IdentityDbContext
         builder.Entity<Habit>().HasQueryFilter(x => !x.IsDeleted);
         builder.Entity<KeyMetricDefinition>().HasQueryFilter(x => !x.IsDeleted);
         builder.Entity<KeyMetricEntry>().HasQueryFilter(x => !x.IsDeleted);
+
+        builder.Entity<StudyPlan>().HasQueryFilter(x => !x.IsDeleted);
+        builder.Entity<StudyPlanItem>().HasQueryFilter(x => !x.IsDeleted);
 
         builder.Entity<Workspace>(b =>
         {
@@ -369,6 +383,70 @@ public class ApplicationDbContext : IdentityDbContext
             b.Property(x => x.OwnerId).HasMaxLength(128);
             b.HasIndex(x => new { x.OwnerId, x.ChangedAtUtc });
             b.HasIndex(x => new { x.EntityType, x.EntityId, x.ChangedAtUtc });
+        });
+
+        builder.Entity<StudyPlan>(b =>
+        {
+            b.ToTable("StudyPlans");
+            b.Property(x => x.OwnerId).IsRequired();
+            b.Property(x => x.Title).IsRequired().HasMaxLength(160);
+            b.Property(x => x.WeekStartUtc).IsRequired();
+            b.Property(x => x.WeeklyMinutesTarget).IsRequired();
+            b.Property(x => x.AiRoadmapJson);
+            b.HasIndex(x => new { x.OwnerId, x.WorkspaceId, x.WeekStartUtc });
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.WeekStartUtc });
+        });
+
+        builder.Entity<StudyPlanItem>(b =>
+        {
+            b.ToTable("StudyPlanItems");
+            b.Property(x => x.OwnerId).IsRequired();
+            b.Property(x => x.Title).IsRequired().HasMaxLength(200);
+            b.Property(x => x.ItemType).IsRequired().HasMaxLength(32);
+            b.Property(x => x.ScheduledOnUtc).IsRequired();
+            b.HasIndex(x => new { x.OwnerId, x.StudyPlanId, x.ScheduledOnUtc });
+            b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.ScheduledOnUtc });
+
+            b.HasOne<StudyPlan>()
+                .WithMany()
+                .HasForeignKey(x => x.StudyPlanId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<UserGamificationProfile>(b =>
+        {
+            b.ToTable("UserGamificationProfiles");
+            b.Property(x => x.OwnerId).IsRequired();
+            b.Property(x => x.Rank).IsRequired().HasMaxLength(40);
+            b.HasIndex(x => x.OwnerId).IsUnique();
+        });
+
+        builder.Entity<BadgeDefinition>(b =>
+        {
+            b.ToTable("BadgeDefinitions");
+            b.Property(x => x.Key).IsRequired().HasMaxLength(64);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(80);
+            b.HasIndex(x => x.Key).IsUnique();
+        });
+
+        builder.Entity<UserBadge>(b =>
+        {
+            b.ToTable("UserBadges");
+            b.Property(x => x.OwnerId).IsRequired();
+            b.Property(x => x.BadgeKey).IsRequired().HasMaxLength(64);
+            b.Property(x => x.BadgeName).IsRequired().HasMaxLength(80);
+            b.HasIndex(x => new { x.OwnerId, x.BadgeKey }).IsUnique();
+            b.HasIndex(x => new { x.OwnerId, x.EarnedAtUtc });
+        });
+
+        builder.Entity<XpEvent>(b =>
+        {
+            b.ToTable("XpEvents");
+            b.Property(x => x.OwnerId).IsRequired();
+            b.Property(x => x.Reason).IsRequired().HasMaxLength(160);
+            b.Property(x => x.SourceType).HasMaxLength(48);
+            b.HasIndex(x => new { x.OwnerId, x.OccurredAtUtc });
+            b.HasIndex(x => new { x.OwnerId, x.SourceType, x.SourceId });
         });
     }
 
