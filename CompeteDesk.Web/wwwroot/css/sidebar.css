@@ -170,6 +170,57 @@ body.cd-has-sidebar{
   padding-top: 6px;
 }
 
+/* Section groups (details/summary)
+   Fixes text overflow by removing native summary markers and allowing wrapping. */
+.cd-sidebar__group{
+  margin: 0;
+}
+
+.cd-sidebar__group > summary{
+  list-style: none;
+}
+
+.cd-sidebar__group > summary::-webkit-details-marker{
+  display: none;
+}
+
+.cd-sidebar__sectionLabel{
+  margin: 10px 6px 6px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, .70);
+
+  /* overflow safety */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cd-sidebar__group > summary.cd-sidebar__sectionLabel::after{
+  content: "▾";
+  font-size: 12px;
+  line-height: 1;
+  opacity: .75;
+}
+
+.cd-sidebar__group:not([open]) > summary.cd-sidebar__sectionLabel::after{
+  content: "▸";
+}
+
 .cd-sidebar__link{
   height: 44px;
   border-radius: 14px;
@@ -317,6 +368,7 @@ body.cd-sidebar-collapsed .cd-sidebar__text,
 body.cd-sidebar-collapsed .cd-sidebar__search,
 body.cd-sidebar-collapsed .cd-sidebar__cta,
 body.cd-sidebar-collapsed .cd-sidebar__userMeta,
+body.cd-sidebar-collapsed .cd-sidebar__sectionLabel,
 body.cd-sidebar-collapsed .cd-sidebar__footer{
   display: none;
 }
