@@ -101,19 +101,6 @@
   border-color: var(--cd-border);
 }
 
-/* Mobile hamburger: remove the button border "outline" (keep tap target) */
-@media (max-width: 767.98px){
-  .cd-topbar__iconBtn[data-cd-sidebar-open]{
-    border-color: transparent;
-    box-shadow: none;
-  }
-
-  .cd-topbar__iconBtn[data-cd-sidebar-open]:hover{
-    border-color: transparent;
-    background: rgba(15, 23, 42, .04);
-  }
-}
-
 .cd-topico{
   width: 18px;
   height: 18px;
@@ -162,6 +149,13 @@
   .cd-topbar{
     padding: 10px 12px;
     gap: 10px;
+  }
+
+  /* Mobile: hamburger button should be "icon only" (no filled background) */
+  .cd-topbar__iconBtn[data-cd-sidebar-open],
+  .cd-topbar__iconBtn[data-cd-sidebar-open]:hover,
+  .cd-topbar__iconBtn[data-cd-sidebar-open]:active{
+    background: transparent;
   }
 
   .cd-topbar__search{
