@@ -10,6 +10,14 @@
 
   const isMobile = () => window.matchMedia("(max-width: 767.98px)").matches;
 
+  const syncCollapseBtn = () => {
+    if (!collapseBtn) return;
+
+    const collapsed = body.classList.contains("cd-sidebar-collapsed");
+    collapseBtn.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
+    collapseBtn.setAttribute("title", collapsed ? "Expand" : "Collapse");
+  };
+
   // Mobile open
   if (openBtn) {
     openBtn.addEventListener("click", () => {
@@ -36,6 +44,8 @@
 
       body.classList.toggle("cd-sidebar-collapsed");
 
+      syncCollapseBtn();
+
       // Persist preference (desktop only)
       try {
         localStorage.setItem(
@@ -53,6 +63,8 @@
     }
   } catch { }
 
+  syncCollapseBtn();
+
   // Mobile should never start in the "collapsed rail" state
   const normalizeMobileState = () => {
     if (isMobile()) {
@@ -60,6 +72,9 @@
       // Also close the drawer when switching to mobile
       body.classList.remove("cd-sidebar-open");
     }
+
+    // Ensure labels reflect current state after viewport changes.
+    syncCollapseBtn();
   };
 
   normalizeMobileState();

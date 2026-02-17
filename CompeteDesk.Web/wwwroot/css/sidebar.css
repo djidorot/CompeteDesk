@@ -110,6 +110,18 @@ body.cd-has-sidebar{
   color: var(--cd-muted);
 }
 
+/* Desktop: make the collapse arrow look like a plain icon (no box) */
+@media (min-width: 992px){
+  .cd-sidebar__collapseBtn{
+    background: transparent;
+    border: none;
+  }
+
+  .cd-sidebar__collapseBtn:hover{
+    background: rgba(15, 23, 42, .06);
+  }
+}
+
 .cd-sidebar__collapseBtn:focus,
 .cd-sidebar__collapseBtn:active,
 .cd-sidebar__collapseBtn:focus-visible{
@@ -120,6 +132,15 @@ body.cd-has-sidebar{
 .cd-ico{
   width: 18px;
   height: 18px;
+}
+
+/* Collapse arrow direction: left = collapse, right = expand */
+.cd-sidebar__collapseIco .cd-ico{
+  transition: transform .18s ease;
+}
+
+body.cd-sidebar-collapsed .cd-sidebar__collapseIco .cd-ico{
+  transform: rotate(180deg);
 }
 
 /* Search */
