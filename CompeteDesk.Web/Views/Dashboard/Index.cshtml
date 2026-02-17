@@ -31,7 +31,7 @@
             <div class="cd-command-top">
                 <div class="cd-command-left">
                     <div class="cd-workspace">
-                        <span class="cd-badge">Workspace</span>
+                        <span class="cd-badge">Prep Workspace</span>
                         <h1 class="cd-title mb-0">@Model.WorkspaceName</h1>
                         <div class="cd-sub">Welcome back, <strong>@Model.UserDisplayName</strong>. Focus for the week:
                             <span class="cd-focus">“@Model.WeeklyFocus”</span></div>
@@ -39,11 +39,11 @@
 
                     <div class="cd-meta">
                         <div class="cd-meta-item">
-                            <div class="cd-meta-label">Strategy Mode</div>
+                            <div class="cd-meta-label">Prep Mode</div>
                             <div class="cd-meta-value">@Model.StrategyMode</div>
                         </div>
                         <div class="cd-meta-item">
-                            <div class="cd-meta-label">Active Strategies</div>
+                            <div class="cd-meta-label">Active Topics</div>
                             <div class="cd-meta-value">@Model.ActiveStrategiesCount</div>
                         </div>
                     </div>
@@ -51,7 +51,7 @@
 
                 <div class="cd-command-right">
                     <div class="cd-score">
-                        <div class="cd-score-label">Strategy Score</div>
+                        <div class="cd-score-label">Readiness Score</div>
                         <div class="cd-score-value">@Model.StrategyScore</div>
                         <div class="cd-score-meter" role="progressbar" aria-valuenow="@Model.StrategyScore"
                             aria-valuemin="0" aria-valuemax="100">
@@ -106,7 +106,7 @@
             <div class="card-body">
                 <div class="cd-panel-head">
                     <h2 class="cd-h2">Overview</h2>
-                    <div class="cd-muted">Quick summary of everything available in CompeteDesk.</div>
+                    <div class="cd-muted">Quick access to your Civil Service prep tools.</div>
                 </div>
 
                 <div class="cd-feature-grid">
@@ -132,7 +132,7 @@
         <section class="cd-panel card shadow-sm">
             <div class="card-body">
                 <div class="cd-panel-head">
-                    <h2 class="cd-h2">Today’s Critical Actions</h2>
+                    <h2 class="cd-h2">Today’s Study Actions</h2>
                     <div class="cd-panel-actions">
                         <button type="button" class="btn btn-sm btn-outline-secondary" data-cd-filter="all">All</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" data-cd-filter="high">High
@@ -169,8 +169,8 @@
         <section class="cd-panel card shadow-sm">
             <div class="card-body">
                 <div class="cd-panel-head">
-                    <h2 class="cd-h2">Habit Systems</h2>
-                    <div class="cd-panel-sub">Strategy Playbook view: cue → environment → reduce friction.</div>
+                    <h2 class="cd-h2">Study Habits</h2>
+                    <div class="cd-panel-sub">Consistency systems: cue → environment → reduce friction.</div>
                 </div>
 
                 <div class="table-responsive">
@@ -208,7 +208,7 @@
         <section class="cd-panel card shadow-sm">
             <div class="card-body">
                 <div class="cd-panel-head">
-                    <h2 class="cd-h2">Active Strategies</h2>
+                    <h2 class="cd-h2">Active Topics</h2>
                     <div class="cd-panel-actions">
                         <a class="btn btn-sm btn-outline-primary disabled" href="#" aria-disabled="true"
                             title="Wireframe-only for now">+ Add Strategy</a>

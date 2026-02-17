@@ -20,7 +20,10 @@
             <span class="cd-sidebar__logo" aria-hidden="true">
                 <img src="~/images/cd-logo.png" alt="CompeteDesk" style="height:28px;" />
             </span>
-            <span class="cd-sidebar__brandText">CompeteDesk</span>
+            <span class="cd-sidebar__brandText">
+                CompeteDesk
+                <span class="d-block small" style="opacity:.7; font-weight:500;">Civil Service Prep</span>
+            </span>
         </a>
 
         <button class="cd-sidebar__collapseBtn" type="button" data-cd-sidebar-collapse aria-label="Collapse sidebar">
@@ -46,14 +49,14 @@
                         <path d="M5 12h14"></path>
                     </svg>
                 </span>
-                New Workspace
+                New Prep Workspace
             </a>
         </div>
     }
 
     <nav class="cd-sidebar__nav" aria-label="Sidebar navigation">
         <details class="cd-sidebar__group" open>
-            <summary class="cd-sidebar__sectionLabel">Workspace</summary>
+            <summary class="cd-sidebar__sectionLabel">Prep Workspace</summary>
 
             <a class="cd-sidebar__link @(currentController == "Dashboard" ? "is-active" : "")" asp-controller="Dashboard"
                 asp-action="Index">
@@ -66,7 +69,7 @@
                     <path d="M3 21h8v-6H3v6z"></path>
                 </svg>
             </span>
-            <span class="cd-sidebar__text">Overview</span>
+            <span class="cd-sidebar__text">Prep Dashboard</span>
             </a>
         </details>
 
@@ -83,7 +86,7 @@
                     <path d="M12 2a7 7 0 0 0-4 12c.6.5 1 1.2 1 2h6c0-.8.4-1.5 1-2a7 7 0 0 0-4-12z"></path>
                 </svg>
             </span>
-            <span class="cd-sidebar__text">Strategies</span>
+            <span class="cd-sidebar__text">Study Strategies</span>
             </a>
 
             <a class="cd-sidebar__link @(currentController == "Actions" ? "is-active" : "")" asp-controller="Actions"
@@ -95,7 +98,7 @@
                         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                     </svg>
                 </span>
-                <span class="cd-sidebar__text">Actions</span>
+                <span class="cd-sidebar__text">Daily Actions</span>
             </a>
 
             <a class="cd-sidebar__link @(currentController == "Habits" ? "is-active" : "")" asp-controller="Habits"
@@ -106,7 +109,7 @@
                         <path d="M8.5 14.5s-1.5 1.5-1.5 3.5a5 5 0 0 0 10 0c0-2-1.5-3.5-1.5-3.5"></path>
                     </svg>
                 </span>
-                <span class="cd-sidebar__text">Habits</span>
+                <span class="cd-sidebar__text">Study Habits</span>
             </a>
 
             <a class="cd-sidebar__link @(currentController == "Metrics" ? "is-active" : "")" asp-controller="Metrics"
@@ -118,7 +121,7 @@
                         <path d="M7 14l3-3 4 4 6-7"></path>
                     </svg>
                 </span>
-                <span class="cd-sidebar__text">Metrics</span>
+                <span class="cd-sidebar__text">Progress Metrics</span>
             </a>
 
             <div class="cd-sidebar__divider"></div>
@@ -132,13 +135,13 @@
             <a class="cd-sidebar__link @(currentController == "Recommendations" ? "is-active" : "")" asp-controller="Recommendations"
                asp-action="Index">
                 <span class="cd-sidebar__icon" aria-hidden="true">✨</span>
-                <span class="cd-sidebar__text">Recommendations</span>
+                <span class="cd-sidebar__text">AI Recommendations</span>
             </a>
 
             <a class="cd-sidebar__link @(currentController == "Gamification" ? "is-active" : "")" asp-controller="Gamification"
                asp-action="Index">
                 <span class="cd-sidebar__icon" aria-hidden="true">🏅</span>
-                <span class="cd-sidebar__text">Gamification</span>
+                <span class="cd-sidebar__text">Rewards</span>
             </a>
 
             <a class="cd-sidebar__link @(currentController == "Exports" ? "is-active" : "")" asp-controller="Exports"
@@ -162,7 +165,7 @@
                         <path d="M8 11h6"></path>
                     </svg>
                 </span>
-                <span class="cd-sidebar__text">Website Analysis</span>
+                <span class="cd-sidebar__text">Resource Analysis</span>
             </a>
 
             <a class="cd-sidebar__link @(currentController == "WarRoom" ? "is-active" : "")" asp-controller="WarRoom"
@@ -192,7 +195,7 @@
                     <path d="M10 22h4"></path>
                 </svg>
             </span>
-            <span class="cd-sidebar__text">AI Co-Pilot</span>
+            <span class="cd-sidebar__text">AI Study Co-Pilot</span>
             </a>
 
             <a class="cd-sidebar__link @(currentController == "BusinessAnalysis" ? "is-active" : "")" asp-controller="BusinessAnalysis"
@@ -206,7 +209,7 @@
                         <path d="M17 5h3v13h-3z"></path>
                     </svg>
                 </span>
-                <span class="cd-sidebar__text">Business Analysis</span>
+                <span class="cd-sidebar__text">Exam Analysis</span>
             </a>
 
             <a class="cd-sidebar__link @(currentController == "AiHistory" ? "is-active" : "")" asp-controller="AiHistory"

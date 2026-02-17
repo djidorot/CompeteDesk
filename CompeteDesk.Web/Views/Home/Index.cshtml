@@ -1,8 +1,89 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "AI-powered Civil Service Strategic Preparation";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/home-landing.css" asp-append-version="true" />
+}
+
+<div class="cd-landing">
+    <section class="cd-hero">
+        <div class="cd-hero__inner">
+            <div class="cd-hero__copy">
+                <div class="cd-hero__pill">🧠 Intelligence • 🎯 Strategy • 🧭 Guidance • 📈 Measurable Improvement</div>
+                <h1 class="cd-hero__title">
+                    CompeteDesk
+                    <span class="cd-hero__titleSub">AI-powered Civil Service Strategic Preparation System</span>
+                </h1>
+                <p class="cd-hero__lead">
+                    Stop guessing what to study next. Build a focused plan, get AI guidance, and track progress with clear metrics.
+                </p>
+
+                <div class="cd-hero__cta">
+                    @if (User?.Identity?.IsAuthenticated == true)
+                    {
+                        <a class="btn btn-primary btn-lg" asp-controller="Dashboard" asp-action="Index">Open Dashboard</a>
+                        <a class="btn btn-outline-secondary btn-lg" asp-controller="StudyPlanner" asp-action="Index">Generate Study Plan</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Get Started</a>
+                        <a class="btn btn-outline-secondary btn-lg" asp-area="Identity" asp-page="/Account/Login">Sign In</a>
+                    }
+                </div>
+
+                <div class="cd-hero__micro">
+                    Designed for Civil Service exam preparation — with strategy-first planning, AI insights, and progress reports.
+                </div>
+            </div>
+
+            <div class="cd-hero__panel" aria-label="Product positioning">
+                <div class="cd-hero__panelCard">
+                    <div class="cd-hero__panelTitle">Right now, it might feel like…</div>
+                    <div class="cd-hero__panelValue">A content manager</div>
+                </div>
+                <div class="cd-hero__panelCard cd-hero__panelCard--good">
+                    <div class="cd-hero__panelTitle">It should feel like…</div>
+                    <div class="cd-hero__panelValue">An AI-powered Civil Service Strategic Preparation System</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cd-landing__section">
+        <div class="cd-landing__sectionHead">
+            <h2 class="cd-landing__h2">What you get</h2>
+            <div class="cd-landing__sub">Everything is built around intelligence, strategy, and measurable improvement.</div>
+        </div>
+
+        <div class="cd-landing__grid">
+            <div class="cd-landing__card">
+                <div class="cd-landing__cardTitle">🧠 Intelligence</div>
+                <div class="cd-landing__cardText">Organize competencies, resources, and insights in one place—so you always know where you stand.</div>
+            </div>
+            <div class="cd-landing__card">
+                <div class="cd-landing__cardTitle">🎯 Strategy</div>
+                <div class="cd-landing__cardText">Turn goals into weekly plans and daily actions. Focus on high-impact topics first.</div>
+            </div>
+            <div class="cd-landing__card">
+                <div class="cd-landing__cardTitle">🧭 Guidance</div>
+                <div class="cd-landing__cardText">Use AI recommendations and a study planner to remove decision fatigue and stay consistent.</div>
+            </div>
+            <div class="cd-landing__card">
+                <div class="cd-landing__cardTitle">📈 Measurable improvement</div>
+                <div class="cd-landing__cardText">Track streaks, completions, and progress reports—see improvement in black and white.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cd-landing__section cd-landing__section--muted">
+        <div class="cd-landing__sectionHead">
+            <h2 class="cd-landing__h2">Start in 3 steps</h2>
+        </div>
+        <ol class="cd-landing__steps">
+            <li><span class="cd-stepNum">1</span> Create a workspace for your Civil Service prep.</li>
+            <li><span class="cd-stepNum">2</span> Generate a weekly plan using Study Planner + AI roadmap.</li>
+            <li><span class="cd-stepNum">3</span> Execute daily actions and export progress PDFs.</li>
+        </ol>
+    </section>
 </div>

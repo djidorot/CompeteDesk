@@ -108,11 +108,11 @@ public class DashboardController : Controller
         // simply guide the user to create their first workspace.
         var vm = new DashboardViewModel
         {
-            UserDisplayName = User?.Identity?.Name ?? "Strategist",
-            StrategyMode = "Growth",
+            UserDisplayName = User?.Identity?.Name ?? "Candidate",
+            StrategyMode = "Prep",
             StrategyScore = 0,
             HealthStatus = "On Track",
-            WeeklyFocus = "Pick one high-leverage move and execute it consistently."
+            WeeklyFocus = "Pick one high-impact topic and practice it consistently."
         };
 
         // These tiles are always available; sections below become data-driven when a workspace exists.
@@ -130,13 +130,13 @@ public class DashboardController : Controller
             // Show the full feature list, but counts will be 0 until a workspace exists.
             vm.OverviewSummary = new()
             {
-                new OverviewSummaryItem { Title = "Strategies", Subtitle = "Playbooks and strategic moves", Count = 0, Badge = "Create a workspace", Href = "/Strategies" },
-                new OverviewSummaryItem { Title = "Actions", Subtitle = "Execution and to-dos", Count = 0, Badge = "Create a workspace", Href = "/Actions" },
-                new OverviewSummaryItem { Title = "Habits", Subtitle = "Systems & routines", Count = 0, Badge = "Coming soon", Href = "/Habits", Disabled = true },
-                new OverviewSummaryItem { Title = "Metrics", Subtitle = "KPIs & tracking", Count = 0, Badge = "Coming soon", Href = "/Metrics", Disabled = true },
-                new OverviewSummaryItem { Title = "Website Analysis", Subtitle = "Website insight reports", Count = 0, Badge = "AI", Href = "/WebsiteAnalysis" },
-                new OverviewSummaryItem { Title = "War Room", Subtitle = "Intel + plans", Count = 0, Badge = "0 intel • 0 plans", Href = "/WarRoom" },
-                new OverviewSummaryItem { Title = "Business Analysis (AI)", Subtitle = "SWOT + Five Forces + competitors", Count = 0, Badge = "Create a workspace", Href = "/BusinessAnalysis" },
+                new OverviewSummaryItem { Title = "Study Strategies", Subtitle = "Your playbook for topics", Count = 0, Badge = "Create a workspace", Href = "/Strategies" },
+                new OverviewSummaryItem { Title = "Daily Actions", Subtitle = "Tasks and practice items", Count = 0, Badge = "Create a workspace", Href = "/Actions" },
+                new OverviewSummaryItem { Title = "Study Habits", Subtitle = "Consistency systems", Count = 0, Badge = "Coming soon", Href = "/Habits", Disabled = true },
+                new OverviewSummaryItem { Title = "Progress Metrics", Subtitle = "Tracking and reports", Count = 0, Badge = "Coming soon", Href = "/Metrics", Disabled = true },
+                new OverviewSummaryItem { Title = "Resource Analysis", Subtitle = "Analyze resources and insights", Count = 0, Badge = "AI", Href = "/WebsiteAnalysis" },
+                new OverviewSummaryItem { Title = "War Room", Subtitle = "Insights + plans", Count = 0, Badge = "0 insights • 0 plans", Href = "/WarRoom" },
+                new OverviewSummaryItem { Title = "Exam Analysis (AI)", Subtitle = "SWOT + Five Forces + competitors (template)", Count = 0, Badge = "Create a workspace", Href = "/BusinessAnalysis" },
             };
 
             ViewData["Title"] = "Dashboard";
@@ -421,15 +421,15 @@ public class DashboardController : Controller
     {
         return new()
         {
-            new FeatureTileItem { Title = "Workspaces", Description = "Create and manage strategic workspaces.", Href = "/Workspaces" },
-            new FeatureTileItem { Title = "Strategies", Description = "Build playbooks and strategic moves.", Href = "/Strategies" },
-            new FeatureTileItem { Title = "Actions", Description = "Track critical actions and execution.", Href = "/Actions" },
-            new FeatureTileItem { Title = "Habits", Description = "Turn strategy into repeatable systems.", Href = "/Habits" },
-            new FeatureTileItem { Title = "Metrics", Description = "Measure what matters with KPIs.", Href = "/Metrics" },
-            new FeatureTileItem { Title = "Website Analysis", Description = "Analyze a website and generate insights.", Href = "/WebsiteAnalysis" },
-            new FeatureTileItem { Title = "War Room", Description = "Capture intel and plans for competition.", Href = "/WarRoom" },
-            new FeatureTileItem { Title = "Business Analysis (AI)", Description = "SWOT + Porter’s Five Forces + competitors.", Href = "/BusinessAnalysis" },
-            new FeatureTileItem { Title = "AI Strategy Co-Pilot", Description = "Synthesize strategy + intel to draft Blue Ocean hypotheses.", Href = "/StrategyCopilot" }
+            new FeatureTileItem { Title = "Prep Workspaces", Description = "Create and manage your Civil Service prep workspace.", Href = "/Workspaces" },
+            new FeatureTileItem { Title = "Study Strategies", Description = "Build your playbook for topics and competencies.", Href = "/Strategies" },
+            new FeatureTileItem { Title = "Daily Actions", Description = "Track practice tasks and execution.", Href = "/Actions" },
+            new FeatureTileItem { Title = "Study Habits", Description = "Turn your plan into repeatable routines.", Href = "/Habits" },
+            new FeatureTileItem { Title = "Progress Metrics", Description = "Measure improvement with streaks and reports.", Href = "/Metrics" },
+            new FeatureTileItem { Title = "Resource Analysis", Description = "Analyze learning resources and extract insights.", Href = "/WebsiteAnalysis" },
+            new FeatureTileItem { Title = "War Room", Description = "Capture insights and plans for weak areas.", Href = "/WarRoom" },
+            new FeatureTileItem { Title = "Exam Analysis (AI)", Description = "Templates + AI support for structured analysis.", Href = "/BusinessAnalysis" },
+            new FeatureTileItem { Title = "AI Study Co-Pilot", Description = "Get guidance to improve focus and consistency.", Href = "/StrategyCopilot" }
         };
     }
 
@@ -495,11 +495,11 @@ public class DashboardController : Controller
 
     private static string DetermineStrategyMode(int activeStrategies, int intel7, int openCount, int overdueCount)
     {
-        if (activeStrategies <= 0) return "Stability";
-        if (overdueCount > 3) return "Defensive";
-        if (intel7 >= 4) return "Offensive";
-        if (openCount > 0) return "Growth";
-        return "Stability";
+        if (activeStrategies <= 0) return "Baseline";
+        if (overdueCount > 3) return "Catch-up";
+        if (intel7 >= 4) return "Push";
+        if (openCount > 0) return "Intensive";
+        return "Baseline";
     }
 
     private static string ComputeWeeklyFocus(List<ActionItem> todayPick, List<Habit> habits)
