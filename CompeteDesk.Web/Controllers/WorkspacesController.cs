@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
 using CompeteDesk.Models;
 using CompeteDesk.ViewModels.Workspaces;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Controllers;
 
@@ -30,7 +32,7 @@ public class WorkspacesController : Controller
     }
 
     // GET: /Workspaces
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
     {
         ViewData["Title"] = "Workspaces";
         ViewData["LayoutFluid"] = true;
@@ -39,14 +41,23 @@ public class WorkspacesController : Controller
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
-        var items = await _db.Workspaces
+        var query = _db.Workspaces
             .AsNoTracking()
             .Where(x => x.OwnerId == userId)
             .OrderByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
             .ThenBy(x => x.Name)
-            .ToListAsync();
+            ;
 
-        return View(items);
+        var paged = await PagedResult<Workspace>.CreateAsync(query, page, pageSize, ct);
+
+        ViewBag.Page = paged.Page;
+        ViewBag.PageSize = paged.PageSize;
+        ViewBag.TotalCount = paged.TotalCount;
+        ViewBag.TotalPages = paged.TotalPages;
+
+        if (partial || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_WorkspacesList", paged.Items.ToList());
+        return View(paged.Items.ToList());
     }
 
     // GET: /Workspaces/Create

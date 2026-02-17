@@ -9,6 +9,12 @@ public sealed class AiHistoryIndexViewModel
     public string? Feature { get; set; }
     public string? Q { get; set; }
 
+    // Paging
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 25;
+    public int TotalCount { get; set; }
+    public int TotalPages { get; set; }
+
     public List<AiHistoryRow> Items { get; set; } = new();
 }
 

@@ -8,6 +8,7 @@
     var status = (string)(ViewBag.Status ?? "Active");
     var workspaceId = (int?)(ViewBag.WorkspaceId ?? null);
     var sort = (string)(ViewBag.Sort ?? "priority");
+    var totalCount = (int)(ViewBag.TotalCount ?? Model.Count);
 }
 
 <link rel="stylesheet" href="~/css/strategies.css" asp-append-version="true" />
@@ -66,7 +67,7 @@
                     </div>
                 </form>
 
-                @if (Model.Count == 0 && status == "Active")
+                @if (totalCount == 0 && status == "Active")
                 {
                     <div class="cd-seed card border-0 shadow-sm">
                         <div class="card-body">
@@ -83,48 +84,18 @@
         </div>
     </div>
 
-    <div class="cd-strategies__grid">
-        @foreach (var s in Model)
-        {
-            <div class="card shadow-sm cd-strategy">
-                <div class="card-body">
-                    <div class="cd-strategy__top">
-                        <div>
-                            <div class="cd-strategy__name">@s.Name</div>
-                            <div class="cd-strategy__meta">
-                                <span class="cd-pill">@(!string.IsNullOrWhiteSpace(s.Category) ? s.Category : "Uncategorized")</span>
-                                <span class="cd-dot">•</span>
-                                <span class="cd-muted">Priority: @s.Priority</span>
-                            </div>
-                        </div>
-
-                        <div class="cd-strategy__actions">
-                            <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@s.Id">View</a>
-                            <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@s.Id" asp-fragment="ai">AI</a>
-                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
-                        </div>
-                    </div>
-
-                    @if (!string.IsNullOrWhiteSpace(s.CorePrinciple))
-                    {
-                        <div class="cd-strategy__principle">@s.CorePrinciple</div>
-                    }
-
-                    @if (!string.IsNullOrWhiteSpace(s.Summary))
-                    {
-                        <div class="cd-strategy__summary">@s.Summary</div>
-                    }
-
-                    <div class="cd-strategy__bottom">
-                        @if (!string.IsNullOrWhiteSpace(s.SourceBook) && !(s.SourceBook.Contains("33 Strategies of War") || s.SourceBook.Contains("Atomic Habits")))
-                        {
-                            <div class="cd-muted">@s.SourceBook</div>
-                        }
-                        <a class="cd-link" asp-action="Delete" asp-route-id="@s.Id">Delete</a>
-                    </div>
-                </div>
+    <div class="position-relative" data-async-pager>
+        <div class="cd-loading-overlay" data-loading-overlay>
+            <div class="cd-skeleton" style="width: min(520px, 90%); padding: 16px;">
+                <div class="cd-skeleton cd-skeleton-line lg"></div>
+                <div class="cd-skeleton cd-skeleton-line"></div>
+                <div class="cd-skeleton cd-skeleton-line"></div>
+                <div class="cd-skeleton cd-skeleton-line"></div>
             </div>
-        }
+        </div>
+        <div data-async-body>
+            @await Html.PartialAsync("_StrategiesList", Model)
+        </div>
     </div>
 </div>
 

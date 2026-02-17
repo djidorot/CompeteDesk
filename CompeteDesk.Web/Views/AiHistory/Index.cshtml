@@ -33,54 +33,21 @@
     <div class="cd-card">
         <div class="cd-card-header">
             <div class="cd-card-title">Recent traces</div>
-            <div class="cd-card-meta">Showing up to 200 items</div>
+            <div class="cd-card-meta">Server-side paginated for scale</div>
         </div>
 
-        @if (Model.Items == null || Model.Items.Count == 0)
-        {
-            <div class="cd-empty">
-                No traces yet. Generate an analysis (War Room, Website Analysis, Business Analysis) and it will show up here.
+        <div class="position-relative" data-async-pager>
+            <div class="cd-loading-overlay" data-loading-overlay>
+                <div class="cd-skeleton" style="width: min(520px, 90%); padding: 16px;">
+                    <div class="cd-skeleton cd-skeleton-line lg"></div>
+                    <div class="cd-skeleton cd-skeleton-line"></div>
+                    <div class="cd-skeleton cd-skeleton-line"></div>
+                    <div class="cd-skeleton cd-skeleton-line"></div>
+                </div>
             </div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th style="width: 180px;">When (UTC)</th>
-                            <th>Feature</th>
-                            <th style="width: 120px;">Workspace</th>
-                            <th>Entity</th>
-                            <th style="width: 110px;"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in Model.Items)
-                        {
-                            <tr>
-                                <td class="text-muted">@row.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                                <td><span class="badge bg-light text-dark border">@row.Feature</span></td>
-                                <td class="text-muted">@(row.WorkspaceId?.ToString() ?? "-")</td>
-                                <td class="text-muted">
-                                    @if (!string.IsNullOrWhiteSpace(row.EntityTitle))
-                                    {
-                                        <span class="fw-semibold">@row.EntityTitle</span>
-                                        <span class="ms-2">(@row.EntityType @row.EntityId)</span>
-                                    }
-                                    else
-                                    {
-                                        <span>@row.EntityType @row.EntityId</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@row.Id">Open</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+            <div data-async-body>
+                @await Html.PartialAsync("_AiHistoryTable", Model)
             </div>
-        }
+        </div>
     </div>
 </div>

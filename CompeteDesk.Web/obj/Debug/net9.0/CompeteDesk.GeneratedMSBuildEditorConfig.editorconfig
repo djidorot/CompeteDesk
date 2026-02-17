@@ -60,12 +60,24 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWN0aW9ucy9fQWN0aW9uRm9ybS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Actions/_ActionsList.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWN0aW9ucy9fQWN0aW9uc0xpc3QuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Activity/History.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWN0aXZpdHkvSGlzdG9yeS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Activity/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWN0aXZpdHkvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Activity/_ActivityTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWN0aXZpdHkvX0FjdGl2aXR5VGFibGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Activity/_EntityHistoryTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWN0aXZpdHkvX0VudGl0eUhpc3RvcnlUYWJsZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Admin/Index.cshtml]
@@ -82,6 +94,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/AiHistory/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWlIaXN0b3J5L0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/AiHistory/_AiHistoryTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWlIaXN0b3J5L19BaUhpc3RvcnlUYWJsZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/AiInsights/Index.cshtml]
@@ -160,6 +176,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19Mb2dpblBhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Shared/_Pager.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19QYWdlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Shared/_Sidebar.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19TaWRlYmFyLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -194,6 +214,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Strategies/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU3RyYXRlZ2llcy9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Strategies/_StrategiesList.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU3RyYXRlZ2llcy9fU3RyYXRlZ2llc0xpc3QuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Strategies/_StrategyForm.cshtml]
@@ -270,6 +294,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Workspaces/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvV29ya3NwYWNlcy9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/Workspaces/_WorkspacesList.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvV29ya3NwYWNlcy9fV29ya3NwYWNlc0xpc3QuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/Views/_ViewImports.cshtml]

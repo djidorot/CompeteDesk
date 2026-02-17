@@ -29,6 +29,9 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// Basic in-memory caching (used for frequent dropdown data like Workspaces/Strategies)
+builder.Services.AddMemoryCache();
+
 // ------------------------------------------------------------
 // Website Analysis + OpenAI
 // ------------------------------------------------------------

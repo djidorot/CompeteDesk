@@ -1,0 +1,92 @@
+@model List<CompeteDesk.Models.ActionItem>
+@using CompeteDesk.ViewModels.Common
+
+@{
+    var page = (int)(ViewBag.Page ?? 1);
+    var pageSize = (int)(ViewBag.PageSize ?? 25);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+    var totalPages = (int)(ViewBag.TotalPages ?? 0);
+
+    var q = (string)(ViewBag.Query ?? "");
+    var status = (string)(ViewBag.Status ?? "Planned");
+    var workspaceId = (int?)(ViewBag.WorkspaceId ?? null);
+    var strategyId = (int?)(ViewBag.StrategyId ?? null);
+    var sort = (string)(ViewBag.Sort ?? "due");
+}
+
+<div class="cd-actions__grid">
+        @if (Model.Count == 0)
+        {
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="cd-muted">No actions found for the current filter.</div>
+                </div>
+            </div>
+        }
+
+        @foreach (var a in Model)
+        {
+            <div class="card shadow-sm cd-action">
+                <div class="card-body">
+                    <div class="cd-action__top">
+                        <div>
+                            <div class="cd-action__title">@a.Title</div>
+                            <div class="cd-action__meta">
+                                <span class="cd-pill">@(!string.IsNullOrWhiteSpace(a.Category) ? a.Category : "Uncategorized")</span>
+                                <span class="cd-dot">•</span>
+                                <span class="cd-muted">Priority: @a.Priority</span>
+                                @if (a.DueAtUtc != null)
+                                {
+                                    <span class="cd-dot">•</span>
+                                    <span class="cd-muted">Due: @a.DueAtUtc.Value.ToString("yyyy-MM-dd")</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="cd-action__actions">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@a.Id">View</a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@a.Id">Edit</a>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(a.Description))
+                    {
+                        <div class="cd-action__desc">@a.Description</div>
+                    }
+
+                    <div class="cd-action__bottom">
+                        @{
+                            var statusClass = a.Status switch
+                            {
+                                "Done" => "badge text-bg-success",
+                                "In Progress" => "badge text-bg-primary",
+                                "Archived" => "badge text-bg-dark",
+                                _ => "badge text-bg-secondary"
+                            };
+                        }
+                        <span class="@statusClass">@a.Status</span>
+                        <a class="cd-link" asp-action="Delete" asp-route-id="@a.Id">Delete</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+@await Html.PartialAsync("_Pager", new PagerViewModel
+{
+    Controller = "Actions",
+    Action = "Index",
+    Page = page,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = totalPages,
+    Async = true,
+    RouteValues = new Dictionary<string, object?>
+    {
+        ["q"] = q,
+        ["status"] = status,
+        ["workspaceId"] = workspaceId,
+        ["strategyId"] = strategyId,
+        ["sort"] = sort
+    }
+})

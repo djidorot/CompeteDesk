@@ -1,0 +1,76 @@
+@model CompeteDesk.ViewModels.Common.PagerViewModel
+
+@{
+    if (Model.TotalPages <= 1)
+    {
+        return;
+    }
+
+    var rv = new Dictionary<string, object?>(Model.RouteValues ?? new());
+    rv["pageSize"] = Model.PageSize;
+    if (Model.Async) rv["partial"] = 1;
+
+    int Clamp(int v) => v < 1 ? 1 : (v > Model.TotalPages ? Model.TotalPages : v);
+    var prev = Clamp(Model.Page - 1);
+    var next = Clamp(Model.Page + 1);
+
+    // Display a compact window.
+    var start = Clamp(Model.Page - 2);
+    var end = Clamp(Model.Page + 2);
+    if (end - start < 4)
+    {
+        // Expand to 5 items if possible.
+        end = Clamp(start + 4);
+        start = Clamp(end - 4);
+    }
+}
+
+<nav class="cd-pager" aria-label="Pagination">
+    <ul class="pagination pagination-sm mb-0">
+        <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+            @{ rv["page"] = prev; }
+            <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">Prev</a>
+        </li>
+
+        @if (start > 1)
+        {
+            <li class="page-item">
+                @{ rv["page"] = 1; }
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">1</a>
+            </li>
+            @if (start > 2)
+            {
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            }
+        }
+
+        @for (var p = start; p <= end; p++)
+        {
+            <li class="page-item @(p == Model.Page ? "active" : "")">
+                @{ rv["page"] = p; }
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">@p</a>
+            </li>
+        }
+
+        @if (end < Model.TotalPages)
+        {
+            @if (end < Model.TotalPages - 1)
+            {
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            }
+            <li class="page-item">
+                @{ rv["page"] = Model.TotalPages; }
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">@Model.TotalPages</a>
+            </li>
+        }
+
+        <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+            @{ rv["page"] = next; }
+            <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">Next</a>
+        </li>
+    </ul>
+
+    <div class="cd-pager-meta text-muted small ms-2">
+        Page @Model.Page of @Model.TotalPages · @Model.TotalCount items
+    </div>
+</nav>

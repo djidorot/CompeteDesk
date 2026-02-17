@@ -1,0 +1,47 @@
+@model CompeteDesk.ViewModels.Activity.EntityHistoryViewModel
+@using CompeteDesk.ViewModels.Common
+
+@if (Model.Items.Count == 0)
+{
+    <div class="text-muted">No history found for this item.</div>
+}
+else
+{
+    @foreach (var h in Model.Items)
+    {
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                <span class="badge text-bg-light">@h.Action</span>
+                <span class="text-muted">@h.ChangedAtUtc.ToString("yyyy-MM-dd HH:mm") (UTC)</span>
+                <span class="text-muted">•</span>
+                <span class="text-muted">@h.ActorEmail</span>
+            </div>
+
+            <details class="mb-2">
+                <summary>After</summary>
+                <pre class="small bg-light p-2 rounded mb-0" style="white-space:pre-wrap;">@h.AfterJson</pre>
+            </details>
+
+            <details>
+                <summary>Before</summary>
+                <pre class="small bg-light p-2 rounded mb-0" style="white-space:pre-wrap;">@h.BeforeJson</pre>
+            </details>
+        </div>
+    }
+
+    @await Html.PartialAsync("_Pager", new PagerViewModel
+    {
+        Controller = "Activity",
+        Action = "History",
+        Page = Model.Page,
+        PageSize = Model.PageSize,
+        TotalCount = Model.TotalCount,
+        TotalPages = Model.TotalPages,
+        Async = true,
+        RouteValues = new Dictionary<string, object?>
+        {
+            ["entityType"] = Model.EntityType,
+            ["entityId"] = Model.EntityId
+        }
+    })
+}

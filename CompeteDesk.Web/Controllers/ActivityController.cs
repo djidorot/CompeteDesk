@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
+using CompeteDesk.Models.Common;
 using CompeteDesk.ViewModels.Activity;
 
 namespace CompeteDesk.Controllers;
@@ -28,7 +29,7 @@ public class ActivityController : Controller
     }
 
     // GET: /Activity
-    public async Task<IActionResult> Index(CancellationToken ct)
+    public async Task<IActionResult> Index(int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
     {
         var (userId, isAdmin) = await GetMeAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
@@ -38,9 +39,8 @@ public class ActivityController : Controller
         if (!isAdmin)
             query = query.Where(x => x.ActorUserId == userId || x.OwnerId == userId);
 
-        var items = await query
+        var projection = query
             .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(200)
             .Select(x => new ActivityLogItem
             {
                 Id = x.Id,
@@ -50,25 +50,33 @@ public class ActivityController : Controller
                 EntityType = x.EntityType,
                 EntityId = x.EntityId,
                 Summary = x.Summary
-            })
-            .ToListAsync(ct);
+            });
+
+        var paged = await PagedResult<ActivityLogItem>.CreateAsync(projection, page, pageSize, ct);
 
         var vm = new ActivityLogViewModel
         {
             IsAdmin = isAdmin,
             ScopeLabel = isAdmin ? "System Activity" : "My Activity",
-            Items = items
+            Page = paged.Page,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount,
+            TotalPages = paged.TotalPages,
+            Items = paged.Items.ToList()
         };
 
         ViewData["Title"] = "Activity Log";
         ViewData["LayoutFluid"] = true;
         ViewData["UseSidebar"] = true;
 
+        if (partial || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_ActivityTable", vm);
+
         return View(vm);
     }
 
     // GET: /Activity/History?entityType=Strategy&entityId=123
-    public async Task<IActionResult> History(string entityType, string entityId, CancellationToken ct)
+    public async Task<IActionResult> History(string entityType, string entityId, int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
     {
         var (userId, isAdmin) = await GetMeAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
@@ -81,9 +89,8 @@ public class ActivityController : Controller
         if (!isAdmin)
             query = query.Where(x => x.OwnerId == userId);
 
-        var items = await query
+        var projection = query
             .OrderByDescending(x => x.ChangedAtUtc)
-            .Take(200)
             .Select(x => new EntityHistoryItem
             {
                 Id = x.Id,
@@ -92,20 +99,28 @@ public class ActivityController : Controller
                 ActorEmail = x.ActorEmail,
                 BeforeJson = x.BeforeJson,
                 AfterJson = x.AfterJson
-            })
-            .ToListAsync(ct);
+            });
+
+        var paged = await PagedResult<EntityHistoryItem>.CreateAsync(projection, page, pageSize, ct);
 
         var vm = new EntityHistoryViewModel
         {
             EntityType = entityType,
             EntityId = entityId,
             Title = $"{entityType} #{entityId} — Change History",
-            Items = items
+            Page = paged.Page,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount,
+            TotalPages = paged.TotalPages,
+            Items = paged.Items.ToList()
         };
 
         ViewData["Title"] = "Change History";
         ViewData["LayoutFluid"] = true;
         ViewData["UseSidebar"] = true;
+
+        if (partial || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_EntityHistoryTable", vm);
 
         return View(vm);
     }

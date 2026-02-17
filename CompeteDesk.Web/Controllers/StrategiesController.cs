@@ -15,6 +15,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CompeteDesk.ViewModels.Strategies;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Caching.Memory;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Controllers;
 
@@ -24,12 +26,14 @@ public class StrategiesController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly OpenAiChatClient _openAi;
+    private readonly IMemoryCache _cache;
 
-    public StrategiesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, OpenAiChatClient openAi)
+    public StrategiesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, OpenAiChatClient openAi, IMemoryCache cache)
     {
         _db = db;
         _userManager = userManager;
         _openAi = openAi;
+        _cache = cache;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -39,7 +43,7 @@ public class StrategiesController : Controller
     }
 
     // GET: /Strategies
-    public async Task<IActionResult> Index(string? q, string status = "Active", int? workspaceId = null, string sort = "priority")
+    public async Task<IActionResult> Index(string? q, string status = "Active", int? workspaceId = null, string sort = "priority", int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
     {
         ViewData["Title"] = "Strategies";
         ViewData["LayoutFluid"] = true;
@@ -53,12 +57,16 @@ public class StrategiesController : Controller
             .Where(x => x.OwnerId == userId);
 
         // Workspaces for filter dropdown
-        var workspaces = await _db.Workspaces
-            .AsNoTracking()
-            .Where(w => w.OwnerId == userId)
-            .OrderBy(w => w.Name)
-            .Select(w => new { w.Id, w.Name })
-            .ToListAsync();
+        var workspaces = await _cache.GetOrCreateAsync($"ws:list:{userId}", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(45);
+            return await _db.Workspaces
+                .AsNoTracking()
+                .Where(w => w.OwnerId == userId)
+                .OrderBy(w => w.Name)
+                .Select(w => new { w.Id, w.Name })
+                .ToListAsync(ct);
+        }) ?? new();
 
         ViewBag.Workspaces = new SelectList(workspaces, "Id", "Name", workspaceId);
 
@@ -93,14 +101,22 @@ public class StrategiesController : Controller
                 .ThenBy(x => x.Name)
         };
 
-        var items = await query.ToListAsync();
+        var paged = await PagedResult<Strategy>.CreateAsync(query, page, pageSize, ct);
+
+        ViewBag.Page = paged.Page;
+        ViewBag.PageSize = paged.PageSize;
+        ViewBag.TotalCount = paged.TotalCount;
+        ViewBag.TotalPages = paged.TotalPages;
 
         ViewBag.Query = q ?? string.Empty;
         ViewBag.Status = status;
         ViewBag.WorkspaceId = workspaceId;
         ViewBag.Sort = sort;
 
-        return View(items);
+        if (partial || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_StrategiesList", paged.Items.ToList());
+
+        return View(paged.Items.ToList());
     }
 
     // GET: /Strategies/Details/5

@@ -14,33 +14,18 @@
 
 <div class="card">
     <div class="card-body">
-        @if (Model.Items.Count == 0)
-        {
-            <div class="text-muted">No history found for this item.</div>
-        }
-        else
-        {
-            @foreach (var h in Model.Items)
-            {
-                <div class="border rounded p-3 mb-3">
-                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                        <span class="badge text-bg-light">@h.Action</span>
-                        <span class="text-muted">@h.ChangedAtUtc.ToString("yyyy-MM-dd HH:mm") (UTC)</span>
-                        <span class="text-muted">•</span>
-                        <span class="text-muted">@h.ActorEmail</span>
-                    </div>
-
-                    <details class="mb-2">
-                        <summary>After</summary>
-                        <pre class="small bg-light p-2 rounded mb-0" style="white-space:pre-wrap;">@h.AfterJson</pre>
-                    </details>
-
-                    <details>
-                        <summary>Before</summary>
-                        <pre class="small bg-light p-2 rounded mb-0" style="white-space:pre-wrap;">@h.BeforeJson</pre>
-                    </details>
+        <div class="position-relative" data-async-pager>
+            <div class="cd-loading-overlay" data-loading-overlay>
+                <div class="cd-skeleton" style="width: min(520px, 90%); padding: 16px;">
+                    <div class="cd-skeleton cd-skeleton-line lg"></div>
+                    <div class="cd-skeleton cd-skeleton-line"></div>
+                    <div class="cd-skeleton cd-skeleton-line"></div>
+                    <div class="cd-skeleton cd-skeleton-line"></div>
                 </div>
-            }
-        }
+            </div>
+            <div data-async-body>
+                @await Html.PartialAsync("_EntityHistoryTable", Model)
+            </div>
+        </div>
     </div>
 </div>

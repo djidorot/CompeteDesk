@@ -1,0 +1,56 @@
+@model IReadOnlyList<CompeteDesk.Models.Workspace>
+@using CompeteDesk.ViewModels.Common
+
+@{
+    var page = (int)(ViewBag.Page ?? 1);
+    var pageSize = (int)(ViewBag.PageSize ?? 25);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+    var totalPages = (int)(ViewBag.TotalPages ?? 0);
+}
+
+@if (totalCount == 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <p class="mb-0">No workspaces yet. Create one to get started.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="list-group">
+                @foreach (var ws in Model)
+                {
+                    <a class="list-group-item list-group-item-action cd-ws-item"
+                       asp-controller="Dashboard"
+                       asp-action="Index"
+                       asp-route-workspaceId="@ws.Id">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@ws.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(ws.Description))
+                                {
+                                    <div class="text-muted">@ws.Description</div>
+                                }
+                            </div>
+                            <div class="text-muted small">Created @ws.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd")</div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Pager", new PagerViewModel
+    {
+        Controller = "Workspaces",
+        Action = "Index",
+        Page = page,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = totalPages,
+        Async = true
+    })
+}

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
 using CompeteDesk.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Caching.Memory;
+using CompeteDesk.Models.Common;
 
 namespace CompeteDesk.Controllers;
 
@@ -16,11 +19,13 @@ public class ActionsController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly IMemoryCache _cache;
 
-    public ActionsController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
+    public ActionsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, IMemoryCache cache)
     {
         _db = db;
         _userManager = userManager;
+        _cache = cache;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -30,7 +35,7 @@ public class ActionsController : Controller
     }
 
     // GET: /Actions
-    public async Task<IActionResult> Index(string? q, string status = "Planned", int? workspaceId = null, int? strategyId = null, string sort = "due")
+    public async Task<IActionResult> Index(string? q, string status = "Planned", int? workspaceId = null, int? strategyId = null, string sort = "due", int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
     {
         ViewData["Title"] = "Actions";
         ViewData["LayoutFluid"] = true;
@@ -43,21 +48,30 @@ public class ActionsController : Controller
             .AsNoTracking()
             .Where(x => x.OwnerId == userId);
 
-        // Filter dropdown data
-        var workspaces = await _db.Workspaces
-            .AsNoTracking()
-            .Where(w => w.OwnerId == userId)
-            .OrderBy(w => w.Name)
-            .Select(w => new { w.Id, w.Name })
-            .ToListAsync();
+        // Filter dropdown data (cached briefly per user)
+        var workspaces = await _cache.GetOrCreateAsync($"ws:list:{userId}", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(45);
+            return await _db.Workspaces
+                .AsNoTracking()
+                .Where(w => w.OwnerId == userId)
+                .OrderBy(w => w.Name)
+                .Select(w => new { w.Id, w.Name })
+                .ToListAsync(ct);
+        }) ?? new();
         ViewBag.Workspaces = new SelectList(workspaces, "Id", "Name", workspaceId);
 
-        var strategies = await _db.Strategies
-            .AsNoTracking()
-            .Where(s => s.OwnerId == userId && (workspaceId == null || s.WorkspaceId == workspaceId))
-            .OrderBy(s => s.Name)
-            .Select(s => new { s.Id, s.Name })
-            .ToListAsync();
+        var strategiesCacheKey = $"st:list:{userId}:ws:{workspaceId?.ToString() ?? "all"}";
+        var strategies = await _cache.GetOrCreateAsync(strategiesCacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(45);
+            return await _db.Strategies
+                .AsNoTracking()
+                .Where(s => s.OwnerId == userId && (workspaceId == null || s.WorkspaceId == workspaceId))
+                .OrderBy(s => s.Name)
+                .Select(s => new { s.Id, s.Name })
+                .ToListAsync(ct);
+        }) ?? new();
         ViewBag.Strategies = new SelectList(strategies, "Id", "Name", strategyId);
 
         if (!string.IsNullOrWhiteSpace(status))
@@ -99,7 +113,12 @@ public class ActionsController : Controller
                 .ThenBy(x => x.Title)
         };
 
-        var items = await query.ToListAsync();
+        var paged = await PagedResult<ActionItem>.CreateAsync(query, page, pageSize, ct);
+
+        ViewBag.Page = paged.Page;
+        ViewBag.PageSize = paged.PageSize;
+        ViewBag.TotalCount = paged.TotalCount;
+        ViewBag.TotalPages = paged.TotalPages;
 
         ViewBag.Query = q ?? string.Empty;
         ViewBag.Status = status;
@@ -107,7 +126,10 @@ public class ActionsController : Controller
         ViewBag.StrategyId = strategyId;
         ViewBag.Sort = sort;
 
-        return View(items);
+        if (partial || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_ActionsList", paged.Items.ToList());
+
+        return View(paged.Items.ToList());
     }
 
     // GET: /Actions/Details/5

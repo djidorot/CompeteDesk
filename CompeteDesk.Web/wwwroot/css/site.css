@@ -31,6 +31,51 @@ body {
   margin-bottom: 60px;
 }
 
+/* ------------------------------------------------------------
+   Loading indicators (skeletons)
+   ------------------------------------------------------------ */
+.cd-skeleton{
+  position: relative;
+  overflow: hidden;
+  background: rgba(0,0,0,.06);
+  border-radius: 10px;
+}
+.cd-skeleton::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  animation: cd-shimmer 1.15s infinite;
+}
+@keyframes cd-shimmer{
+  100%{ transform: translateX(100%); }
+}
+.cd-skeleton-line{ height: 12px; margin: 10px 0; }
+.cd-skeleton-line.lg{ height: 16px; }
+.cd-skeleton-line.sm{ height: 10px; }
+
+.cd-loading-overlay{
+  position:absolute;
+  inset:0;
+  background: rgba(255,255,255,.6);
+  backdrop-filter: blur(1px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index: 10;
+}
+.cd-loading-overlay.show{ display:flex; }
+
+/* Pager layout */
+.cd-pager{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding-top: 10px;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;

@@ -1,0 +1,76 @@
+@model List<CompeteDesk.Models.Strategy>
+@using CompeteDesk.ViewModels.Common
+
+@{
+    var page = (int)(ViewBag.Page ?? 1);
+    var pageSize = (int)(ViewBag.PageSize ?? 25);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+    var totalPages = (int)(ViewBag.TotalPages ?? 0);
+
+    var q = (string)(ViewBag.Query ?? "");
+    var status = (string)(ViewBag.Status ?? "Active");
+    var workspaceId = (int?)(ViewBag.WorkspaceId ?? null);
+    var sort = (string)(ViewBag.Sort ?? "priority");
+}
+
+<div class="cd-strategies__grid">
+        @foreach (var s in Model)
+        {
+            <div class="card shadow-sm cd-strategy">
+                <div class="card-body">
+                    <div class="cd-strategy__top">
+                        <div>
+                            <div class="cd-strategy__name">@s.Name</div>
+                            <div class="cd-strategy__meta">
+                                <span class="cd-pill">@(!string.IsNullOrWhiteSpace(s.Category) ? s.Category : "Uncategorized")</span>
+                                <span class="cd-dot">•</span>
+                                <span class="cd-muted">Priority: @s.Priority</span>
+                            </div>
+                        </div>
+
+                        <div class="cd-strategy__actions">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@s.Id">View</a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@s.Id" asp-fragment="ai">AI</a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(s.CorePrinciple))
+                    {
+                        <div class="cd-strategy__principle">@s.CorePrinciple</div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(s.Summary))
+                    {
+                        <div class="cd-strategy__summary">@s.Summary</div>
+                    }
+
+                    <div class="cd-strategy__bottom">
+                        @if (!string.IsNullOrWhiteSpace(s.SourceBook) && !(s.SourceBook.Contains("33 Strategies of War") || s.SourceBook.Contains("Atomic Habits")))
+                        {
+                            <div class="cd-muted">@s.SourceBook</div>
+                        }
+                        <a class="cd-link" asp-action="Delete" asp-route-id="@s.Id">Delete</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+@await Html.PartialAsync("_Pager", new PagerViewModel
+{
+    Controller = "Strategies",
+    Action = "Index",
+    Page = page,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = totalPages,
+    Async = true,
+    RouteValues = new Dictionary<string, object?>
+    {
+        ["q"] = q,
+        ["status"] = status,
+        ["workspaceId"] = workspaceId,
+        ["sort"] = sort
+    }
+})

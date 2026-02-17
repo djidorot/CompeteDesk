@@ -7,6 +7,13 @@ public class ActivityLogViewModel
 {
     public bool IsAdmin { get; set; }
     public string ScopeLabel { get; set; } = "My Activity";
+
+    // Paging
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 25;
+    public int TotalCount { get; set; }
+    public int TotalPages { get; set; }
+
     public List<ActivityLogItem> Items { get; set; } = new();
 }
 

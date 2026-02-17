@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CompeteDesk.Data;
+using CompeteDesk.Models.Common;
 using CompeteDesk.ViewModels.AiHistory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -24,7 +25,7 @@ public sealed class AiHistoryController : Controller
     }
 
     // GET: /AiHistory?workspaceId=1&feature=WarRoom.RedTeamPlan&q=pricing
-    public async Task<IActionResult> Index(int? workspaceId, string? feature, string? q, CancellationToken ct)
+    public async Task<IActionResult> Index(int? workspaceId, string? feature, string? q, int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
     {
         ViewData["Title"] = "AI History";
         ViewData["LayoutFluid"] = true;
@@ -52,9 +53,8 @@ public sealed class AiHistoryController : Controller
                 (x.EntityType != null && x.EntityType.Contains(q)));
         }
 
-        var items = await query
+        var projection = query
             .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(200)
             .Select(x => new AiHistoryRow
             {
                 Id = x.Id,
@@ -64,16 +64,24 @@ public sealed class AiHistoryController : Controller
                 EntityType = x.EntityType,
                 EntityId = x.EntityId,
                 EntityTitle = x.EntityTitle
-            })
-            .ToListAsync(ct);
+            });
+
+        var paged = await PagedResult<AiHistoryRow>.CreateAsync(projection, page, pageSize, ct);
 
         var vm = new AiHistoryIndexViewModel
         {
             WorkspaceId = workspaceId,
             Feature = feature,
             Q = q,
-            Items = items
+            Page = paged.Page,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount,
+            TotalPages = paged.TotalPages,
+            Items = paged.Items.ToList()
         };
+
+        if (partial || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_AiHistoryTable", vm);
 
         return View(vm);
     }
