@@ -168,7 +168,8 @@ public sealed class AiInsightsController : Controller
             vm.WeakAreas.Add(new AiWeakAreaItem
             {
                 Title = "Low-confidence intel",
-                Detail = $"{lowConfidenceIntel} intel item(s) have confidence ≤ 0.5. Validate signals before committing resources.",
+				// Confidence is stored as 1-5 (low to high). ≤2 means low-confidence.
+				Detail = $"{lowConfidenceIntel} intel item(s) have low confidence (≤ 2). Validate signals before committing resources.",
                 Href = "/WarRoom"
             });
         }

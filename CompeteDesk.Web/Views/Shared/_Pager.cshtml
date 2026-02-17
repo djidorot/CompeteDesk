@@ -8,7 +8,8 @@
 
     // asp-all-route-data expects IDictionary<string,string>. Convert route values to strings.
     var rv = new Dictionary<string, string>();
-    foreach (var kvp in (Model.RouteValues ?? new()))
+    // Use an explicit type to avoid any Razor target-typed `new()` inference quirks.
+    foreach (var kvp in (Model.RouteValues ?? new Dictionary<string, object?>()))
     {
         if (kvp.Value is null) continue;
         rv[kvp.Key] = kvp.Value.ToString() ?? string.Empty;
