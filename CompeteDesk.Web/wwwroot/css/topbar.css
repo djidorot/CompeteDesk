@@ -78,6 +78,7 @@
   place-items: center;
   color: var(--cd-muted);
   outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .cd-topbar__iconBtn:focus,
@@ -89,6 +90,15 @@
   outline: none;
   box-shadow: 0 0 0 4px rgba(109, 94, 252, .12);
   border-color: rgba(109, 94, 252, .55);
+}
+
+/* Mobile hamburger: remove the visible focus ring/outline */
+.cd-topbar__iconBtn[data-cd-sidebar-open]:focus,
+.cd-topbar__iconBtn[data-cd-sidebar-open]:active,
+.cd-topbar__iconBtn[data-cd-sidebar-open]:focus-visible{
+  outline: none;
+  box-shadow: none;
+  border-color: var(--cd-border);
 }
 
 .cd-topico{
