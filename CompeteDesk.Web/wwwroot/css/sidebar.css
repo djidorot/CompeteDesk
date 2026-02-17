@@ -267,8 +267,9 @@ body.cd-has-sidebar{
 }
 
 .cd-sidebar__link.is-active{
-  background: var(--cd-accent-soft);
-  border-color: rgba(109, 94, 252, .30);
+  /* Active state: no outer background/highlight. Keep only the inner icon pill. */
+  background: transparent;
+  border-color: transparent;
 }
 
 .cd-sidebar__link.is-active .cd-sidebar__icon{
