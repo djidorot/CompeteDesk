@@ -248,7 +248,7 @@ public class ActionsController : Controller
         if (!string.Equals(previousStatus, "Completed", StringComparison.OrdinalIgnoreCase)
             && string.Equals(item.Status, "Completed", StringComparison.OrdinalIgnoreCase))
         {
-            var userId = await GetUserIdAsync();
+            // Reuse the user id we already resolved above.
             if (!string.IsNullOrWhiteSpace(userId))
             {
                 await _gamification.AwardXpAsync(userId, xp: 25, reason: "Completed an action", sourceType: "Action", sourceId: item.Id, CancellationToken.None);

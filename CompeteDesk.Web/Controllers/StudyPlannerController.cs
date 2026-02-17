@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
@@ -60,8 +61,9 @@ public sealed class StudyPlannerController : Controller
             .OrderByDescending(p => p.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 
+        // Keep a consistent type (List<T>) regardless of whether a plan exists.
         var items = latest == null
-            ? Array.Empty<Models.StudyPlanItem>()
+            ? new List<Models.StudyPlanItem>()
             : await _db.StudyPlanItems.AsNoTracking()
                 .Where(i => i.OwnerId == userId && i.StudyPlanId == latest.Id)
                 .OrderBy(i => i.ScheduledOnUtc)
@@ -83,7 +85,8 @@ public sealed class StudyPlannerController : Controller
             WorkspaceName = ws?.Name,
             WeekStartUtc = monday,
             WeeklyMinutesTarget = 300,
-            Goal = ws?.Goal,
+            // Workspace currently stores its "goal" as Description.
+            Goal = ws?.Description,
             AiEnabled = _planner.IsAiConfigured,
             LatestPlan = latest,
             ItemsByDay = items.ToLookup(x => x.ScheduledOnUtc.Date),

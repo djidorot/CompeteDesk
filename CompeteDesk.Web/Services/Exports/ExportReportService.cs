@@ -49,7 +49,8 @@ public sealed class ExportReportService
         var lines = new List<string>
         {
             ws == null ? "" : $"Workspace: {ws.Name}",
-            ws == null ? "" : $"Goal: {ws.Goal}",
+            // Workspace currently stores its "goal" as Description.
+            ws == null ? "" : $"Goal: {ws.Description}",
             "",
             $"Strategies: {strategies.Count}",
             $"Actions: {actions.Count} (Open: {open}, Completed: {done})",
@@ -102,9 +103,12 @@ public sealed class ExportReportService
         var checkinDays = checkins.Select(c => c.OccurredOnUtc.Date).Distinct().Count();
         var totalCheckins = checkins.Sum(c => c.Count);
 
+        // KeyMetricEntry uses DateUtc (stored at midnight UTC) rather than ObservedAtUtc.
+        // Also, label/unit come from the Definition navigation.
         var metrics = await _db.KeyMetricEntries.AsNoTracking()
-            .Where(m => m.OwnerId == ownerId && m.ObservedAtUtc >= from)
-            .OrderByDescending(m => m.ObservedAtUtc)
+            .Include(m => m.Definition)
+            .Where(m => m.OwnerId == ownerId && m.DateUtc >= from)
+            .OrderByDescending(m => m.DateUtc)
             .Take(10)
             .ToListAsync(ct);
 
@@ -120,7 +124,9 @@ public sealed class ExportReportService
 
         foreach (var m in metrics)
         {
-            lines.Add($"- {m.ObservedAtUtc:yyyy-MM-dd}: {m.Label} = {m.Value} {m.Unit}".Trim());
+            var label = m.Definition?.DisplayName ?? m.Definition?.Key ?? $"Metric #{m.DefinitionId}";
+            var unit = m.Definition?.Unit ?? string.Empty;
+            lines.Add($"- {m.DateUtc:yyyy-MM-dd}: {label} = {m.Value} {unit}".Trim());
         }
 
         lines.Add(" ");
