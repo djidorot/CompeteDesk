@@ -51,6 +51,15 @@ body.cd-has-sidebar{
   gap: 14px;
 }
 
+/* Backdrop (mobile overlay) */
+.cd-sidebar__backdrop{
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1030;
+  background: rgba(15, 23, 42, .45);
+}
+
 /* Brand row */
 .cd-sidebar__top{
   display: flex;
@@ -400,8 +409,25 @@ body.cd-sidebar-collapsed .cd-sidebar__icon{
     z-index: 1040;
     transform: translateX(-105%);
     transition: transform .2s ease;
-    width: var(--cd-sidebar-w);
+    width: min(var(--cd-sidebar-w), 88vw);
+    max-width: 88vw;
+    box-shadow: 18px 0 42px rgba(15, 23, 42, .18);
   }
+
+  /* Ensure "collapsed" desktop state doesn't create a huge empty rail on phones */
+  body.cd-sidebar-collapsed .cd-sidebar{
+    width: min(var(--cd-sidebar-w), 88vw);
+    max-width: 88vw;
+  }
+
+  body.cd-sidebar-open{
+    overflow: hidden;
+  }
+
+  body.cd-sidebar-open .cd-sidebar__backdrop{
+    display: block;
+  }
+
   body.cd-sidebar-open .cd-sidebar{
     transform: translateX(0);
   }

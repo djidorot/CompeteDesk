@@ -8,6 +8,8 @@
   const collapseBtn = document.querySelector("[data-cd-sidebar-collapse]");
   const backdrop = document.querySelector("[data-cd-sidebar-backdrop]");
 
+  const isMobile = () => window.matchMedia("(max-width: 767.98px)").matches;
+
   // Mobile open
   if (openBtn) {
     openBtn.addEventListener("click", () => {
@@ -25,20 +27,43 @@
   // Collapse (desktop)
   if (collapseBtn) {
     collapseBtn.addEventListener("click", () => {
+      // On mobile, the sidebar is an off-canvas drawer.
+      // Treat the collapse button as a "close" action.
+      if (isMobile()) {
+        body.classList.remove("cd-sidebar-open");
+        return;
+      }
+
       body.classList.toggle("cd-sidebar-collapsed");
-      // Persist preference
+
+      // Persist preference (desktop only)
       try {
-        localStorage.setItem("cd.sidebar.collapsed", body.classList.contains("cd-sidebar-collapsed") ? "1" : "0");
+        localStorage.setItem(
+          "cd.sidebar.collapsed",
+          body.classList.contains("cd-sidebar-collapsed") ? "1" : "0"
+        );
       } catch { }
     });
   }
 
   // Restore collapse state
   try {
-    if (localStorage.getItem("cd.sidebar.collapsed") === "1") {
+    if (!isMobile() && localStorage.getItem("cd.sidebar.collapsed") === "1") {
       body.classList.add("cd-sidebar-collapsed");
     }
   } catch { }
+
+  // Mobile should never start in the "collapsed rail" state
+  const normalizeMobileState = () => {
+    if (isMobile()) {
+      body.classList.remove("cd-sidebar-collapsed");
+      // Also close the drawer when switching to mobile
+      body.classList.remove("cd-sidebar-open");
+    }
+  };
+
+  normalizeMobileState();
+  window.addEventListener("resize", normalizeMobileState);
 
   // Close on ESC (mobile)
   window.addEventListener("keydown", (e) => {
