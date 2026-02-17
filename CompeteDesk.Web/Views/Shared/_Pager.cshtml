@@ -6,9 +6,16 @@
         return;
     }
 
-    var rv = new Dictionary<string, object?>(Model.RouteValues ?? new());
-    rv["pageSize"] = Model.PageSize;
-    if (Model.Async) rv["partial"] = 1;
+    // asp-all-route-data expects IDictionary<string,string>. Convert route values to strings.
+    var rv = new Dictionary<string, string>();
+    foreach (var kvp in (Model.RouteValues ?? new()))
+    {
+        if (kvp.Value is null) continue;
+        rv[kvp.Key] = kvp.Value.ToString() ?? string.Empty;
+    }
+
+    rv["pageSize"] = Model.PageSize.ToString();
+    if (Model.Async) rv["partial"] = "1";
 
     int Clamp(int v) => v < 1 ? 1 : (v > Model.TotalPages ? Model.TotalPages : v);
     var prev = Clamp(Model.Page - 1);
@@ -28,14 +35,14 @@
 <nav class="cd-pager" aria-label="Pagination">
     <ul class="pagination pagination-sm mb-0">
         <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-            @{ rv["page"] = prev; }
+            @{ rv["page"] = prev.ToString(); }
             <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">Prev</a>
         </li>
 
         @if (start > 1)
         {
             <li class="page-item">
-                @{ rv["page"] = 1; }
+                @{ rv["page"] = "1"; }
                 <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">1</a>
             </li>
             @if (start > 2)
@@ -47,7 +54,7 @@
         @for (var p = start; p <= end; p++)
         {
             <li class="page-item @(p == Model.Page ? "active" : "")">
-                @{ rv["page"] = p; }
+                @{ rv["page"] = p.ToString(); }
                 <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">@p</a>
             </li>
         }
@@ -59,13 +66,13 @@
                 <li class="page-item disabled"><span class="page-link">…</span></li>
             }
             <li class="page-item">
-                @{ rv["page"] = Model.TotalPages; }
+                @{ rv["page"] = Model.TotalPages.ToString(); }
                 <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">@Model.TotalPages</a>
             </li>
         }
 
         <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
-            @{ rv["page"] = next; }
+            @{ rv["page"] = next.ToString(); }
             <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="rv">Next</a>
         </li>
     </ul>

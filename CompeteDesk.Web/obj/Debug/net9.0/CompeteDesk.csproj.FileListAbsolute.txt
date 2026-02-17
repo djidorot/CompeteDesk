@@ -242,7 +242,6 @@
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/owl3okhgoj-ucchrc97t6.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/viuebl8zh4-6d257yn84t.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/rp16lct7wt-rh12y8h8iu.gz
-/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/61isycy5rh-k58f2m8dol.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/6yb0u1n5ag-xe6cgwqo3v.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/p0ifuzwmzh-alxlwc387g.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/z2fqrl9kd3-frk4er63yr.gz
@@ -262,7 +261,6 @@
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/1kc3ntxmfq-vmicapfyqr.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/veemze8q00-y6rbqb3tp1.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/jmhz4ygmir-j9m3mbqsp8.gz
-/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/mppatcmrvc-xtxxf3hu2r.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/5r22w25crk-mirf9mc2gq.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/7tlrixqouf-79j3mvq9ov.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/q9ftc94btq-d5b6aeu80x.gz
@@ -320,3 +318,5 @@
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/fi1q3insqn-u8to60upix.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/m56qs2uxms-1llwgom1v2.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/iwpz4ud047-5dpbjofz3r.gz
+/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/61isycy5rh-5ctvx0frjx.gz
+/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/mppatcmrvc-sl8lz8r4cz.gz

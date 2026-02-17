@@ -49,3 +49,28 @@
   });
 })();
 
+// Responsive table wrapping (mobile):
+// Automatically wraps Bootstrap tables with a .table-responsive container when not already wrapped.
+(function () {
+  function wrapTable(table) {
+    // If already wrapped, skip.
+    if (table.closest && table.closest('.table-responsive')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-responsive';
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // Only target main content tables to avoid side effects in navbar/sidebar.
+    const scope = document.querySelector('.cd-main') || document.body;
+    const tables = scope.querySelectorAll('table');
+    tables.forEach(function (t) {
+      // Respect explicit opt-out.
+      if (t.hasAttribute('data-no-responsive-wrap')) return;
+      wrapTable(t);
+    });
+  });
+})();
+
