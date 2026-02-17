@@ -421,7 +421,7 @@ public class DashboardController : Controller
     {
         return new()
         {
-            new FeatureTileItem { Title = "Prep Workspaces", Description = "Create and manage your Civil Service prep workspace.", Href = "/Workspaces" },
+            new FeatureTileItem { Title = "Prep Workspaces", Description = "Create and manage your prep workspace.", Href = "/Workspaces" },
             new FeatureTileItem { Title = "Study Strategies", Description = "Build your playbook for topics and competencies.", Href = "/Strategies" },
             new FeatureTileItem { Title = "Daily Actions", Description = "Track practice tasks and execution.", Href = "/Actions" },
             new FeatureTileItem { Title = "Study Habits", Description = "Turn your plan into repeatable routines.", Href = "/Habits" },

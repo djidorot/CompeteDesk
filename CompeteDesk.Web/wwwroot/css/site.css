@@ -110,3 +110,45 @@ body {
     margin-left: 0 !important;
   }
 }
+
+
+/* ------------------------------------------------------------
+   Modern top navigation
+   ------------------------------------------------------------ */
+.cd-navbar{
+  border-bottom: 1px solid rgba(0,0,0,.06) !important;
+}
+.cd-navbar .navbar-nav{
+  gap: 6px;
+}
+.cd-navbar .cd-navlink{
+  display: inline-flex;
+  align-items: center;
+  padding: .5rem .85rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: rgba(0,0,0,.78);
+  transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.cd-navbar .cd-navlink:hover{
+  background: rgba(91, 19, 110, .08);
+  color: rgb(91, 19, 110);
+}
+.cd-navbar .cd-navlink.is-active{
+  background: rgba(91, 19, 110, .12);
+  color: rgb(91, 19, 110);
+  box-shadow: 0 0 0 1px rgba(91, 19, 110, .18) inset;
+}
+.cd-navbar .navbar-brand .small{
+  letter-spacing: .2px;
+}
+@media (max-width: 575.98px){
+  .cd-navbar .navbar-nav{
+    padding-top: 8px;
+    gap: 4px;
+  }
+  .cd-navbar .cd-navlink{
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
