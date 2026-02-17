@@ -246,7 +246,6 @@
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/z2fqrl9kd3-frk4er63yr.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/sz09p6xmkg-hjn79smlfy.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/q5rw6r0tkd-0mkz5i4zvr.gz
-/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/z5akjhshu6-mouftfrux5.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/74xyvnpb9o-8s5bki4483.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/dz28ak4lxw-itueoimgl0.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/od3w3t2omb-iq90a6b5wz.gz
@@ -321,3 +320,4 @@
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/61isycy5rh-ktah74nih2.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/rp16lct7wt-089i9kgq0l.gz
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/jmhz4ygmir-aak8xzy11b.gz
+/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/Debug/net9.0/compressed/z5akjhshu6-196lv4xs09.gz
