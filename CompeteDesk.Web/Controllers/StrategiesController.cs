@@ -226,7 +226,12 @@ public class StrategiesController : Controller
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
+        // OwnerId is required in the model but is NOT posted from the form.
+        // Model validation runs during model-binding, so we must assign it
+        // server-side and remove any stale ModelState errors for this field.
         model.OwnerId = userId;
+        ModelState.Remove(nameof(Strategy.OwnerId));
+
         model.CreatedAtUtc = DateTime.UtcNow;
         model.UpdatedAtUtc = DateTime.UtcNow;
         model.Status = string.IsNullOrWhiteSpace(model.Status) ? "Active" : model.Status;
@@ -273,6 +278,9 @@ public class StrategiesController : Controller
 
         var item = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId);
         if (item == null) return NotFound();
+
+        // OwnerId is not part of the edit form. Ensure it doesn't block validation.
+        ModelState.Remove(nameof(Strategy.OwnerId));
 
         if (!ModelState.IsValid) return View(model);
 
