@@ -56,15 +56,7 @@
             </div>
         </div>
 
-        @if (Model.LatestPlan != null && Model.Roadmap != null)
-        {
-            <div class="card shadow-sm mt-3">
-                <div class="card-body">
-                    <h6 class="card-title mb-2">AI Roadmap (JSON)</h6>
-                    <pre class="mb-0" style="white-space: pre-wrap; font-size: 12px;">@System.Text.Json.JsonSerializer.Serialize(Model.Roadmap, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre>
-                </div>
-            </div>
-        }
+        @* JSON debug card intentionally removed for cleaner Study Planner UI *@
     </div>
 
     <div class="col-12 col-lg-8">

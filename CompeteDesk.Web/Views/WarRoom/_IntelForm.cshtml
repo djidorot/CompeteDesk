@@ -42,7 +42,7 @@
 
         <div class="cd-field">
             <label class="cd-label" asp-for="ObservedAtUtc">Observed At (UTC)</label>
-            <input type="datetime-local" class="form-control cd-input" asp-for="ObservedAtUtc" />
+            <input type="datetime-local" class="form-control cd-input" asp-for="ObservedAtUtc" asp-format="{0:yyyy-MM-ddTHH:mm}" />
             <span class="text-danger" asp-validation-for="ObservedAtUtc"></span>
         </div>
 
