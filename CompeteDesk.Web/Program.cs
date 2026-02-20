@@ -97,8 +97,14 @@ builder.Services
 builder.Services.AddAuthorization(options =>
 {
     // CanEdit: allow creating/updating/deleting core data
+    // NOTE: CompeteDesk is a self-serve app. Every authenticated user should be able to
+    // create/update/delete their own workspace data by default.
+    // (Admin-only controls remain protected via [Authorize(Roles = "Admin")]).
     options.AddPolicy("CanEdit", policy =>
-        policy.RequireRole(IdentitySeeder.AdminRoleName, IdentitySeeder.EditorRoleName));
+        policy.RequireRole(
+            IdentitySeeder.AdminRoleName,
+            IdentitySeeder.EditorRoleName,
+            IdentitySeeder.UserRoleName));
 
     // Read-only users can still view app pages (authenticated) but can't POST/edit
     options.AddPolicy("ReadOnly", policy =>
