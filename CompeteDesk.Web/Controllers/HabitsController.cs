@@ -379,6 +379,10 @@ public class HabitsController : Controller
         vm.Habit.CreatedAtUtc = DateTime.UtcNow;
         vm.Habit.UpdatedAtUtc = DateTime.UtcNow;
 
+        // OwnerId is required on the model but is set server-side (not posted from the form).
+        // Remove any model-state error that may have been added during binding.
+        ModelState.Remove("Habit.OwnerId");
+
         if (vm.Habit.StrategyId.HasValue && vm.Habit.StrategyId.Value <= 0)
             vm.Habit.StrategyId = null;
 

@@ -188,6 +188,10 @@ public class ActionsController : Controller
         model.Status = string.IsNullOrWhiteSpace(model.Status) ? "Planned" : model.Status;
         model.SourceBook = string.IsNullOrWhiteSpace(model.SourceBook) ? null : model.SourceBook;
 
+        // OwnerId is required on the model but is set server-side (not posted from the form).
+        // Remove any model-state error that may have been added during binding.
+        ModelState.Remove(nameof(ActionItem.OwnerId));
+
         if (!ModelState.IsValid) return View(model);
 
         _db.Actions.Add(model);
