@@ -39,6 +39,11 @@
         savingBtn.classList.toggle('d-none', !isSaving);
     };
 
+    const setSavingText = (text) => {
+        if (!savingBtn) return;
+        savingBtn.textContent = text || 'Saving…';
+    };
+
     const openModal = () => {
         showError('');
         bsModal.show();
@@ -86,6 +91,7 @@
         }
 
         setSaving(true);
+        setSavingText('Saving…');
         try {
             const res = await fetch('/Dashboard/SetBusinessProfile', {
                 method: 'POST',
@@ -107,7 +113,8 @@
             // Mark profile as complete so Generate form can submit.
             root.setAttribute('data-needs-profile', 'false');
 
-            bsModal.hide();
+            // Keep the modal open and show progress so the user knows we're updating.
+            setSavingText('Generating…');
 
             // After saving, automatically generate analysis if none exists yet.
             // We do this by posting to Generate endpoint and then reloading.
@@ -129,11 +136,12 @@
                 bsModal.show();
                 return;
             }
-
+            bsModal.hide();
             window.location.reload();
         } catch (err) {
             showError(err?.message || 'Save failed.');
         } finally {
+            setSavingText('Saving…');
             setSaving(false);
         }
     });
