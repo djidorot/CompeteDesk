@@ -10,6 +10,9 @@ namespace CompeteDesk.ViewModels.Dashboard
         public int WorkspaceId { get; set; }
         public string WorkspaceName { get; set; } = "My Workspace";
 
+        // Workspace switcher (Dashboard header)
+        public List<WorkspaceSwitchItem> Workspaces { get; set; } = new();
+
         // When true, the user hasn't created a workspace yet.
         // The Dashboard should still render and guide them to create one.
         public bool NeedsWorkspace { get; set; }
@@ -169,6 +172,12 @@ namespace CompeteDesk.ViewModels.Dashboard
         public string? Badge { get; set; }
         public string Href { get; set; } = "#";
         public bool Disabled { get; set; }
+    }
+
+    public sealed class WorkspaceSwitchItem
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
     }
 
     public sealed class FeatureTileItem

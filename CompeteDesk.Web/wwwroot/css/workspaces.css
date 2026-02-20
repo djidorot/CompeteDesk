@@ -1,6 +1,12 @@
+/*
+  Workspace pages should feel consistent with the rest of the dashboard modules.
+  The previous centered + narrow max-width made Create feel like it had
+  a "large margin" on wide screens.
+*/
 .cd-page{
-  max-width: 920px;
-  margin: 0 auto;
+  max-width: 1100px;
+  margin: 0; /* left-align inside the dashboard container */
+  width: 100%;
 }
 
 .cd-page__head{

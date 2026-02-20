@@ -148,6 +148,9 @@ public class DashboardController : Controller
             WeeklyFocus = "Pick one high-impact topic and practice it consistently."
         };
 
+        // Populate workspace switcher options (even when no active workspace yet)
+        vm.Workspaces = await LoadUserWorkspacesAsync(userId, ct);
+
         // These tiles are always available; sections below become data-driven when a workspace exists.
         vm.FeatureTiles = BuildFeatureTiles();
 
@@ -450,11 +453,24 @@ public class DashboardController : Controller
             vm.BusinessAnalysis = MapBusinessAnalysis(latest);
         }
 
+        // Workspace switcher options
+        vm.Workspaces = await LoadUserWorkspacesAsync(userId, ct);
+
         ViewData["Title"] = "Dashboard";
         ViewData["LayoutFluid"] = true;
         ViewData["UseSidebar"] = true;
 
         return View(vm);
+    }
+
+    private async Task<List<WorkspaceSwitchItem>> LoadUserWorkspacesAsync(string userId, CancellationToken ct)
+    {
+        return await _db.Workspaces
+            .AsNoTracking()
+            .Where(w => w.OwnerId == userId)
+            .OrderByDescending(w => w.UpdatedAtUtc ?? w.CreatedAtUtc)
+            .Select(w => new WorkspaceSwitchItem { Id = w.Id, Name = w.Name })
+            .ToListAsync(ct);
     }
 
     private static List<FeatureTileItem> BuildFeatureTiles()

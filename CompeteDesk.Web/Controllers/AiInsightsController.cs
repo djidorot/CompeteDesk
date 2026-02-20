@@ -71,8 +71,12 @@ public sealed class AiInsightsController : Controller
         var actionsQ = _db.Actions.AsNoTracking().Where(a => a.OwnerId == userId);
         if (wsId.HasValue) actionsQ = actionsQ.Where(a => a.WorkspaceId == wsId.Value);
 
-        var actionsOpen = await actionsQ.CountAsync(a => !string.Equals(a.Status, "Done", StringComparison.OrdinalIgnoreCase), ct);
-        var actionsDone14 = await actionsQ.CountAsync(a => string.Equals(a.Status, "Done", StringComparison.OrdinalIgnoreCase)
+        // NOTE: EF Core cannot translate string.Equals(..., StringComparison) to SQL.
+        // Use a SQL-translatable expression (lowercase comparison).
+        const string doneLower = "done";
+        var actionsOpen = await actionsQ.CountAsync(a => a.Status == null || a.Status.ToLower() != doneLower, ct);
+        var actionsDone14 = await actionsQ.CountAsync(a => a.Status != null
+                                                          && a.Status.ToLower() == doneLower
                                                           && a.UpdatedAtUtc != null
                                                           && a.UpdatedAtUtc.Value >= start14, ct);
 

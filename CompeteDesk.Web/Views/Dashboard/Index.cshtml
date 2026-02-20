@@ -33,6 +33,27 @@
                     <div class="cd-workspace">
                         <span class="cd-badge">Prep Workspace</span>
                         <h1 class="cd-title mb-0">@Model.WorkspaceName</h1>
+
+                        @if (Model.Workspaces != null && Model.Workspaces.Count > 1)
+                        {
+                            <div class="cd-workspace-switch" aria-label="Workspace switcher">
+                                <label for="cdWorkspaceSelect" class="cd-muted small">Workspace</label>
+                                <select id="cdWorkspaceSelect" class="form-select form-select-sm cd-workspace-select">
+                                    @foreach (var w in Model.Workspaces)
+                                    {
+                                        if (w.Id == Model.WorkspaceId)
+                                        {
+                                            <option value="@w.Id" selected="selected">@w.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@w.Id">@w.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        }
+
                         <div class="cd-sub">Welcome back, <strong>@Model.UserDisplayName</strong>. Focus for the week:
                             <span class="cd-focus">“@Model.WeeklyFocus”</span></div>
                     </div>
@@ -320,5 +341,17 @@
 </div>
 
 @section Scripts {
+    <script>
+        (function () {
+            const sel = document.getElementById('cdWorkspaceSelect');
+            if (!sel) return;
+            sel.addEventListener('change', function () {
+                const id = this.value;
+                if (!id) return;
+                window.location.href = `/Dashboard?workspaceId=${encodeURIComponent(id)}`;
+            });
+        })();
+    </script>
+
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
 }

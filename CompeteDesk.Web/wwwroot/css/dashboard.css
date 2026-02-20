@@ -39,6 +39,23 @@
   color: #5b6471;
 }
 
+/* Workspace switcher (Dashboard header) */
+.cd-workspace-switch{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.cd-workspace-select{
+  max-width: 360px;
+}
+
+@media (max-width: 576px){
+  .cd-workspace-select{ max-width: 100%; }
+}
+
 .cd-focus{
   color:#1f2937;
   font-weight:600;
