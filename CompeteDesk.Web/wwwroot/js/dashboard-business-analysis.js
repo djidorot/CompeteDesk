@@ -143,9 +143,33 @@
                 });
 
                 if (!genRes.ok) {
-                    const txt = await genRes.text();
-                    // Friendly default, append server text if present.
-                    showError('Saved, but could not generate analysis. Configure OpenAI (OpenAI:ApiKey) then click Generate.' + (txt ? `\n${txt}` : ''));
+                    let serverMsg = '';
+                    const contentType = (genRes.headers.get('content-type') || '').toLowerCase();
+
+                    // Prefer JSON error payloads.
+                    if (contentType.includes('application/json')) {
+                        try {
+                            const payload = await genRes.json();
+                            serverMsg = (payload && (payload.error || payload.message)) ? (payload.error || payload.message) : '';
+                        } catch {
+                            serverMsg = '';
+                        }
+                    } else {
+                        // Fallback: text/html (e.g., dev exception page). Strip tags + truncate.
+                        try {
+                            const raw = await genRes.text();
+                            const cleaned = raw
+                                .replace(/<[^>]*>/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            serverMsg = cleaned.length > 260 ? cleaned.slice(0, 260) + '…' : cleaned;
+                        } catch {
+                            serverMsg = '';
+                        }
+                    }
+
+                    const base = 'Saved, but could not generate analysis.';
+                    showError(serverMsg ? `${base} ${serverMsg}` : `${base} Configure OpenAI (OpenAI:ApiKey) then click Generate.`);
                     bsModal.show();
                     return;
                 }

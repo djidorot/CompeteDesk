@@ -65,6 +65,8 @@ Return ONLY a valid JSON object with this exact schema (no markdown):
   "competitors": [
     {
       "name": "Competitor name",
+      "website": "https://example.com (optional)",
+      "summary": "1 sentence description (optional)",
       "whyRelevant": "Why they are a competitor in the selected country",
       "fiveForces": {
         "rivalry": { "score": 1-5, "notes": "..." },
@@ -80,8 +82,12 @@ Return ONLY a valid JSON object with this exact schema (no markdown):
 Rules:
 - SWOT lists: 5-8 bullets each, concise and specific.
 - IMPORTANT: The "businessType" field is authoritative. Do NOT infer the industry from the workspace name.
+- The output must reflect the selected country. Avoid generic, location-agnostic wording.
+  - Mention country-specific realities (regulation, consumer behavior, pricing, distribution/insurance where relevant).
+  - When helpful, reference major cities/regions in that country (but keep it concise).
 - Competitors: 10-14 competitors for the selected country.
-- Competitor names must sound like real businesses in that country.
+  - Prefer REAL competitor brands/clinic chains/platforms that operate in the selected country.
+  - If you include a website, use the company/brand domain when you know it.
   - DO NOT use placeholders like "Competitor 1", "Company A", "Dental Clinic A", "Clinic B", etc.
   - Use distinct, brand-like names (2-6 words) and avoid single-letter suffixes.
 - Five Forces score: integer 1..5 (1=low force, 5=high force).
@@ -332,6 +338,21 @@ Rules:
         if (c.Contains("united states") || c.Equals("usa"))
         {
             return new[] { "Downtown", "Midtown", "Bay", "Lakeside", "Valley" };
+        }
+
+        if (c.Contains("china") || c.Contains("people's republic") || c.Contains("prc"))
+        {
+            return new[] { "Beijing", "Shanghai", "Shenzhen", "Guangzhou", "Hangzhou", "Chengdu", "Wuhan", "Nanjing" };
+        }
+
+        if (c.Contains("japan"))
+        {
+            return new[] { "Tokyo", "Osaka", "Yokohama", "Nagoya", "Fukuoka", "Sapporo" };
+        }
+
+        if (c.Contains("united kingdom") || c.Equals("uk") || c.Contains("great britain"))
+        {
+            return new[] { "London", "Manchester", "Birmingham", "Leeds", "Bristol", "Glasgow" };
         }
 
         return Array.Empty<string>();

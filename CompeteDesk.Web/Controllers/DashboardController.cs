@@ -809,9 +809,36 @@ public class DashboardController : Controller
         if (string.IsNullOrWhiteSpace(ws.BusinessType) || string.IsNullOrWhiteSpace(ws.Country))
             return BadRequest(new { ok = false, error = "Missing business profile." });
 
-        var output = await _biz.GenerateAsync(
-            new BusinessAnalysisService.GenerateInput(ws.Name, ws.BusinessType!, ws.Country!),
-            ct);
+        BusinessAnalysisService.GenerateOutput output;
+        try
+        {
+            output = await _biz.GenerateAsync(
+                new BusinessAnalysisService.GenerateInput(ws.Name, ws.BusinessType!, ws.Country!),
+                ct);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            // HttpClient timeout surfaces as TaskCanceled/OperationCanceled.
+            return StatusCode(504, new
+            {
+                ok = false,
+                error = "AI request timed out. Please try again (or use a simpler business type / country)."
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Common case: OpenAI key not configured.
+            return BadRequest(new { ok = false, error = ex.Message });
+        }
+        catch (Exception)
+        {
+            // Avoid leaking stack traces to the client (AJAX shows raw HTML otherwise).
+            return StatusCode(500, new
+            {
+                ok = false,
+                error = "Could not generate analysis right now. Please try again."
+            });
+        }
 
         var report = new BusinessAnalysisReport
         {

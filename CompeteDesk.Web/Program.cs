@@ -56,7 +56,9 @@ builder.Services.AddHttpClient("site-analyzer", c =>
 // HttpClient for OpenAI.
 builder.Services.AddHttpClient<OpenAiChatClient>(c =>
 {
-    c.Timeout = TimeSpan.FromSeconds(40);
+    // BusinessAnalysis / WarRoom prompts can be larger and occasionally take longer than 40s.
+    // 120s prevents noisy timeouts while still keeping requests bounded.
+    c.Timeout = TimeSpan.FromSeconds(120);
 });
 
 builder.Services.AddScoped<WebsiteAnalysisService>();
