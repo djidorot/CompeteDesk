@@ -4,9 +4,13 @@
   a "large margin" on wide screens.
 */
 .cd-page{
-  max-width: 1100px;
-  /* Center within the dashboard content area so left/right gutters match */
-  margin: 0 auto;
+  /*
+    Keep workspace pages aligned with other dashboard modules (e.g. Strategies).
+    The surrounding layout already provides consistent gutters via container-fluid,
+    so avoid an extra centered max-width that creates different left/right spacing.
+  */
+  max-width: none;
+  margin: 0;
   width: 100%;
 }
 
@@ -41,5 +45,5 @@
 }
 
 @media (max-width: 768px){
-  .cd-page{ max-width: 100%; }
+  .cd-page{ max-width: none; }
 }
