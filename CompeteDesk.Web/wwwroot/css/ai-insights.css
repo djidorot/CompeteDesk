@@ -1,0 +1,61 @@
+/* CompeteDesk - AI Insights (modern cards) */
+
+.cd-aii{ padding: 16px; }
+
+.cd-aii__head{ display:flex; align-items:flex-start; justify-content:space-between; gap: 14px; margin-bottom: 14px; }
+@media (max-width: 992px){
+  .cd-aii__head{ flex-direction:column; align-items:stretch; }
+}
+
+.cd-aii__title{ margin:0; font-weight: 800; letter-spacing: -0.02em; font-size: 2.2rem; }
+.cd-aii__sub{ margin-top: 6px; color: rgba(0,0,0,.62); font-size: .98rem; display:flex; flex-wrap:wrap; gap: 8px; align-items:center; }
+.cd-aii__dot{ color: rgba(0,0,0,.35); }
+
+.cd-aii__headActions{ display:flex; gap: 10px; flex-wrap:wrap; }
+.cd-aii__btn{ border-radius: 12px; padding-left: 14px; padding-right: 14px; }
+
+.cd-aii__card{ background:#fff; border: 1px solid rgba(0,0,0,.08); border-radius: 16px; overflow:hidden; box-shadow: 0 10px 18px rgba(0,0,0,.04); }
+.cd-aii__card--wide{ }
+
+.cd-aii__cardHead{ display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,.06); background: rgba(0,0,0,.015); }
+.cd-aii__cardTitle{ font-weight: 800; letter-spacing: -0.01em; }
+.cd-aii__muted{ color: rgba(0,0,0,.6); }
+
+.cd-aii__pill{ display:inline-flex; align-items:center; padding: 6px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; border: 1px solid rgba(0,0,0,.08); background: #fff; color: rgba(0,0,0,.65); white-space:nowrap; }
+.cd-aii__pill--warn{ background: rgba(255,193,7,.14); border-color: rgba(255,193,7,.28); color: rgba(145, 90, 0, .95); }
+.cd-aii__pill--good{ background: rgba(25,135,84,.12); border-color: rgba(25,135,84,.22); color: rgba(18, 95, 58, .95); }
+
+.cd-aii__cardBody{ padding: 14px 16px; }
+
+.cd-aii__stats{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 992px){
+  .cd-aii__stats{ grid-template-columns: 1fr; }
+}
+
+.cd-aii__stat{ border: 1px solid rgba(0,0,0,.07); border-radius: 14px; padding: 12px; background: rgba(0,0,0,.012); }
+.cd-aii__statLabel{ font-size: .82rem; color: rgba(0,0,0,.6); }
+.cd-aii__statValue{ margin-top: 4px; font-weight: 900; letter-spacing: -0.02em; font-size: 1.35rem; }
+.cd-aii__statValue--small{ font-size: 1rem; font-weight: 800; }
+
+.cd-aii__divider{ height: 1px; background: rgba(0,0,0,.06); margin: 14px 0; }
+
+.cd-aii__kv{ display:grid; gap: 10px; }
+.cd-aii__kvRow{ display:flex; align-items:baseline; justify-content:space-between; gap: 10px; }
+.cd-aii__kvK{ color: rgba(0,0,0,.6); font-size: .88rem; }
+.cd-aii__kvV{ font-weight: 800; }
+
+.cd-aii__list{ list-style:none; padding:0; margin:0; display:grid; gap: 10px; }
+.cd-aii__listItem{ border: 1px solid rgba(0,0,0,.07); border-radius: 14px; padding: 12px; background: rgba(0,0,0,.012); }
+.cd-aii__listTitle{ font-weight: 900; letter-spacing: -0.01em; }
+
+.cd-aii__link{ color: #0d6efd; text-decoration:none; font-weight: 800; display:inline-flex; margin-top: 6px; }
+.cd-aii__link:hover{ text-decoration: underline; }
+
+.cd-aii__empty{ padding: 10px 4px; }
+.cd-aii__emptyTitle{ font-weight: 900; }
+
+.cd-aii__tableWrap{ border: 1px solid rgba(0,0,0,.08); border-radius: 14px; overflow:hidden; }
+.cd-aii__table thead th{ background: rgba(0,0,0,.02); color: rgba(0,0,0,.65); font-size: .85rem; font-weight: 800; border-bottom: 1px solid rgba(0,0,0,.06) !important; }
+.cd-aii__table tbody td{ border-top: 1px solid rgba(0,0,0,.05); }
+.cd-aii__tdFeature{ font-weight: 800; }
+.cd-aii__count{ display:inline-flex; align-items:center; justify-content:center; min-width: 34px; padding: 2px 10px; border-radius: 999px; border: 1px solid rgba(13,110,253,.25); background: rgba(13,110,253,.08); font-weight: 900; }
