@@ -74,8 +74,9 @@ public class AdminController : Controller
         {
             var roles = await _userManager.GetRolesAsync(u);
             var role = roles.Contains(IdentitySeeder.AdminRoleName) ? IdentitySeeder.AdminRoleName
+                : roles.Contains(IdentitySeeder.EditorRoleName) ? IdentitySeeder.EditorRoleName
                 : roles.Contains(IdentitySeeder.ReadOnlyRoleName) ? IdentitySeeder.ReadOnlyRoleName
-                : IdentitySeeder.EditorRoleName;
+                : IdentitySeeder.UserRoleName;
 
             vm.Users.Add(new AdminUserItem
             {
@@ -97,7 +98,7 @@ public class AdminController : Controller
         if (string.IsNullOrWhiteSpace(id)) return RedirectToAction(nameof(Users));
 
         role = (role ?? "").Trim();
-        var allowed = new[] { IdentitySeeder.AdminRoleName, IdentitySeeder.EditorRoleName, IdentitySeeder.ReadOnlyRoleName };
+        var allowed = new[] { IdentitySeeder.UserRoleName, IdentitySeeder.AdminRoleName, IdentitySeeder.EditorRoleName, IdentitySeeder.ReadOnlyRoleName };
         if (!allowed.Contains(role))
         {
             TempData["ToastError"] = "Invalid role.";
@@ -108,7 +109,7 @@ public class AdminController : Controller
         if (user == null) return RedirectToAction(nameof(Users));
 
         var currentRoles = await _userManager.GetRolesAsync(user);
-        // Enforce single app role (Admin/Editor/ReadOnly)
+        // Enforce single app role (User/Admin/Editor/ReadOnly)
         var toRemove = currentRoles.Where(r => allowed.Contains(r)).ToArray();
         if (toRemove.Length > 0)
             await _userManager.RemoveFromRolesAsync(user, toRemove);

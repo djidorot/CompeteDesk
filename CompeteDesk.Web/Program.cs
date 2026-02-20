@@ -221,7 +221,7 @@ app.UseCookiePolicy();
 // IMPORTANT: Auth must run before Authorization
 app.UseAuthentication();
 
-// Ensure every signed-in user has a baseline role (Editor by default).
+// Ensure every signed-in user has a baseline role (User by default).
 // Also supports config-driven Admin promotion for the seed email.
 app.Use(async (context, next) =>
 {

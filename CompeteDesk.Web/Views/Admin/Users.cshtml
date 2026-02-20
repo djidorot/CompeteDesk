@@ -7,7 +7,7 @@
 <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
         <h1 class="h4 mb-0">User Roles</h1>
-        <div class="text-muted">Assign Admin, Editor, or ReadOnly permissions.</div>
+        <div class="text-muted">Assign User, Admin, Editor, or ReadOnly permissions.</div>
     </div>
     <a class="btn btn-sm btn-outline-secondary" asp-controller="Admin" asp-action="Index">Back to Admin</a>
 </div>
@@ -35,6 +35,7 @@
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@u.Id" />
                                     <select class="form-select form-select-sm" name="role">
+                                        <option value="User" selected="@(u.Role=="User")">User</option>
                                         <option value="Admin" selected="@(u.Role=="Admin")">Admin</option>
                                         <option value="Editor" selected="@(u.Role=="Editor")">Editor</option>
                                         <option value="ReadOnly" selected="@(u.Role=="ReadOnly")">ReadOnly</option>

@@ -10,12 +10,14 @@ namespace CompeteDesk.Data;
 /// </summary>
 public static class IdentitySeeder
 {
+    public const string UserRoleName = "User";
     public const string AdminRoleName = "Admin";
     public const string EditorRoleName = "Editor";
     public const string ReadOnlyRoleName = "ReadOnly";
 
     private static readonly string[] BaselineRoles = new[]
     {
+        UserRoleName,
         AdminRoleName,
         EditorRoleName,
         ReadOnlyRoleName
@@ -72,7 +74,7 @@ public static class IdentitySeeder
 
     /// <summary>
     /// Ensures that a signed-in user has at least one application role.
-    /// Default role is Editor (so they can use CRUD features).
+    /// Default role is User.
     /// </summary>
     public static async Task EnsureUserHasDefaultRoleAsync(IServiceProvider services, IdentityUser user)
     {
@@ -81,6 +83,6 @@ public static class IdentitySeeder
         var roles = await userManager.GetRolesAsync(user);
         if (roles is not null && roles.Count > 0) return;
 
-        await userManager.AddToRoleAsync(user, EditorRoleName);
+        await userManager.AddToRoleAsync(user, UserRoleName);
     }
 }
