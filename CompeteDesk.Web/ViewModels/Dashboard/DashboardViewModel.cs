@@ -122,7 +122,7 @@ namespace CompeteDesk.ViewModels.Dashboard
             vm.TodayActions.AddRange(new[]
             {
                 new TodayActionItem { Title = "Publish 1 high-leverage post", Subtitle = "Strategy Playbook • Make it obvious", Impact = "High", Minutes = 25 },
-                new TodayActionItem { Title = "Review competitor pricing page", Subtitle = "33 Strategies • Intelligence", Impact = "Medium", Minutes = 15 }
+                new TodayActionItem { Title = "Review competitor pricing page", Subtitle = "Competitive Intel • Pricing review", Impact = "Medium", Minutes = 15 }
             });
 
             vm.HabitSystems.AddRange(new[]
@@ -149,8 +149,8 @@ namespace CompeteDesk.ViewModels.Dashboard
 
             vm.StrategyCards.AddRange(new[]
             {
-                new StrategyCardItem { Name = "Channel Domination", SourceBook = "33 Strategies", CorePrinciple = "Control the battlefield", ExecutionRate = 74, Effectiveness = "High" },
-                new StrategyCardItem { Name = "Habit Flywheel", SourceBook = "Atomic Habits", CorePrinciple = "Reduce friction", ExecutionRate = 61, Effectiveness = "Medium" }
+                new StrategyCardItem { Name = "Channel Domination", SourceBook = "Playbook", CorePrinciple = "Control the battlefield", ExecutionRate = 74, Effectiveness = "High" },
+                new StrategyCardItem { Name = "Habit Flywheel", SourceBook = "Execution", CorePrinciple = "Reduce friction", ExecutionRate = 61, Effectiveness = "Medium" }
             });
 
             vm.Kpis.AddRange(new[]

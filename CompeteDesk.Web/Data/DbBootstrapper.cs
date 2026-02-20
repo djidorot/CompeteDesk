@@ -1268,13 +1268,16 @@ ON UserProfiles (UserId);");
 
         private static async Task NormalizeSourceBooksAsync(ApplicationDbContext db)
         {
-            // Remove legacy book-title labels from existing data so UI no longer shows them.
+            // Remove legacy inspiration labels from existing data so UI stays neutral.
             // Safe to run repeatedly.
             await db.Database.ExecuteSqlRawAsync(@"
 UPDATE Strategies
 SET SourceBook = NULL
 WHERE SourceBook IS NOT NULL
-  AND (SourceBook LIKE '%33 Strategies of War%' OR SourceBook LIKE '%Atomic Habits%');
+  AND (
+        -- Normalize any old seeded/placeholder sources that referenced a specific book.
+        (lower(SourceBook) LIKE '%33%' AND lower(SourceBook) LIKE '%strateg%' AND lower(SourceBook) LIKE '%war%')
+      );
 ");
         }
 

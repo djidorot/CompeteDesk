@@ -46,10 +46,6 @@
                     }
 
                     <div class="cd-strategy__bottom">
-                        @if (!string.IsNullOrWhiteSpace(s.SourceBook) && !(s.SourceBook.Contains("33 Strategies of War") || s.SourceBook.Contains("Atomic Habits")))
-                        {
-                            <div class="cd-muted">@s.SourceBook</div>
-                        }
                         <a class="cd-link" asp-action="Delete" asp-route-id="@s.Id">Delete</a>
                     </div>
                 </div>

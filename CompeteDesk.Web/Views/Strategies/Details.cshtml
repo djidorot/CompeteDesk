@@ -31,10 +31,6 @@
                     <div class="cd-details__value">@(!string.IsNullOrWhiteSpace(Model.Strategy.Summary) ? Model.Strategy.Summary : "—")</div>
                 </div>
                 <div class="cd-details__row">
-                    <div class="cd-details__label">Source</div>
-                    <div class="cd-details__value">@(!string.IsNullOrWhiteSpace(Model.Strategy.SourceBook) ? Model.Strategy.SourceBook : "—")</div>
-                </div>
-                <div class="cd-details__row">
                     <div class="cd-details__label">Updated</div>
                     <div class="cd-details__value">@((Model.Strategy.UpdatedAtUtc ?? Model.Strategy.CreatedAtUtc).ToLocalTime().ToString("MMM d, yyyy • h:mm tt"))</div>
                 </div>
