@@ -4,7 +4,11 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<div class="cd-pageHeader">
+@section Styles {
+    <link rel="stylesheet" href="~/css/recommendations.css" asp-append-version="true" />
+}
+
+<div class="cd-pageHeader cd-recsHeader">
     <div>
         <h1 class="cd-pageTitle">Smart Recommendations</h1>
         <div class="cd-pageSub">
@@ -15,36 +19,177 @@
             }
         </div>
     </div>
-    <div class="cd-pageActions">
-        <a class="btn btn-outline-secondary" asp-controller="Exports" asp-action="ProgressReportPdf" asp-route-workspaceId="@Model.WorkspaceId">Export Progress PDF</a>
+
+    <div class="cd-pageActions cd-recsHeader__actions">
+        <div class="cd-recsHeader__picker" role="group" aria-label="Workspace">
+            <label class="cd-recsLabel" for="cdRecWorkspace">Workspace</label>
+            <select id="cdRecWorkspace" class="form-select form-select-sm" data-current="@Model.WorkspaceId">
+                <option value="">All workspaces</option>
+                @foreach (var w in Model.Workspaces)
+                {
+                    if (Model.WorkspaceId == w.Id)
+                    {
+                        <option value="@w.Id" selected>@w.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@w.Id">@w.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="btn-group" role="group" aria-label="Actions">
+            <a class="btn btn-outline-secondary btn-sm" asp-controller="Recommendations" asp-action="Index" asp-route-workspaceId="@Model.WorkspaceId" title="Refresh">
+                <span class="cd-recsIco" aria-hidden="true">⟳</span>
+                Refresh
+            </a>
+            <a class="btn btn-outline-secondary btn-sm" asp-controller="Exports" asp-action="ProgressReportPdf" asp-route-workspaceId="@Model.WorkspaceId">
+                Export Progress PDF
+            </a>
+        </div>
     </div>
 </div>
 
+@if (!Model.AiEnabled)
+{
+    <div class="alert alert-warning cd-recsAiAlert" role="alert">
+        <div class="d-flex gap-2 align-items-start">
+            <div class="cd-recsAiAlert__ico" aria-hidden="true">⚡</div>
+            <div>
+                <div class="fw-semibold">AI is not configured.</div>
+                <div class="small">Recommendations will still work, but they won’t be refined into next steps. To enable AI, set <code>OpenAI:ApiKey</code> in appsettings or user secrets.</div>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="row g-3">
+    <div class="col-12">
+        <div class="row g-3">
+            <div class="col-12 col-lg-3">
+                <a class="card shadow-sm cd-recsStat" href="/Actions?workspaceId=@Model.WorkspaceId" title="View actions">
+                    <div class="card-body">
+                        <div class="cd-recsStat__top">
+                            <div class="cd-recsStat__label">Open actions</div>
+                            <div class="cd-recsStat__ico" aria-hidden="true">✅</div>
+                        </div>
+                        <div class="cd-recsStat__value">@Model.OpenActions</div>
+                        <div class="cd-recsStat__sub text-muted">Items not completed</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-lg-3">
+                <a class="card shadow-sm cd-recsStat" href="/Actions?workspaceId=@Model.WorkspaceId&amp;sort=due" title="View overdue">
+                    <div class="card-body">
+                        <div class="cd-recsStat__top">
+                            <div class="cd-recsStat__label">Overdue</div>
+                            <div class="cd-recsStat__ico" aria-hidden="true">⏰</div>
+                        </div>
+                        <div class="cd-recsStat__value">@Model.OverdueActions</div>
+                        <div class="cd-recsStat__sub text-muted">Due before today</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-lg-3">
+                <a class="card shadow-sm cd-recsStat" href="/Habits?workspaceId=@Model.WorkspaceId" title="View habits">
+                    <div class="card-body">
+                        <div class="cd-recsStat__top">
+                            <div class="cd-recsStat__label">Active habits</div>
+                            <div class="cd-recsStat__ico" aria-hidden="true">📈</div>
+                        </div>
+                        <div class="cd-recsStat__value">@Model.ActiveHabits</div>
+                        <div class="cd-recsStat__sub text-muted">Currently tracked</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-lg-3">
+                <div class="card shadow-sm cd-recsStat">
+                    <div class="card-body">
+                        <div class="cd-recsStat__top">
+                            <div class="cd-recsStat__label">14-day check-ins</div>
+                            <div class="cd-recsStat__ico" aria-hidden="true">🗓️</div>
+                        </div>
+                        <div class="cd-recsStat__value">@Model.HabitCheckins14d</div>
+                        <div class="cd-recsStat__sub text-muted">
+                            @if (!string.IsNullOrWhiteSpace(Model.WeakestHabitTitle))
+                            {
+                                <span>Weakest: <strong>@Model.WeakestHabitTitle</strong> (@Model.WeakestHabitCount14d)</span>
+                            }
+                            else
+                            {
+                                <span>Log check-ins to get insights</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Recommendations</h5>
-                    <div class="small text-muted">AI: @(Model.AiEnabled ? "Enabled" : "Not configured")</div>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h5 class="card-title mb-0">Recommendations</h5>
+                        <div class="small text-muted">AI: @(Model.AiEnabled ? "Enabled" : "Not configured")</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (Model.TopBooks?.Length > 0)
+                        {
+                            <span class="badge text-bg-light">Resources: @string.Join(", ", Model.TopBooks)</span>
+                        }
+                        <a class="btn btn-outline-secondary btn-sm" href="/ResourceAnalysis?workspaceId=@Model.WorkspaceId">Resource Analysis</a>
+                    </div>
                 </div>
 
                 @if (Model.Items.Length == 0)
                 {
-                    <div class="text-muted mt-3">No recommendations yet. Add a few actions/habits to get started.</div>
+                    <div class="cd-recsEmpty mt-3">
+                        <div class="cd-recsEmpty__ico" aria-hidden="true">✨</div>
+                        <div>
+                            <div class="fw-semibold">No recommendations yet</div>
+                            <div class="text-muted">Add a few actions and habits, then come back for smart focus suggestions.</div>
+                            <div class="d-flex gap-2 mt-3 flex-wrap">
+                                <a class="btn btn-primary btn-sm" href="/Actions/Create">+ New Action</a>
+                                <a class="btn btn-outline-secondary btn-sm" href="/Habits/Create">+ New Habit</a>
+                            </div>
+                        </div>
+                    </div>
                 }
                 else
                 {
                     <div class="row g-3 mt-1">
                         @foreach (var r in Model.Items)
                         {
+                            var type = (r.Type ?? "").ToLowerInvariant();
+                            var icon = type.Contains("habit") ? "🔁" : type.Contains("resource") ? "📚" : "🎯";
+                            var ctaHref = type.Contains("habit")
+                                ? $"/Habits?workspaceId={Model.WorkspaceId}" 
+                                : $"/Actions?workspaceId={Model.WorkspaceId}";
+                            var ctaText = type.Contains("habit") ? "View habits" : "View actions";
+
                             <div class="col-12 col-lg-6">
-                                <div class="border rounded-4 p-3 h-100">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="fw-semibold">@r.Title</div>
+                                <div class="cd-recsCard">
+                                    <div class="cd-recsCard__top">
+                                        <div class="cd-recsCard__title">
+                                            <span class="cd-recsCard__icon" aria-hidden="true">@icon</span>
+                                            <span>@r.Title</span>
+                                        </div>
                                         <span class="badge text-bg-light">@r.Type</span>
                                     </div>
-                                    <div class="text-muted mt-2">@r.Message</div>
+
+                                    <div class="cd-recsCard__msg text-muted">@r.Message</div>
+
+                                    <div class="cd-recsCard__actions">
+                                        <a class="btn btn-outline-secondary btn-sm" href="@ctaHref">@ctaText</a>
+                                        <button type="button" class="btn btn-primary btn-sm" data-cd-recs-create-action
+                                                data-title="@r.Title" data-note="@r.Message" data-workspace-id="@Model.WorkspaceId">
+                                            Create action
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -54,3 +199,11 @@
         </div>
     </div>
 </div>
+
+<form id="cdRecsAnti" method="post" asp-controller="Recommendations" asp-action="CreateActionFromRecommendation" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/recommendations.js" asp-append-version="true"></script>
+}

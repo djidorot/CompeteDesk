@@ -1,0 +1,163 @@
+.cd-recsHeader{
+  align-items:flex-end;
+  gap:12px;
+}
+
+.cd-recsHeader__actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+}
+
+.cd-recsHeader__picker{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:220px;
+}
+
+.cd-recsLabel{
+  font-size:.75rem;
+  color:rgba(0,0,0,.6);
+}
+
+.cd-recsIco{
+  display:inline-flex;
+  margin-right:6px;
+  transform:translateY(-1px);
+}
+
+.cd-recsAiAlert{
+  border-radius:16px;
+}
+
+.cd-recsAiAlert__ico{
+  width:28px;
+  height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  background:rgba(255,255,255,.6);
+}
+
+.cd-recsStat{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  border-radius:18px;
+}
+
+.cd-recsStat:hover{
+  transform:translateY(-1px);
+}
+
+.cd-recsStat .card-body{
+  padding:16px;
+}
+
+.cd-recsStat__top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.cd-recsStat__label{
+  font-size:.85rem;
+  color:rgba(0,0,0,.6);
+}
+
+.cd-recsStat__ico{
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  background:rgba(0,0,0,.04);
+}
+
+.cd-recsStat__value{
+  font-size:1.6rem;
+  font-weight:800;
+  margin-top:10px;
+  letter-spacing:-0.02em;
+}
+
+.cd-recsStat__sub{
+  margin-top:6px;
+  font-size:.85rem;
+}
+
+.cd-recsEmpty{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  border:1px dashed rgba(0,0,0,.15);
+  border-radius:18px;
+  padding:16px;
+}
+
+.cd-recsEmpty__ico{
+  width:44px;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:16px;
+  background:rgba(0,0,0,.04);
+  flex:0 0 auto;
+  font-size:1.2rem;
+}
+
+.cd-recsCard{
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:14px;
+  height:100%;
+  background:#fff;
+}
+
+.cd-recsCard__top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.cd-recsCard__title{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  font-weight:700;
+  line-height:1.25;
+}
+
+.cd-recsCard__icon{
+  width:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:14px;
+  background:rgba(0,0,0,.04);
+  flex:0 0 auto;
+}
+
+.cd-recsCard__msg{
+  margin-top:10px;
+  font-size:.95rem;
+}
+
+.cd-recsCard__actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+
+@media (max-width: 576px){
+  .cd-recsHeader__picker{ min-width: 100%; }
+  .cd-recsCard__actions .btn{ width:100%; }
+}
