@@ -157,4 +157,19 @@
             }
         });
     }
+
+    // ----------------------------
+    // Intel Create: give visible feedback on Save
+    // ----------------------------
+    const intelCreateForm = qs('form[data-war-intel-create]');
+    if (intelCreateForm) {
+        intelCreateForm.addEventListener('submit', () => {
+            const submitBtn = qs('button[type="submit"]', intelCreateForm);
+            if (!submitBtn) return;
+            // Prevent double submits and show progress.
+            submitBtn.disabled = true;
+            submitBtn.setAttribute('data-original-text', submitBtn.textContent || 'Save');
+            submitBtn.textContent = 'Saving…';
+        });
+    }
 })();

@@ -16,7 +16,18 @@
 
     if (!modalEl || !formEl || !saveBtn || !savingBtn) return;
 
+    // Guard: if Bootstrap JS isn't available, don't break the page.
+    if (!window.bootstrap || !window.bootstrap.Modal) return;
+
     const bsModal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+
+    // Business Profile updates should immediately refresh the analysis.
+    // Always save + generate from this modal.
+    const generateAfterSave = true;
+
+    const setSaveButtonMode = () => {
+        if (saveBtn) saveBtn.textContent = 'Save + Generate';
+    };
 
     const antiForgery = () => {
         const tokenInput = formEl.querySelector('input[name="__RequestVerificationToken"]');
@@ -51,6 +62,7 @@
 
     // Auto-open if profile is missing
     if (needsProfile) {
+        setSaveButtonMode();
         openModal();
     }
 
@@ -58,6 +70,7 @@
     if (editBtn) {
         editBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            setSaveButtonMode();
             openModal();
         });
     }
@@ -70,13 +83,14 @@
                 const currentNeeds = (root.getAttribute('data-needs-profile') || '').toLowerCase() === 'true';
                 if (currentNeeds) {
                     e.preventDefault();
+                    setSaveButtonMode();
                     openModal();
                 }
             });
         }
     }
 
-    // Save profile via fetch then trigger Generate if user originally clicked Generate.
+    // Save profile via fetch, optionally triggering Generate.
     saveBtn.addEventListener('click', async () => {
         showError('');
 
@@ -113,29 +127,30 @@
             // Mark profile as complete so Generate form can submit.
             root.setAttribute('data-needs-profile', 'false');
 
-            // Keep the modal open and show progress so the user knows we're updating.
-            setSavingText('Generating…');
+            if (generateAfterSave) {
+                // Keep the modal open and show progress so the user knows we're working.
+                setSavingText('Generating…');
 
-            // After saving, automatically generate analysis if none exists yet.
-            // We do this by posting to Generate endpoint and then reloading.
-            const genTokenInput = document.querySelector('form[action*="GenerateBusinessAnalysis"] input[name="__RequestVerificationToken"]');
-            const genToken = genTokenInput ? genTokenInput.value : antiForgery();
+                const genTokenInput = document.querySelector('form[action*="GenerateBusinessAnalysis"] input[name="__RequestVerificationToken"]');
+                const genToken = genTokenInput ? genTokenInput.value : antiForgery();
 
-            const genRes = await fetch('/Dashboard/GenerateBusinessAnalysis', {
-                method: 'POST',
-                headers: {
-                    'RequestVerificationToken': genToken
-                },
-                body: new URLSearchParams({ workspaceId: workspaceId })
-            });
+                const genRes = await fetch('/Dashboard/GenerateBusinessAnalysis', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': genToken
+                    },
+                    body: new URLSearchParams({ workspaceId: workspaceId })
+                });
 
-            if (!genRes.ok) {
-                // If OpenAI isn't configured, show a friendly error and don't reload.
-                const txt = await genRes.text();
-                showError('Saved, but could not generate analysis. Configure OpenAI (OpenAI:ApiKey) then click Generate.');
-                bsModal.show();
-                return;
+                if (!genRes.ok) {
+                    const txt = await genRes.text();
+                    // Friendly default, append server text if present.
+                    showError('Saved, but could not generate analysis. Configure OpenAI (OpenAI:ApiKey) then click Generate.' + (txt ? `\n${txt}` : ''));
+                    bsModal.show();
+                    return;
+                }
             }
+
             bsModal.hide();
             window.location.reload();
         } catch (err) {

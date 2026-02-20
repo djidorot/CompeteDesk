@@ -13,8 +13,10 @@
         <h1 class="cd-h1 mb-1">New Intel</h1>
         <div class="cd-sub mb-3">Capture observations and signals. Keep it short and specific.</div>
 
-        <form asp-action="IntelCreate" method="post">
+        <form asp-action="IntelCreate" method="post" data-war-intel-create>
             @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
             <partial name="_IntelForm" model="Model" />
 

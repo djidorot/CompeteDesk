@@ -79,6 +79,7 @@ Return ONLY a valid JSON object with this exact schema (no markdown):
 
 Rules:
 - SWOT lists: 5-8 bullets each, concise and specific.
+- IMPORTANT: The "businessType" field is authoritative. Do NOT infer the industry from the workspace name.
 - Competitors: 10-14 competitors for the selected country.
 - Competitor names must sound like real businesses in that country.
   - DO NOT use placeholders like "Competitor 1", "Company A", "Dental Clinic A", "Clinic B", etc.
@@ -88,10 +89,10 @@ Rules:
 
         var userPayload = JsonSerializer.Serialize(new
         {
-            workspace = input.WorkspaceName ?? "",
             businessType = input.BusinessType,
             country = input.Country,
-            task = "Generate SWOT and Porter's Five Forces for the business and for key competitors in the specified country."
+            task = "Generate SWOT and Porter's Five Forces for the business and for key competitors in the specified country.",
+            note = "Use businessType exactly; ignore workspace name if it suggests a different industry."
         });
 
         // This should return JSON (your OpenAiChatClient likely sets response_format=json_object)
