@@ -11,6 +11,63 @@
     </div>
 </div>
 
+@if (Model.IsAdmin)
+{
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small text-muted mb-1" for="q">Search</label>
+                    <input id="q" name="q" value="@Model.Q" class="form-control" placeholder="Summary / entity / id" />
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label class="form-label small text-muted mb-1" for="actionFilter">Action</label>
+                    <select id="actionFilter" name="actionFilter" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.ActionOptions)
+                        {
+                            <option value="@opt" selected="@((opt == Model.ActionFilter) ? "selected" : null)">@opt</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label class="form-label small text-muted mb-1" for="entityType">Entity</label>
+                    <select id="entityType" name="entityType" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.EntityTypeOptions)
+                        {
+                            <option value="@opt" selected="@((opt == Model.EntityTypeFilter) ? "selected" : null)">@opt</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label class="form-label small text-muted mb-1" for="actor">Actor</label>
+                    <input id="actor" name="actor" value="@Model.ActorFilter" class="form-control" placeholder="email contains…" />
+                </div>
+
+                <div class="col-6 col-md-1">
+                    <label class="form-label small text-muted mb-1" for="fromUtc">From</label>
+                    <input id="fromUtc" name="fromUtc" type="date" class="form-control" value="@(Model.FromUtc?.ToString("yyyy-MM-dd"))" />
+                </div>
+
+                <div class="col-6 col-md-1">
+                    <label class="form-label small text-muted mb-1" for="toUtc">To</label>
+                    <input id="toUtc" name="toUtc" type="date" class="form-control" value="@(Model.ToUtc?.ToString("yyyy-MM-dd"))" />
+                </div>
+
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Filter</button>
+                    <a class="btn btn-outline-secondary" href="/Activity">Clear</a>
+                </div>
+            </form>
+            <div class="small text-muted mt-2">Times are in UTC.</div>
+        </div>
+    </div>
+}
+
 <div class="card">
     <div class="card-body">
         <div class="position-relative" data-async-pager>

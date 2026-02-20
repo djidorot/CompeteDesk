@@ -29,15 +29,74 @@ public class ActivityController : Controller
     }
 
     // GET: /Activity
-    public async Task<IActionResult> Index(int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
+    public async Task<IActionResult> Index(
+        string? q = null,
+        string? actionFilter = null,
+        string? entityType = null,
+        string? actor = null,
+        DateTime? fromUtc = null,
+        DateTime? toUtc = null,
+        int page = 1,
+        int pageSize = 25,
+        bool partial = false,
+        CancellationToken ct = default)
     {
         var (userId, isAdmin) = await GetMeAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
         // Non-admin sees only own activity. Admin sees system-wide.
-        var query = _db.AuditLogs.AsNoTracking();
+        var baseQuery = _db.AuditLogs.AsNoTracking();
         if (!isAdmin)
-            query = query.Where(x => x.ActorUserId == userId || x.OwnerId == userId);
+            baseQuery = baseQuery.Where(x => x.ActorUserId == userId || x.OwnerId == userId);
+
+        // Populate filter option lists (scoped by permissions, not by the selected filter values).
+        var actionOptionsTask = baseQuery
+            .Select(x => x.Action)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync(ct);
+
+        var entityTypeOptionsTask = baseQuery
+            .Select(x => x.EntityType)
+            .Where(x => x != null && x != "")
+            .Distinct()
+            .OrderBy(x => x)
+            .Select(x => x!)
+            .ToListAsync(ct);
+
+        // Apply filters
+        var query = baseQuery;
+
+        if (!string.IsNullOrWhiteSpace(actionFilter))
+            query = query.Where(x => x.Action == actionFilter);
+
+        if (!string.IsNullOrWhiteSpace(entityType))
+            query = query.Where(x => x.EntityType == entityType);
+
+        if (!string.IsNullOrWhiteSpace(actor))
+            query = query.Where(x => x.ActorEmail != null && EF.Functions.Like(x.ActorEmail, $"%{actor}%"));
+
+        if (fromUtc.HasValue)
+            query = query.Where(x => x.CreatedAtUtc >= fromUtc.Value);
+
+        if (toUtc.HasValue)
+        {
+            // Treat date-only inputs as inclusive. If the user provides a date without time,
+            // bump to the next day boundary in UTC.
+            var to = toUtc.Value;
+            if (to.TimeOfDay == TimeSpan.Zero)
+                to = to.AddDays(1);
+            query = query.Where(x => x.CreatedAtUtc < to);
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var term = q.Trim();
+            query = query.Where(x =>
+                (x.Summary != null && EF.Functions.Like(x.Summary, $"%{term}%")) ||
+                (x.EntityType != null && EF.Functions.Like(x.EntityType, $"%{term}%")) ||
+                (x.EntityId != null && EF.Functions.Like(x.EntityId, $"%{term}%")));
+        }
 
         var projection = query
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -58,6 +117,14 @@ public class ActivityController : Controller
         {
             IsAdmin = isAdmin,
             ScopeLabel = isAdmin ? "System Activity" : "My Activity",
+            Q = q,
+            ActionFilter = actionFilter,
+            EntityTypeFilter = entityType,
+            ActorFilter = actor,
+            FromUtc = fromUtc,
+            ToUtc = toUtc,
+            ActionOptions = await actionOptionsTask,
+            EntityTypeOptions = await entityTypeOptionsTask,
             Page = paged.Page,
             PageSize = paged.PageSize,
             TotalCount = paged.TotalCount,

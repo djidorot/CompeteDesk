@@ -53,6 +53,15 @@ else
         PageSize = Model.PageSize,
         TotalCount = Model.TotalCount,
         TotalPages = Model.TotalPages,
+        RouteValues = new Dictionary<string, object?>
+        {
+            ["q"] = Model.Q,
+            ["actionFilter"] = Model.ActionFilter,
+            ["entityType"] = Model.EntityTypeFilter,
+            ["actor"] = Model.ActorFilter,
+            ["fromUtc"] = Model.FromUtc?.ToString("yyyy-MM-dd"),
+            ["toUtc"] = Model.ToUtc?.ToString("yyyy-MM-dd")
+        },
         Async = true
     })
 }
