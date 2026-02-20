@@ -72,7 +72,7 @@
     <div class="cd-grid mt-3">
 
         <!-- Summary Cards -->
-        <section class="cd-panel card shadow-sm" id="overview-summary">
+        <section class="cd-panel card shadow-sm" id="overview-summary" data-workspace-id="@Model.WorkspaceId">
             <div class="card-body">
                 <div class="cd-panel-head">
                     <h2 class="cd-h2">Summary</h2>
@@ -84,15 +84,15 @@
                     {
                         var cls = s.Disabled ? "cd-overview-card cd-overview-card--disabled" : "cd-overview-card";
                         var href = s.Disabled ? "#" : s.Href;
-                        <a class="@cls" href="@href" aria-disabled="@(s.Disabled ? "true" : "false")">
+                        <a class="@cls" href="@href" aria-disabled="@(s.Disabled ? "true" : "false")" data-summary-title="@s.Title">
                             <div class="cd-overview-top">
                                 <div class="cd-overview-title">@s.Title</div>
                                 @if (!string.IsNullOrWhiteSpace(s.Badge))
                                 {
-                                    <span class="cd-overview-badge">@s.Badge</span>
+                                    <span class="cd-overview-badge" data-summary-badge>@s.Badge</span>
                                 }
                             </div>
-                            <div class="cd-overview-count">@s.Count</div>
+                            <div class="cd-overview-count" data-summary-count>@s.Count</div>
                             <div class="cd-overview-sub">@s.Subtitle</div>
                             <div class="cd-overview-link">Open →</div>
                         </a>

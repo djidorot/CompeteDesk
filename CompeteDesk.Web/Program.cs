@@ -176,6 +176,9 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
 
 builder.Services.AddControllersWithViews();
 
+// Workspace context resolver (used by Dashboard + create flows)
+builder.Services.AddScoped<CompeteDesk.Services.ActiveWorkspaceService>();
+
 var app = builder.Build();
 
 // Ensure Workspace CRUD works even if you already have an existing app.db.

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Caching.Memory;
 using CompeteDesk.Models.Common;
 using CompeteDesk.Services.Gamification;
+using CompeteDesk.Services;
 
 namespace CompeteDesk.Controllers;
 
@@ -22,13 +23,15 @@ public class ActionsController : Controller
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IMemoryCache _cache;
     private readonly GamificationService _gamification;
+    private readonly ActiveWorkspaceService _activeWs;
 
-    public ActionsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, IMemoryCache cache, GamificationService gamification)
+    public ActionsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, IMemoryCache cache, GamificationService gamification, ActiveWorkspaceService activeWs)
     {
         _db = db;
         _userManager = userManager;
         _cache = cache;
         _gamification = gamification;
+        _activeWs = activeWs;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -191,6 +194,14 @@ public class ActionsController : Controller
         // OwnerId is required on the model but is set server-side (not posted from the form).
         // Remove any model-state error that may have been added during binding.
         ModelState.Remove(nameof(ActionItem.OwnerId));
+
+        // Back-compat: if the form didn't include a workspace, attach to active workspace.
+        if (model.WorkspaceId == null || model.WorkspaceId <= 0)
+        {
+            var activeWorkspaceId = await _activeWs.ResolveAsync(HttpContext, userId, workspaceId: null, ct: CancellationToken.None);
+            if (activeWorkspaceId.HasValue)
+                model.WorkspaceId = activeWorkspaceId.Value;
+        }
 
         if (!ModelState.IsValid) return View(model);
 

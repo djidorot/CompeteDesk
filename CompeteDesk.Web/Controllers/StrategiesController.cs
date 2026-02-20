@@ -17,6 +17,7 @@ using CompeteDesk.ViewModels.Strategies;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Caching.Memory;
 using CompeteDesk.Models.Common;
+using CompeteDesk.Services;
 
 namespace CompeteDesk.Controllers;
 
@@ -27,13 +28,15 @@ public class StrategiesController : Controller
     private readonly UserManager<IdentityUser> _userManager;
     private readonly OpenAiChatClient _openAi;
     private readonly IMemoryCache _cache;
+    private readonly ActiveWorkspaceService _activeWs;
 
-    public StrategiesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, OpenAiChatClient openAi, IMemoryCache cache)
+    public StrategiesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, OpenAiChatClient openAi, IMemoryCache cache, ActiveWorkspaceService activeWs)
     {
         _db = db;
         _userManager = userManager;
         _openAi = openAi;
         _cache = cache;
+        _activeWs = activeWs;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -206,8 +209,13 @@ public class StrategiesController : Controller
             Priority = 0
         };
 
-        // If user has 0 strategies, gently suggest seeding.
+        // Auto-attach to the active workspace so Dashboard summary counts stay in sync.
         var userId = await GetUserIdAsync();
+        var activeWorkspaceId = await _activeWs.ResolveAsync(HttpContext, userId, workspaceId: null, ct: CancellationToken.None);
+        if (activeWorkspaceId.HasValue)
+            model.WorkspaceId = activeWorkspaceId.Value;
+
+        // If user has 0 strategies, gently suggest seeding.
         ViewBag.HasAny = await _db.Strategies.AnyAsync(x => x.OwnerId == userId);
 
         return View(model);
@@ -231,6 +239,14 @@ public class StrategiesController : Controller
         // server-side and remove any stale ModelState errors for this field.
         model.OwnerId = userId;
         ModelState.Remove(nameof(Strategy.OwnerId));
+
+        // Back-compat: if the form didn't include a workspace, attach to active workspace.
+        if (model.WorkspaceId == null || model.WorkspaceId <= 0)
+        {
+            var activeWorkspaceId = await _activeWs.ResolveAsync(HttpContext, userId, workspaceId: null, ct: CancellationToken.None);
+            if (activeWorkspaceId.HasValue)
+                model.WorkspaceId = activeWorkspaceId.Value;
+        }
 
         model.CreatedAtUtc = DateTime.UtcNow;
         model.UpdatedAtUtc = DateTime.UtcNow;

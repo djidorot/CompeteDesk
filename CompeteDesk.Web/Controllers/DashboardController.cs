@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
 using CompeteDesk.Models;
 using CompeteDesk.Services.BusinessAnalysis;
+using CompeteDesk.Services;
 using CompeteDesk.ViewModels.Dashboard;
 
 namespace CompeteDesk.Controllers;
@@ -19,17 +20,49 @@ namespace CompeteDesk.Controllers;
 [Authorize]
 public class DashboardController : Controller
 {
-    private const string ActiveWorkspaceCookieName = "cd.activeWorkspaceId";
+    private const string ActiveWorkspaceCookieName = ActiveWorkspaceService.ActiveWorkspaceCookieName;
 
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly BusinessAnalysisService _biz;
+    private readonly ActiveWorkspaceService _activeWs;
 
-    public DashboardController(ApplicationDbContext db, UserManager<IdentityUser> userManager, BusinessAnalysisService biz)
+    public DashboardController(ApplicationDbContext db, UserManager<IdentityUser> userManager, BusinessAnalysisService biz, ActiveWorkspaceService activeWs)
     {
         _db = db;
         _userManager = userManager;
         _biz = biz;
+        _activeWs = activeWs;
+    }
+
+    /// <summary>
+    /// Returns the current Dashboard summary cards for the active workspace.
+    /// This is used by the client to refresh counts dynamically.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> Summary(int? workspaceId, CancellationToken ct)
+    {
+        var userId = await GetUserIdAsync();
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+        var resolvedId = await _activeWs.ResolveAsync(HttpContext, userId, workspaceId, ct);
+        if (!resolvedId.HasValue)
+            return Json(new { workspaceId = 0, items = Array.Empty<object>() });
+
+        var items = await BuildOverviewSummaryAsync(userId, resolvedId.Value, ct);
+        return Json(new
+        {
+            workspaceId = resolvedId.Value,
+            items = items.Select(i => new
+            {
+                title = i.Title,
+                subtitle = i.Subtitle,
+                count = i.Count,
+                badge = i.Badge,
+                href = i.Href,
+                disabled = i.Disabled
+            })
+        });
     }
 
     private async Task<string> GetUserIdAsync()
@@ -151,6 +184,13 @@ public class DashboardController : Controller
         vm.BusinessType = ws.BusinessType;
         vm.Country = ws.Country;
         vm.NeedsBusinessProfile = string.IsNullOrWhiteSpace(ws.BusinessType) || string.IsNullOrWhiteSpace(ws.Country);
+
+        // Back-compat fix:
+        // Earlier create flows could save records without WorkspaceId, causing Dashboard summary to stay at 0.
+        // If the user only has ONE workspace, safely attach those orphan records to it.
+        var wsCount = await _db.Workspaces.AsNoTracking().CountAsync(w => w.OwnerId == userId, ct);
+        if (wsCount == 1)
+            await AttachOrphanedRecordsToWorkspaceAsync(userId, ws.Id, ct);
 
         // ------------------------------------------------------------
         // Dynamic dashboard sections (no static demo content)
@@ -431,6 +471,169 @@ public class DashboardController : Controller
             new FeatureTileItem { Title = "Exam Analysis (AI)", Description = "Templates + AI support for structured analysis.", Href = "/BusinessAnalysis" },
             new FeatureTileItem { Title = "AI Study Co-Pilot", Description = "Get guidance to improve focus and consistency.", Href = "/StrategyCopilot" }
         };
+    }
+
+    private async Task<List<OverviewSummaryItem>> BuildOverviewSummaryAsync(string userId, int workspaceId, CancellationToken ct)
+    {
+        var strategiesActive = await _db.Strategies.AsNoTracking()
+            .CountAsync(s => s.OwnerId == userId && s.WorkspaceId == workspaceId && s.Status == "Active", ct);
+
+        var totalActions = await _db.Actions.AsNoTracking()
+            .CountAsync(a => a.OwnerId == userId && a.WorkspaceId == workspaceId, ct);
+
+        var openActions = await _db.Actions.AsNoTracking()
+            .CountAsync(a => a.OwnerId == userId && a.WorkspaceId == workspaceId && a.Status != "Done", ct);
+
+        var habitsActive = await _db.Habits.AsNoTracking()
+            .CountAsync(h => h.OwnerId == userId && h.WorkspaceId == workspaceId && h.IsActive, ct);
+
+        var websiteReports = await _db.WebsiteAnalysisReports.AsNoTracking()
+            .CountAsync(r => r.OwnerId == userId && r.WorkspaceId == workspaceId, ct);
+
+        var warIntelCount = await _db.WarIntel.AsNoTracking()
+            .CountAsync(i => i.OwnerId == userId && i.WorkspaceId == workspaceId, ct);
+
+        var warPlanCount = await _db.WarPlans.AsNoTracking()
+            .CountAsync(p => p.OwnerId == userId && p.WorkspaceId == workspaceId, ct);
+
+        var businessReports = await _db.BusinessAnalysisReports.AsNoTracking()
+            .CountAsync(r => r.OwnerId == userId && r.WorkspaceId == workspaceId, ct);
+
+        // NeedsBusinessProfile is evaluated in Index; for summary refresh we keep the badge simple.
+        return new()
+        {
+            new OverviewSummaryItem
+            {
+                Title = "Strategies",
+                Subtitle = "Playbooks and strategic moves",
+                Count = strategiesActive,
+                Badge = strategiesActive > 0 ? $"{strategiesActive} active" : "No active",
+                Href = "/Strategies"
+            },
+            new OverviewSummaryItem
+            {
+                Title = "Actions",
+                Subtitle = "Execution and to-dos",
+                Count = totalActions,
+                Badge = openActions > 0 ? $"{openActions} open" : "All done",
+                Href = "/Actions"
+            },
+            new OverviewSummaryItem
+            {
+                Title = "Habits",
+                Subtitle = "Systems & routines",
+                Count = habitsActive,
+                Badge = habitsActive > 0 ? "Active" : "Create one",
+                Href = "/Habits",
+                Disabled = false
+            },
+            new OverviewSummaryItem
+            {
+                Title = "Metrics",
+                Subtitle = "KPIs & tracking",
+                Count = 4,
+                Badge = "Auto",
+                Href = "/Metrics",
+                Disabled = false
+            },
+            new OverviewSummaryItem
+            {
+                Title = "Website Analysis",
+                Subtitle = "Website insight reports",
+                Count = websiteReports,
+                Badge = "AI",
+                Href = "/WebsiteAnalysis"
+            },
+            new OverviewSummaryItem
+            {
+                Title = "War Room",
+                Subtitle = "Intel + plans",
+                Count = warIntelCount + warPlanCount,
+                Badge = $"{warIntelCount} intel • {warPlanCount} plans",
+                Href = "/WarRoom"
+            },
+            new OverviewSummaryItem
+            {
+                Title = "Business Analysis (AI)",
+                Subtitle = "SWOT + Five Forces + competitors",
+                Count = businessReports,
+                Badge = "AI",
+                Href = "/BusinessAnalysis"
+            },
+        };
+    }
+
+    private async Task AttachOrphanedRecordsToWorkspaceAsync(string userId, int workspaceId, CancellationToken ct)
+    {
+        // Only safe when the user has exactly one workspace (checked by caller).
+        // Attach missing WorkspaceId to prevent Dashboard summary counts from staying at 0.
+        var updated = false;
+
+        var orphanStrategies = await _db.Strategies
+            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .ToListAsync(ct);
+        if (orphanStrategies.Count > 0)
+        {
+            orphanStrategies.ForEach(x => x.WorkspaceId = workspaceId);
+            updated = true;
+        }
+
+        var orphanActions = await _db.Actions
+            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .ToListAsync(ct);
+        if (orphanActions.Count > 0)
+        {
+            orphanActions.ForEach(x => x.WorkspaceId = workspaceId);
+            updated = true;
+        }
+
+        var orphanHabits = await _db.Habits
+            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .ToListAsync(ct);
+        if (orphanHabits.Count > 0)
+        {
+            orphanHabits.ForEach(x => x.WorkspaceId = workspaceId);
+            updated = true;
+        }
+
+        var orphanIntel = await _db.WarIntel
+            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .ToListAsync(ct);
+        if (orphanIntel.Count > 0)
+        {
+            orphanIntel.ForEach(x => x.WorkspaceId = workspaceId);
+            updated = true;
+        }
+
+        var orphanPlans = await _db.WarPlans
+            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .ToListAsync(ct);
+        if (orphanPlans.Count > 0)
+        {
+            orphanPlans.ForEach(x => x.WorkspaceId = workspaceId);
+            updated = true;
+        }
+
+        var orphanWeb = await _db.WebsiteAnalysisReports
+            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .ToListAsync(ct);
+        if (orphanWeb.Count > 0)
+        {
+            orphanWeb.ForEach(x => x.WorkspaceId = workspaceId);
+            updated = true;
+        }
+
+        var orphanBiz = await _db.BusinessAnalysisReports
+            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .ToListAsync(ct);
+        if (orphanBiz.Count > 0)
+        {
+            orphanBiz.ForEach(x => x.WorkspaceId = workspaceId);
+            updated = true;
+        }
+
+        if (updated)
+            await _db.SaveChangesAsync(ct);
     }
 
     private static int EstimateMinutes(ActionItem a)

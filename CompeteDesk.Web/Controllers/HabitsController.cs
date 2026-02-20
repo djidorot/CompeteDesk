@@ -7,6 +7,7 @@ using CompeteDesk.Data;
 using CompeteDesk.Models;
 using CompeteDesk.Services.Habits;
 using CompeteDesk.Services.Gamification;
+using CompeteDesk.Services;
 using CompeteDesk.ViewModels.Habits;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -22,13 +23,15 @@ public class HabitsController : Controller
     private readonly UserManager<IdentityUser> _userManager;
     private readonly HabitsAiService _ai;
     private readonly GamificationService _gamification;
+    private readonly ActiveWorkspaceService _activeWs;
 
-    public HabitsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, HabitsAiService ai, GamificationService gamification)
+    public HabitsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, HabitsAiService ai, GamificationService gamification, ActiveWorkspaceService activeWs)
     {
         _db = db;
         _userManager = userManager;
         _ai = ai;
         _gamification = gamification;
+        _activeWs = activeWs;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -328,11 +331,19 @@ public class HabitsController : Controller
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
+        // If no workspace is provided, default to the active workspace so Dashboard summary stays accurate.
+        var resolvedWorkspaceId = workspaceId;
+        if (!resolvedWorkspaceId.HasValue || resolvedWorkspaceId.Value <= 0)
+        {
+            var active = await _activeWs.ResolveAsync(HttpContext, userId, workspaceId: null, ct: CancellationToken.None);
+            if (active.HasValue) resolvedWorkspaceId = active.Value;
+        }
+
         var vm = new HabitEditViewModel
         {
             Habit = new Habit
             {
-                WorkspaceId = workspaceId ?? 0,
+                WorkspaceId = resolvedWorkspaceId ?? 0,
                 StrategyId = strategyId,
                 Frequency = NormalizeFrequency(frequency),
                 TargetCount = 1,
@@ -349,8 +360,8 @@ public class HabitsController : Controller
         var strategiesQuery = _db.Strategies.AsNoTracking()
             .Where(x => x.OwnerId == userId);
 
-        if (workspaceId.HasValue)
-            strategiesQuery = strategiesQuery.Where(x => x.WorkspaceId == workspaceId.Value);
+        if (resolvedWorkspaceId.HasValue)
+            strategiesQuery = strategiesQuery.Where(x => x.WorkspaceId == resolvedWorkspaceId.Value);
 
         vm.Strategies = await strategiesQuery
             .OrderBy(x => x.Name)
@@ -385,6 +396,14 @@ public class HabitsController : Controller
 
         if (vm.Habit.StrategyId.HasValue && vm.Habit.StrategyId.Value <= 0)
             vm.Habit.StrategyId = null;
+
+        // Back-compat: if the form didn't include a workspace, attach to active workspace.
+        if (vm.Habit.WorkspaceId <= 0)
+        {
+            var activeWorkspaceId = await _activeWs.ResolveAsync(HttpContext, userId, workspaceId: null, ct: CancellationToken.None);
+            if (activeWorkspaceId.HasValue)
+                vm.Habit.WorkspaceId = activeWorkspaceId.Value;
+        }
 
         // Validate workspace belongs to user
         var wsOk = await _db.Workspaces.AsNoTracking().AnyAsync(x => x.Id == vm.Habit.WorkspaceId && x.OwnerId == userId);
