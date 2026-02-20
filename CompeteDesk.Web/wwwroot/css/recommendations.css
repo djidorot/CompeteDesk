@@ -3,11 +3,23 @@
   gap:12px;
 }
 
+/* Keep the header controls visually separated from the stats cards. */
+.cd-recsGrid{
+  margin-top: 14px;
+}
+
+/* Some pages set Bootstrap gutters to 0 globally. Force consistent spacing here. */
+.cd-recsGutters{
+  --bs-gutter-x: 1.25rem;
+  --bs-gutter-y: 1.25rem;
+}
+
 .cd-recsHeader__actions{
   display:flex;
-  gap:12px;
+  gap:16px;
   flex-wrap:wrap;
   align-items:flex-end;
+  padding-top:6px;
 }
 
 .cd-recsHeader__picker{
@@ -15,6 +27,17 @@
   flex-direction:column;
   gap:4px;
   min-width:220px;
+}
+
+.cd-recsHeader__btns{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+}
+
+.cd-recsHeader__btns .btn{
+  border-radius:12px;
 }
 
 .cd-recsLabel{

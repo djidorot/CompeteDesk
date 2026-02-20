@@ -39,7 +39,7 @@
             </select>
         </div>
 
-        <div class="btn-group" role="group" aria-label="Actions">
+        <div class="cd-recsHeader__btns" role="group" aria-label="Actions">
             <a class="btn btn-outline-secondary btn-sm" asp-controller="Recommendations" asp-action="Index" asp-route-workspaceId="@Model.WorkspaceId" title="Refresh">
                 <span class="cd-recsIco" aria-hidden="true">⟳</span>
                 Refresh
@@ -64,9 +64,9 @@
     </div>
 }
 
-<div class="row g-3">
+<div class="row g-3 cd-recsGutters cd-recsGrid">
     <div class="col-12">
-        <div class="row g-3">
+        <div class="row g-3 cd-recsGutters">
             <div class="col-12 col-lg-3">
                 <a class="card shadow-sm cd-recsStat" href="/Actions?workspaceId=@Model.WorkspaceId" title="View actions">
                     <div class="card-body">
@@ -161,7 +161,7 @@
                 }
                 else
                 {
-                    <div class="row g-3 mt-1">
+                    <div class="row g-3 mt-1 cd-recsGutters">
                         @foreach (var r in Model.Items)
                         {
                             var type = (r.Type ?? "").ToLowerInvariant();
