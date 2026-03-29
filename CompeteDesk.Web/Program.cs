@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
 using CompeteDesk.Services.Gemini;
@@ -154,7 +155,6 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     };
 });
 
-
 // External Login (Google) - only enable if credentials exist.
 // Prevents runtime crash: ArgumentException "ClientId cannot be empty".
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
@@ -199,7 +199,6 @@ using (var scope = app.Services.CreateScope())
     // Ensure the Admin role exists and assign Admin to the configured seed email.
     // (Important for Google external login scenarios where we don't pre-create a password-based user.)
     await IdentitySeeder.EnsureAdminAsync(scope.ServiceProvider);
-
 }
 
 // Configure the HTTP request pipeline.
@@ -212,6 +211,18 @@ else
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// Respect reverse proxy headers from Render so ASP.NET correctly sees the original scheme as HTTPS.
+// This fixes Google OAuth redirect_uri_mismatch where the app sends http://... instead of https://...
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 // In Development, Google external login callbacks can fail with HTTP 400 if the flow
 // is initiated on http:// but redirected mid-flight to https:// (correlation/state mismatch).
