@@ -1,0 +1,126 @@
+@page
+@model CompeteDesk.Areas.Identity.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/identity-login.css" asp-append-version="true" />
+}
+
+<div class="cd-auth-page">
+    <div class="cd-auth-shell">
+        <div class="cd-auth-hero">
+            <span class="cd-auth-kicker">Welcome back</span>
+            <h1>Sign in to continue your strategy work.</h1>
+            <p>
+                Access your dashboards, workspace plans, AI analysis, and progress tools in one place.
+            </p>
+
+            <div class="cd-auth-highlights">
+                <div class="cd-auth-highlight">
+                    <div class="cd-auth-highlight__icon">✓</div>
+                    <div>
+                        <strong>Track progress</strong>
+                        <span>Keep your study plans and decisions organized.</span>
+                    </div>
+                </div>
+                <div class="cd-auth-highlight">
+                    <div class="cd-auth-highlight__icon">⚡</div>
+                    <div>
+                        <strong>Use AI faster</strong>
+                        <span>Jump back into SWOT, habits, and strategy tools.</span>
+                    </div>
+                </div>
+                <div class="cd-auth-highlight">
+                    <div class="cd-auth-highlight__icon">🔒</div>
+                    <div>
+                        <strong>Secure access</strong>
+                        <span>Sign in with your email or continue with Google.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cd-auth-card">
+            <div class="cd-auth-card__header">
+                <span class="cd-auth-badge">CompeteDesk</span>
+                <h2>Log in</h2>
+                <p>Use your account details below.</p>
+            </div>
+
+            <form id="account" method="post" class="cd-auth-form">
+                <input type="hidden" asp-for="ReturnUrl" />
+                @if (!ViewContext.ViewData.ModelState.IsValid && ViewContext.ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger cd-auth-alert" role="alert"></div>
+                }
+
+                <div class="cd-auth-field">
+                    <label asp-for="Input.Email"></label>
+                    <input asp-for="Input.Email" class="form-control cd-auth-input" autocomplete="username" placeholder="name@example.com" />
+                    <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                </div>
+
+                <div class="cd-auth-field">
+                    <div class="d-flex align-items-center justify-content-between gap-3">
+                        <label asp-for="Input.Password"></label>
+                        <a id="forgot-password" asp-page="./ForgotPassword" class="cd-auth-inline-link">Forgot password?</a>
+                    </div>
+                    <input asp-for="Input.Password" class="form-control cd-auth-input" autocomplete="current-password" placeholder="Enter your password" />
+                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                </div>
+
+                <label asp-for="Input.RememberMe" class="cd-auth-check form-check-label">
+                    <input class="form-check-input" asp-for="Input.RememberMe" />
+                    <span>Keep me signed in</span>
+                </label>
+
+                <button id="login-submit" type="submit" class="btn cd-auth-submit">Log in</button>
+            </form>
+
+            @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+            {
+                <div class="cd-auth-divider"><span>or continue with</span></div>
+
+                <div class="cd-auth-external">
+                    @foreach (var provider in Model.ExternalLogins!)
+                    {
+                        var providerName = provider.DisplayName ?? provider.Name;
+                        var isGoogle = string.Equals(provider.Name, "Google", System.StringComparison.OrdinalIgnoreCase);
+                        <a href="/Identity/Account/Login"
+                           class="btn cd-auth-provider @(isGoogle ? "is-google" : string.Empty)"
+                           role="button"
+                           title="@providerName is currently updating">
+                            <span class="cd-auth-provider__icon" aria-hidden="true">
+                                @if (isGoogle)
+                                {
+                                    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                                        <path fill="#EA4335" d="M12 10.2v3.95h5.49c-.24 1.27-.96 2.35-2.04 3.08l3.3 2.56c1.92-1.77 3.03-4.37 3.03-7.46 0-.73-.07-1.43-.2-2.11H12z"></path>
+                                        <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.61-2.43l-3.3-2.56c-.91.61-2.08.98-3.31.98-2.54 0-4.69-1.72-5.46-4.03H3.13v2.63A9.99 9.99 0 0 0 12 22z"></path>
+                                        <path fill="#4A90E2" d="M6.54 13.96A5.99 5.99 0 0 1 6.24 12c0-.68.12-1.33.3-1.96V7.41H3.13A9.99 9.99 0 0 0 2 12c0 1.61.38 3.14 1.13 4.59l3.41-2.63z"></path>
+                                        <path fill="#FBBC05" d="M12 6.01c1.47 0 2.78.51 3.81 1.5l2.85-2.85C16.95 3.09 14.69 2 12 2A9.99 9.99 0 0 0 3.13 7.41l3.41 2.63C7.31 7.73 9.46 6.01 12 6.01z"></path>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <span>@providerName.Substring(0, 1)</span>
+                                }
+                            </span>
+                            <span>Continue with @providerName</span>
+                        </a>
+                    }
+                </div>
+            }
+
+            <div class="cd-auth-links">
+                <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create a new account</a>
+                <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
