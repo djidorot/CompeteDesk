@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CompeteDesk")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6bdf6a8c7fefae6e87c55b28e090864aff9bea39")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b075c8ffdb64fc5076f359a6fd34ea919003616e")]
 [assembly: System.Reflection.AssemblyProductAttribute("CompeteDesk")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CompeteDesk")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
