@@ -232,6 +232,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseStatusCodePagesWithReExecute("/updating");
+
 app.UseRouting();
 
 // Must be before UseAuthentication so external auth cookies keep SameSite=None.
@@ -324,5 +326,7 @@ app.MapControllerRoute(
 
 app.MapRazorPages()
    .WithStaticAssets();
+
+app.MapFallbackToController("Updating", "Home");
 
 app.Run();

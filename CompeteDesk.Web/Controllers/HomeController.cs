@@ -31,6 +31,13 @@ public class HomeController : Controller
         return View();
     }
 
+    [Route("updating")]
+    public IActionResult Updating()
+    {
+        Response.StatusCode = StatusCodes.Status200OK;
+        return View();
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
