@@ -83,15 +83,16 @@
             {
                 <div class="cd-auth-divider"><span>or continue with</span></div>
 
-                <div class="cd-auth-external">
+                <form id="external-account" class="cd-auth-external" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
                     @foreach (var provider in Model.ExternalLogins!)
                     {
                         var providerName = provider.DisplayName ?? provider.Name;
                         var isGoogle = string.Equals(provider.Name, "Google", System.StringComparison.OrdinalIgnoreCase);
-                        <a href="/Identity/Account/Login"
-                           class="btn cd-auth-provider @(isGoogle ? "is-google" : string.Empty)"
-                           role="button"
-                           title="@providerName is currently updating">
+                        <button type="submit"
+                                class="btn cd-auth-provider @(isGoogle ? "is-google" : string.Empty)"
+                                name="provider"
+                                value="@provider.Name"
+                                title="Continue with @providerName">
                             <span class="cd-auth-provider__icon" aria-hidden="true">
                                 @if (isGoogle)
                                 {
@@ -108,9 +109,9 @@
                                 }
                             </span>
                             <span>Continue with @providerName</span>
-                        </a>
+                        </button>
                     }
-                </div>
+                </form>
             }
 
             <div class="cd-auth-links">
