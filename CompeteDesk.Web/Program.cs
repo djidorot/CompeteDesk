@@ -199,6 +199,7 @@ using (var scope = app.Services.CreateScope())
     // Ensure the Admin role exists and assign Admin to the configured seed email.
     // (Important for Google external login scenarios where we don't pre-create a password-based user.)
     await IdentitySeeder.EnsureAdminAsync(scope.ServiceProvider);
+    await IdentitySeeder.EnsureGuestUserAsync(scope.ServiceProvider);
 }
 
 // Configure the HTTP request pipeline.
@@ -241,6 +242,33 @@ app.UseCookiePolicy();
 
 // IMPORTANT: Auth must run before Authorization
 app.UseAuthentication();
+
+// Automatically sign visitors in as the shared guest user so the app opens
+// directly to the dashboard without requiring Login/Register.
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path;
+    var isStaticAsset = path.StartsWithSegments("/css", StringComparison.OrdinalIgnoreCase)
+                        || path.StartsWithSegments("/js", StringComparison.OrdinalIgnoreCase)
+                        || path.StartsWithSegments("/lib", StringComparison.OrdinalIgnoreCase)
+                        || path.StartsWithSegments("/images", StringComparison.OrdinalIgnoreCase)
+                        || path.StartsWithSegments("/favicon", StringComparison.OrdinalIgnoreCase);
+
+    if (!isStaticAsset && context.User?.Identity?.IsAuthenticated != true)
+    {
+        using var scope = context.RequestServices.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<IdentityUser>>();
+
+        var guestUser = await userManager.FindByEmailAsync(IdentitySeeder.GuestEmail)
+                        ?? await IdentitySeeder.EnsureGuestUserAsync(scope.ServiceProvider);
+
+        await signInManager.SignInAsync(guestUser, isPersistent: false);
+        context.User = await signInManager.CreateUserPrincipalAsync(guestUser);
+    }
+
+    await next();
+});
 
 // Ensure every signed-in user has a baseline role (User by default).
 // Also supports config-driven Admin promotion for the seed email.

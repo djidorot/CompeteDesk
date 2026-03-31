@@ -55,10 +55,11 @@ public class RegisterModel : PageModel
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
-    public async Task OnGetAsync(string? returnUrl = null)
+    public async Task<IActionResult> OnGetAsync(string? returnUrl = null)
     {
         ReturnUrl = NormalizeReturnUrl(returnUrl);
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+        return LocalRedirect(GetPostLoginReturnUrl(ReturnUrl));
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)

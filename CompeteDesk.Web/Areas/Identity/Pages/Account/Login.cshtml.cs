@@ -49,7 +49,7 @@ public class LoginModel : PageModel
         public bool RememberMe { get; set; }
     }
 
-    public async Task OnGetAsync(string? returnUrl = null)
+    public async Task<IActionResult> OnGetAsync(string? returnUrl = null)
     {
         if (!string.IsNullOrEmpty(ErrorMessage))
         {
@@ -62,6 +62,8 @@ public class LoginModel : PageModel
 
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         ReturnUrl = returnUrl;
+
+        return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
@@ -135,5 +137,32 @@ public class LoginModel : PageModel
 
         ModelState.AddModelError(string.Empty, "Invalid login attempt.");
         return Page();
+    }
+
+    private string NormalizeReturnUrl(string? returnUrl)
+    {
+        var homeUrl = Url.Content("~/");
+
+        if (string.IsNullOrWhiteSpace(returnUrl))
+        {
+            return homeUrl;
+        }
+
+        if (Uri.TryCreate(returnUrl, UriKind.Absolute, out _))
+        {
+            return homeUrl;
+        }
+
+        return Url.IsLocalUrl(returnUrl) ? returnUrl : homeUrl;
+    }
+
+    private string GetPostLoginReturnUrl(string? returnUrl)
+    {
+        if (string.IsNullOrWhiteSpace(returnUrl) || returnUrl == "/" || returnUrl == "~/" || returnUrl == Url.Content("~/"))
+        {
+            return "/Dashboard";
+        }
+
+        return returnUrl;
     }
 }
