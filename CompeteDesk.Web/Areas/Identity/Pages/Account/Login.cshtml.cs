@@ -11,11 +11,16 @@ namespace CompeteDesk.Areas.Identity.Pages.Account;
 public class LoginModel : PageModel
 {
     private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly UserManager<IdentityUser> _userManager;
     private readonly ILogger<LoginModel> _logger;
 
-    public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger)
+    public LoginModel(
+        SignInManager<IdentityUser> signInManager,
+        UserManager<IdentityUser> userManager,
+        ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -70,7 +75,46 @@ public class LoginModel : PageModel
             return Page();
         }
 
-        var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+        Microsoft.AspNetCore.Identity.SignInResult result;
+
+        try
+        {
+            result = await _signInManager.PasswordSignInAsync(
+                Input.Email,
+                Input.Password,
+                Input.RememberMe,
+                lockoutOnFailure: false);
+        }
+        catch (FormatException ex)
+        {
+            _logger.LogWarning(ex, "Invalid password hash detected for user {Email}. Resetting password hash.", Input.Email);
+
+            var user = await _userManager.FindByEmailAsync(Input.Email);
+            if (user is not null)
+            {
+                user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, Input.Password);
+                var updateResult = await _userManager.UpdateAsync(user);
+
+                if (updateResult.Succeeded)
+                {
+                    result = await _signInManager.PasswordSignInAsync(
+                        Input.Email,
+                        Input.Password,
+                        Input.RememberMe,
+                        lockoutOnFailure: false);
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Unable to repair this account automatically.");
+                    return Page();
+                }
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return Page();
+            }
+        }
 
         if (result.Succeeded)
         {

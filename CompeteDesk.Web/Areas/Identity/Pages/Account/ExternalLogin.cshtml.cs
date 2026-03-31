@@ -1,3 +1,4 @@
+using CompeteDesk.Data;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
@@ -123,6 +124,7 @@ public class ExternalLoginModel : PageModel
                     _logger.LogInformation("Linked {LoginProvider} login for existing user {Email}.", info.LoginProvider, email);
 
                     await MaybeAssignSeedAdminAsync(existingUser, email);
+                    await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, existingUser);
 
                     return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
                 }
@@ -150,6 +152,7 @@ public class ExternalLoginModel : PageModel
                     if (addLoginRes.Succeeded)
                     {
                         await MaybeAssignSeedAdminAsync(newUser, email);
+                        await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, newUser);
 
                         await _signInManager.SignInAsync(newUser, isPersistent: false, info.LoginProvider);
                         _logger.LogInformation("Auto-created local user for external login {Email} via {Provider}.", email, info.LoginProvider);
@@ -207,6 +210,7 @@ public class ExternalLoginModel : PageModel
                 _logger.LogInformation("Linked {LoginProvider} login via confirmation for existing user {Email}.", info.LoginProvider, Input.Email);
 
                 await MaybeAssignSeedAdminAsync(existingUser, Input.Email);
+                await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, existingUser);
 
                 return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
             }
@@ -250,6 +254,7 @@ public class ExternalLoginModel : PageModel
         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
         await MaybeAssignSeedAdminAsync(user, Input.Email);
+        await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, user);
 
         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
         return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
