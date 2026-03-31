@@ -59,6 +59,8 @@ public class ExternalLoginModel : PageModel
     public IActionResult OnPost(string provider, string? returnUrl = null)
     {
         // Request a redirect to the external login provider.
+        returnUrl = NormalizeReturnUrl(returnUrl);
+
         var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
         var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
         return new ChallengeResult(provider, properties);
@@ -67,7 +69,7 @@ public class ExternalLoginModel : PageModel
 
     public async Task<IActionResult> OnGetCallbackAsync(string? returnUrl = null, string? remoteError = null)
     {
-        returnUrl ??= Url.Content("~/");
+        returnUrl = NormalizeReturnUrl(returnUrl);
         ReturnUrl = returnUrl;
 
         if (remoteError != null)
@@ -182,7 +184,7 @@ public class ExternalLoginModel : PageModel
 
     public async Task<IActionResult> OnPostConfirmationAsync(string? returnUrl = null)
     {
-        returnUrl ??= Url.Content("~/");
+        returnUrl = NormalizeReturnUrl(returnUrl);
         ReturnUrl = returnUrl;
 
         var info = await _signInManager.GetExternalLoginInfoAsync();
@@ -258,6 +260,23 @@ public class ExternalLoginModel : PageModel
 
         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
         return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
+    }
+
+    private string NormalizeReturnUrl(string? returnUrl)
+    {
+        var homeUrl = Url.Content("~/");
+
+        if (string.IsNullOrWhiteSpace(returnUrl))
+        {
+            return homeUrl;
+        }
+
+        if (Uri.TryCreate(returnUrl, UriKind.Absolute, out _))
+        {
+            return homeUrl;
+        }
+
+        return Url.IsLocalUrl(returnUrl) ? returnUrl : homeUrl;
     }
 
     private async Task MaybeAssignSeedAdminAsync(IdentityUser user, string? email)

@@ -57,14 +57,14 @@ public class RegisterModel : PageModel
 
     public async Task OnGetAsync(string? returnUrl = null)
     {
-        ReturnUrl = returnUrl;
+        ReturnUrl = NormalizeReturnUrl(returnUrl);
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
         returnUrl ??= Url.Content("~/");
-        ReturnUrl = returnUrl;
+        ReturnUrl = NormalizeReturnUrl(returnUrl);
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
         if (!ModelState.IsValid)
@@ -93,6 +93,23 @@ public class RegisterModel : PageModel
         _logger.LogInformation("User created a new account with password.");
 
         return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
+    }
+
+    private string NormalizeReturnUrl(string? returnUrl)
+    {
+        var homeUrl = Url.Content("~/");
+
+        if (string.IsNullOrWhiteSpace(returnUrl))
+        {
+            return homeUrl;
+        }
+
+        if (Uri.TryCreate(returnUrl, UriKind.Absolute, out _))
+        {
+            return homeUrl;
+        }
+
+        return Url.IsLocalUrl(returnUrl) ? returnUrl : homeUrl;
     }
 
     private string GetPostLoginReturnUrl(string? returnUrl)

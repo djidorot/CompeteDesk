@@ -56,7 +56,7 @@ public class LoginModel : PageModel
             ModelState.AddModelError(string.Empty, ErrorMessage);
         }
 
-        returnUrl ??= Url.Content("~/");
+        returnUrl = NormalizeReturnUrl(returnUrl);
 
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
@@ -66,7 +66,7 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
-        returnUrl ??= Url.Content("~/");
+        returnUrl = NormalizeReturnUrl(returnUrl);
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         ReturnUrl = returnUrl;
 
