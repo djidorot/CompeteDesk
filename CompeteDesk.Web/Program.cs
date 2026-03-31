@@ -14,6 +14,18 @@ using CompeteDesk.Services.Habits;
 using CompeteDesk.Services.StrategyCopilot;
 using CompeteDesk.Services.Notifications;
 
+// Render/Linux environments can hit low inotify limits during startup when the
+// default configuration system tries to watch appsettings files for changes.
+// Force polling/no-op style watching before CreateBuilder runs so startup does
+// not crash with "The configured user limit on the number of inotify instances
+// has been reached".
+if (OperatingSystem.IsLinux() && !string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
+{
+    AppContext.SetSwitch("Microsoft.Extensions.FileProviders.UsePollingFileWatcher", true);
+    AppContext.SetSwitch("Microsoft.Extensions.Hosting.IgnoreConfigFileExceptions", false);
+    Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "1");
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 var isDev = builder.Environment.IsDevelopment();
