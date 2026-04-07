@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
 using CompeteDesk.Models;
 using CompeteDesk.ViewModels.Settings;
+using CompeteDesk.Models.Billing;
+using CompeteDesk.Services.Billing;
 
 namespace CompeteDesk.Controllers
 {
@@ -19,11 +21,13 @@ namespace CompeteDesk.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ApplicationDbContext _db;
+        private readonly SubscriptionService _subscriptionService;
 
-        public SettingsController(UserManager<IdentityUser> userManager, ApplicationDbContext db)
+        public SettingsController(UserManager<IdentityUser> userManager, ApplicationDbContext db, SubscriptionService subscriptionService)
         {
             _userManager = userManager;
             _db = db;
+            _subscriptionService = subscriptionService;
         }
 
         [HttpGet]
@@ -40,6 +44,14 @@ namespace CompeteDesk.Controllers
                 ? null
                 : await _db.UserDataControls.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == userId);
 
+            var usage = string.IsNullOrWhiteSpace(userId)
+                ? null
+                : await _subscriptionService.GetUsageSnapshotAsync(userId);
+
+            var pendingPaymentRequest = string.IsNullOrWhiteSpace(userId)
+                ? false
+                : await _db.SubscriptionPaymentRequests.AsNoTracking().AnyAsync(x => x.UserId == userId && x.Status == "Pending");
+
             var vm = new SettingsIndexViewModel
             {
                 Email = user?.Email ?? "",
@@ -54,11 +66,23 @@ namespace CompeteDesk.Controllers
 
                 RetentionDays = data?.RetentionDays ?? 90,
                 ExportFormat = data?.ExportFormat ?? "json",
+
+                SubscriptionTier = usage?.Plan.Tier ?? "Free",
+                SubscriptionStatus = usage?.Status ?? "Active",
+                MonthlyAiLimit = usage?.Plan.MonthlyAiLimit ?? 0,
+                MonthlyAiUsed = usage?.AiUsed ?? 0,
+                MonthlyExportLimit = usage?.Plan.MonthlyExportLimit ?? 0,
+                MonthlyExportUsed = usage?.ExportsUsed ?? 0,
+                WorkspaceLimit = usage?.Plan.WorkspaceLimit ?? 0,
+                WorkspaceUsed = usage?.WorkspacesUsed ?? 0,
+                QuotaPeriodKey = usage?.PeriodKey ?? string.Empty,
+                HasPendingPaymentRequest = pendingPaymentRequest
             };
 
             ViewData["SavedMessage"] = TempData["SettingsSaved"] as string;
             ViewData["ResetMessage"] = TempData["ResetDone"] as string;
             ViewData["ExportError"] = TempData["ExportError"] as string;
+            ViewData["UpgradeMessage"] = TempData["UpgradeMessage"] as string;
 
             return View(vm);
         }
@@ -118,6 +142,53 @@ namespace CompeteDesk.Controllers
             await ApplyRetentionAsync(user.Id, vm.RetentionDays);
 
             TempData["SettingsSaved"] = "Settings updated.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RequestUpgrade(SettingsIndexViewModel vm)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Index", "Home");
+
+            var requestedTier = SubscriptionService.NormalizeTier(vm.UpgradeTier);
+            if (requestedTier == "Free")
+            {
+                TempData["UpgradeMessage"] = "Choose Pro or Premium to submit an upgrade request.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var reference = (vm.UpgradeReferenceNumber ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                TempData["UpgradeMessage"] = "Reference number is required for payment review.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var hasPending = await _db.SubscriptionPaymentRequests
+                .AnyAsync(x => x.UserId == user.Id && x.Status == "Pending");
+
+            if (hasPending)
+            {
+                TempData["UpgradeMessage"] = "You already have a pending subscription request under review.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _db.SubscriptionPaymentRequests.Add(new SubscriptionPaymentRequest
+            {
+                UserId = user.Id,
+                UserEmail = user.Email,
+                RequestedTier = requestedTier,
+                PaymentMethod = SubscriptionService.NormalizePaymentMethod(vm.UpgradePaymentMethod),
+                ReferenceNumber = reference,
+                Notes = string.IsNullOrWhiteSpace(vm.UpgradeNotes) ? null : vm.UpgradeNotes.Trim(),
+                Status = "Pending",
+                SubmittedAtUtc = DateTime.UtcNow
+            });
+
+            await _db.SaveChangesAsync();
+            TempData["UpgradeMessage"] = "Upgrade request submitted. An admin will review your payment reference.";
             return RedirectToAction(nameof(Index));
         }
 

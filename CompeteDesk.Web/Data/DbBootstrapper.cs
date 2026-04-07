@@ -49,8 +49,122 @@ namespace CompeteDesk.Data
             await EnsureWorkspaceCollaborationTablesAsync(db);
             await EnsureUserFeaturePermissionsTableAsync(db);
             await EnsureNotificationsTableAsync(db);
+            await EnsureSubscriptionTablesAsync(db);
 
             await NormalizeSourceBooksAsync(db);
+        }
+
+
+        private static async Task EnsureSubscriptionTablesAsync(ApplicationDbContext db)
+        {
+            if (!await TableExistsAsync(db, "UserSubscriptions"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE UserSubscriptions (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId TEXT NOT NULL,
+    Tier TEXT NOT NULL DEFAULT 'Free',
+    Status TEXT NOT NULL DEFAULT 'Active',
+    BillingProvider TEXT NOT NULL DEFAULT 'Manual',
+    ExternalReference TEXT NULL,
+    MonthlyAiLimit INTEGER NOT NULL DEFAULT 20,
+    MonthlyExportLimit INTEGER NOT NULL DEFAULT 8,
+    WorkspaceLimit INTEGER NOT NULL DEFAULT 2,
+    StartedAtUtc TEXT NOT NULL,
+    EndsAtUtc TEXT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NULL,
+    ApprovedByUserId TEXT NULL,
+    ApprovedAtUtc TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "UserSubscriptions", "UserId", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "UserSubscriptions", "Tier", "TEXT", nullable: false, defaultSql: "'Free'");
+                await EnsureColumnAsync(db, "UserSubscriptions", "Status", "TEXT", nullable: false, defaultSql: "'Active'");
+                await EnsureColumnAsync(db, "UserSubscriptions", "BillingProvider", "TEXT", nullable: false, defaultSql: "'Manual'");
+                await EnsureColumnAsync(db, "UserSubscriptions", "ExternalReference", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserSubscriptions", "MonthlyAiLimit", "INTEGER", nullable: false, defaultSql: "20");
+                await EnsureColumnAsync(db, "UserSubscriptions", "MonthlyExportLimit", "INTEGER", nullable: false, defaultSql: "8");
+                await EnsureColumnAsync(db, "UserSubscriptions", "WorkspaceLimit", "INTEGER", nullable: false, defaultSql: "2");
+                await EnsureColumnAsync(db, "UserSubscriptions", "StartedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserSubscriptions", "EndsAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserSubscriptions", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserSubscriptions", "UpdatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserSubscriptions", "ApprovedByUserId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserSubscriptions", "ApprovedAtUtc", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE UNIQUE INDEX IF NOT EXISTS IX_UserSubscriptions_UserId
+ON UserSubscriptions (UserId);");
+
+            if (!await TableExistsAsync(db, "UsageQuotaWindows"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE UsageQuotaWindows (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId TEXT NOT NULL,
+    PeriodKey TEXT NOT NULL,
+    AiRequestsUsed INTEGER NOT NULL DEFAULT 0,
+    ExportsUsed INTEGER NOT NULL DEFAULT 0,
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "UsageQuotaWindows", "UserId", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "UsageQuotaWindows", "PeriodKey", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "UsageQuotaWindows", "AiRequestsUsed", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "UsageQuotaWindows", "ExportsUsed", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "UsageQuotaWindows", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UsageQuotaWindows", "UpdatedAtUtc", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE UNIQUE INDEX IF NOT EXISTS IX_UsageQuotaWindows_UserId_PeriodKey
+ON UsageQuotaWindows (UserId, PeriodKey);");
+
+            if (!await TableExistsAsync(db, "SubscriptionPaymentRequests"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE SubscriptionPaymentRequests (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId TEXT NOT NULL,
+    UserEmail TEXT NULL,
+    RequestedTier TEXT NOT NULL,
+    PaymentMethod TEXT NOT NULL,
+    ReferenceNumber TEXT NOT NULL,
+    Status TEXT NOT NULL DEFAULT 'Pending',
+    Notes TEXT NULL,
+    SubmittedAtUtc TEXT NOT NULL,
+    ReviewedAtUtc TEXT NULL,
+    ReviewedByUserId TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "UserId", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "UserEmail", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "RequestedTier", "TEXT", nullable: false, defaultSql: "'Pro'");
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "PaymentMethod", "TEXT", nullable: false, defaultSql: "'QR'");
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "ReferenceNumber", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "Status", "TEXT", nullable: false, defaultSql: "'Pending'");
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "Notes", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "SubmittedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "ReviewedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "SubscriptionPaymentRequests", "ReviewedByUserId", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_SubscriptionPaymentRequests_UserId_Status_Submitted
+ON SubscriptionPaymentRequests (UserId, Status, SubmittedAtUtc);");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE INDEX IF NOT EXISTS IX_SubscriptionPaymentRequests_Reference_Status
+ON SubscriptionPaymentRequests (ReferenceNumber, Status);");
         }
 
         private static async Task EnsureStudyPlannerTablesAsync(ApplicationDbContext db)

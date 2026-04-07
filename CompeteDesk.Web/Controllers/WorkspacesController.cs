@@ -11,6 +11,7 @@ using CompeteDesk.Models;
 using CompeteDesk.ViewModels.Workspaces;
 using CompeteDesk.Models.Common;
 using CompeteDesk.Services.Notifications;
+using CompeteDesk.Services.Billing;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace CompeteDesk.Controllers;
@@ -21,12 +22,14 @@ public class WorkspacesController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly InAppNotificationService _notifications;
+    private readonly SubscriptionService _subscriptionService;
 
-    public WorkspacesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, InAppNotificationService notifications)
+    public WorkspacesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, InAppNotificationService notifications, SubscriptionService subscriptionService)
     {
         _db = db;
         _userManager = userManager;
         _notifications = notifications;
+        _subscriptionService = subscriptionService;
     }
 
     private async Task<IdentityUser?> GetUserAsync() => await _userManager.GetUserAsync(User);
@@ -101,6 +104,13 @@ public class WorkspacesController : Controller
         if (string.IsNullOrWhiteSpace(name))
         {
             ModelState.AddModelError(nameof(vm.Name), "Workspace name is required.");
+            return View(vm);
+        }
+
+        var workspaceGate = await _subscriptionService.CanCreateWorkspaceAsync(userId);
+        if (!workspaceGate.Allowed)
+        {
+            ModelState.AddModelError(string.Empty, workspaceGate.Error ?? "Your current plan does not allow creating more workspaces.");
             return View(vm);
         }
 

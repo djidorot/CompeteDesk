@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using CompeteDesk.Services.Ai;
+using CompeteDesk.Services.Billing;
 
 namespace CompeteDesk.Controllers;
 
@@ -13,11 +14,13 @@ public sealed class AiAssistController : Controller
 {
     private readonly StrategyAiAssistService _strategyAssist;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly SubscriptionService _subscriptionService;
 
-    public AiAssistController(StrategyAiAssistService strategyAssist, UserManager<IdentityUser> userManager)
+    public AiAssistController(StrategyAiAssistService strategyAssist, UserManager<IdentityUser> userManager, SubscriptionService subscriptionService)
     {
         _strategyAssist = strategyAssist;
         _userManager = userManager;
+        _subscriptionService = subscriptionService;
     }
 
     public sealed class AssistRequest
@@ -53,9 +56,16 @@ public sealed class AiAssistController : Controller
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
+        var quota = await _subscriptionService.CanUseAiAsync(userId, ct);
+        if (!quota.Allowed)
+        {
+            return BadRequest(new { error = quota.Error ?? "AI quota reached for your current plan." });
+        }
+
         try
         {
             var result = await _strategyAssist.GenerateAsync(userId, id, kind, goal, ct);
+            await _subscriptionService.RecordAiUsageAsync(userId, ct);
             return Ok(new
             {
                 ok = true,

@@ -8,6 +8,7 @@ using System.Text.Json;
 using CompeteDesk.Models;
 using CompeteDesk.Models.Common;
 using CompeteDesk.Models.Gamification;
+using CompeteDesk.Models.Billing;
 
 namespace CompeteDesk.Data;
 
@@ -71,6 +72,9 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<StrategyComment> StrategyComments => Set<StrategyComment>();
     public DbSet<UserFeaturePermission> UserFeaturePermissions => Set<UserFeaturePermission>();
     public DbSet<NotificationItem> Notifications => Set<NotificationItem>();
+    public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
+    public DbSet<UsageQuotaWindow> UsageQuotaWindows => Set<UsageQuotaWindow>();
+    public DbSet<SubscriptionPaymentRequest> SubscriptionPaymentRequests => Set<SubscriptionPaymentRequest>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -271,6 +275,40 @@ public class ApplicationDbContext : IdentityDbContext
             b.Property(x => x.Message).IsRequired().HasMaxLength(400);
             b.Property(x => x.LinkUrl).HasMaxLength(256);
             b.HasIndex(x => new { x.OwnerId, x.IsRead, x.CreatedAtUtc });
+        });
+        builder.Entity<UserSubscription>(b =>
+        {
+            b.ToTable("UserSubscriptions");
+            b.Property(x => x.UserId).IsRequired().HasMaxLength(128);
+            b.Property(x => x.Tier).IsRequired().HasMaxLength(24);
+            b.Property(x => x.Status).IsRequired().HasMaxLength(24);
+            b.Property(x => x.BillingProvider).HasMaxLength(32);
+            b.Property(x => x.ExternalReference).HasMaxLength(128);
+            b.Property(x => x.ApprovedByUserId).HasMaxLength(128);
+            b.HasIndex(x => x.UserId).IsUnique();
+        });
+
+        builder.Entity<UsageQuotaWindow>(b =>
+        {
+            b.ToTable("UsageQuotaWindows");
+            b.Property(x => x.UserId).IsRequired().HasMaxLength(128);
+            b.Property(x => x.PeriodKey).IsRequired().HasMaxLength(16);
+            b.HasIndex(x => new { x.UserId, x.PeriodKey }).IsUnique();
+        });
+
+        builder.Entity<SubscriptionPaymentRequest>(b =>
+        {
+            b.ToTable("SubscriptionPaymentRequests");
+            b.Property(x => x.UserId).IsRequired().HasMaxLength(128);
+            b.Property(x => x.UserEmail).HasMaxLength(256);
+            b.Property(x => x.RequestedTier).IsRequired().HasMaxLength(24);
+            b.Property(x => x.PaymentMethod).IsRequired().HasMaxLength(24);
+            b.Property(x => x.ReferenceNumber).IsRequired().HasMaxLength(80);
+            b.Property(x => x.Status).IsRequired().HasMaxLength(24);
+            b.Property(x => x.Notes).HasMaxLength(400);
+            b.Property(x => x.ReviewedByUserId).HasMaxLength(128);
+            b.HasIndex(x => new { x.UserId, x.Status, x.SubmittedAtUtc });
+            b.HasIndex(x => new { x.ReferenceNumber, x.Status });
         });
         builder.Entity<WorkspaceMember>(b =>
         {

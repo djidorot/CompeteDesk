@@ -10,6 +10,10 @@
             <h1 class="mb-1">Exports</h1>
             <p class="text-muted mb-0">Generate PDF exports for your currently active workspace.</p>
         </div>
+        <div class="text-lg-end">
+            <div class="small text-uppercase text-muted fw-semibold">@Model.Tier plan</div>
+            <div class="fw-semibold">@Model.ExportsUsed / @Model.ExportLimit exports used this month</div>
+        </div>
     </div>
 
     @if (TempData["ExportError"] is string exportError && !string.IsNullOrWhiteSpace(exportError))

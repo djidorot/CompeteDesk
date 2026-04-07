@@ -1,5 +1,6 @@
 using CompeteDesk.Data;
 using CompeteDesk.Services.Ai;
+using CompeteDesk.Services.Billing;
 using CompeteDesk.Services.BusinessAnalysis;
 using CompeteDesk.Services.Gemini;
 using CompeteDesk.Services.Habits;
@@ -82,6 +83,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CompeteDesk.Services.StudyPlanner.StudyPlannerService>();
         services.AddScoped<CompeteDesk.Services.Recommendations.RecommendationsService>();
         services.AddScoped<CompeteDesk.Services.Exports.ExportReportService>();
+        services.AddScoped<SubscriptionService>();
     }
 
     private static void ConfigureMessaging(IServiceCollection services, IConfiguration configuration)

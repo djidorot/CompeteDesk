@@ -1,0 +1,127 @@
+@model CompeteDesk.ViewModels.Admin.AdminSubscriptionsViewModel
+@{
+    ViewData["Title"] = "Subscriptions";
+    ViewData["LayoutFluid"] = true;
+    ViewData["UseSidebar"] = true;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">Subscriptions</h1>
+            <p class="text-muted mb-0">Review payment references, approve upgrades, and monitor plan limits.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Pending payment requests</h2>
+
+                    @if (Model.PendingRequests.Count == 0)
+                    {
+                        <div class="text-muted">No pending payment requests.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Tier</th>
+                                        <th>Method</th>
+                                        <th>Reference</th>
+                                        <th>Submitted</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var item in Model.PendingRequests)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@item.UserEmail</div>
+                                            @if (!string.IsNullOrWhiteSpace(item.Notes))
+                                            {
+                                                <div class="small text-muted">@item.Notes</div>
+                                            }
+                                        </td>
+                                        <td>@item.RequestedTier</td>
+                                        <td>@item.PaymentMethod</td>
+                                        <td><code>@item.ReferenceNumber</code></td>
+                                        <td>@item.SubmittedAtUtc.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</td>
+                                        <td class="text-end">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <form asp-action="ApproveSubscriptionRequest" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="requestId" value="@item.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-primary">Approve</button>
+                                                </form>
+                                                <form asp-action="RejectSubscriptionRequest" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="requestId" value="@item.Id" />
+                                                    <input type="hidden" name="notes" value="Rejected by admin" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Active plans</h2>
+
+                    @if (Model.Users.Count == 0)
+                    {
+                        <div class="text-muted">No subscriptions found yet.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Plan</th>
+                                        <th>Limits</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var item in Model.Users)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@item.Email</div>
+                                            <div class="small text-muted">Ref: @(item.ExternalReference ?? "—")</div>
+                                        </td>
+                                        <td>
+                                            <div>@item.Tier</div>
+                                            <div class="small text-muted">@item.Status</div>
+                                        </td>
+                                        <td class="small text-muted">
+                                            AI @item.MonthlyAiLimit<br />
+                                            Exports @item.MonthlyExportLimit<br />
+                                            Workspaces @item.WorkspaceLimit
+                                        </td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

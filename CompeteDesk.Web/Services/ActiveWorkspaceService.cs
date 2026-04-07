@@ -45,14 +45,14 @@ public sealed class ActiveWorkspaceService
         {
             var exists = await _db.Workspaces
                 .AsNoTracking()
-                .AnyAsync(w => w.Id == activeId.Value && w.OwnerId == userId, ct);
+                .AnyAsync(w => w.Id == activeId.Value && (w.OwnerId == userId || _db.WorkspaceMembers.Any(m => m.WorkspaceId == w.Id && m.UserId == userId)), ct);
             if (exists) return activeId.Value;
         }
 
         // Fallback: latest workspace for this user
         var latest = await _db.Workspaces
             .AsNoTracking()
-            .Where(w => w.OwnerId == userId)
+             .Where(w => w.OwnerId == userId || _db.WorkspaceMembers.Any(m => m.WorkspaceId == w.Id && m.UserId == userId))
             .OrderByDescending(w => w.UpdatedAtUtc ?? w.CreatedAtUtc)
             .Select(w => (int?)w.Id)
             .FirstOrDefaultAsync(ct);

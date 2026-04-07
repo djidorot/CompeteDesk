@@ -29,6 +29,10 @@
             {
                 <span class="cd-badge cd-badge--info">@ViewData["ResetMessage"]</span>
             }
+            @if (!string.IsNullOrWhiteSpace(ViewData["UpgradeMessage"] as string))
+            {
+                <span class="cd-badge cd-badge--info">@ViewData["UpgradeMessage"]</span>
+            }
         </div>
     </div>
 
@@ -52,6 +56,85 @@
                 <p class="cd-muted mt-3">
                     Profile editing can be enabled next (name, avatar, timezone, org/workspace defaults).
                 </p>
+            </div>
+        </section>
+
+
+        <section class="cd-card">
+            <div class="cd-card__head">
+                <h2 class="cd-card__title">Subscription</h2>
+            </div>
+            <div class="cd-card__body">
+                <div class="cd-plan">
+                    <div>
+                        <div class="cd-plan__tier">@Model.SubscriptionTier</div>
+                        <div class="cd-muted">Status: @Model.SubscriptionStatus</div>
+                        <div class="cd-help mt-3">Current billing period: @Model.QuotaPeriodKey</div>
+                    </div>
+                    <div class="cd-plan__limits">
+                        <div><strong>@Model.WorkspaceUsed / @Model.WorkspaceLimit</strong><span> Workspaces</span></div>
+                        <div><strong>@Model.MonthlyAiUsed / @Model.MonthlyAiLimit</strong><span> AI requests</span></div>
+                        <div><strong>@Model.MonthlyExportUsed / @Model.MonthlyExportLimit</strong><span> Exports</span></div>
+                    </div>
+                </div>
+
+                <div class="cd-meterGroup">
+                    <div>
+                        <div class="cd-meterLabel">Workspace usage</div>
+                        <progress class="cd-meter" max="@(System.Math.Max(Model.WorkspaceLimit, 1))" value="@Model.WorkspaceUsed"></progress>
+                    </div>
+                    <div>
+                        <div class="cd-meterLabel">AI usage</div>
+                        <progress class="cd-meter" max="@(System.Math.Max(Model.MonthlyAiLimit, 1))" value="@Model.MonthlyAiUsed"></progress>
+                    </div>
+                    <div>
+                        <div class="cd-meterLabel">Export usage</div>
+                        <progress class="cd-meter" max="@(System.Math.Max(Model.MonthlyExportLimit, 1))" value="@Model.MonthlyExportUsed"></progress>
+                    </div>
+                </div>
+
+                <div class="cd-divider"></div>
+
+                <form asp-action="RequestUpgrade" asp-controller="Settings" method="post" class="cd-form">
+                    @Html.AntiForgeryToken()
+                    <div class="cd-sectionhead">
+                        <h3 class="cd-sectionhead__title">Upgrade plan</h3>
+                        <p class="cd-muted">Submit a QR or Stripe payment reference for manual approval.</p>
+                    </div>
+
+                    <div class="cd-form__grid">
+                        <div class="cd-field">
+                            <label class="cd-label" for="UpgradeTier">Requested tier</label>
+                            <select class="cd-select" id="UpgradeTier" name="UpgradeTier">
+                                <option value="Pro">Pro</option>
+                                <option value="Premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="cd-field">
+                            <label class="cd-label" for="UpgradePaymentMethod">Payment method</label>
+                            <select class="cd-select" id="UpgradePaymentMethod" name="UpgradePaymentMethod">
+                                <option value="QR">QR</option>
+                                <option value="Stripe">Stripe</option>
+                            </select>
+                        </div>
+                        <div class="cd-field">
+                            <label class="cd-label" for="UpgradeReferenceNumber">Reference number</label>
+                            <input class="cd-input" id="UpgradeReferenceNumber" name="UpgradeReferenceNumber" value="@Model.UpgradeReferenceNumber" placeholder="Enter payment reference" />
+                        </div>
+                        <div class="cd-field">
+                            <label class="cd-label" for="UpgradeNotes">Notes</label>
+                            <input class="cd-input" id="UpgradeNotes" name="UpgradeNotes" value="@Model.UpgradeNotes" placeholder="Optional message for admin" />
+                        </div>
+                    </div>
+
+                    <div class="cd-actions">
+                        <button type="submit" class="cd-btn cd-btn--primary" @(Model.HasPendingPaymentRequest ? "disabled" : null)>Submit upgrade request</button>
+                        @if (Model.HasPendingPaymentRequest)
+                        {
+                            <span class="cd-help">You already have a pending payment request.</span>
+                        }
+                    </div>
+                </form>
             </div>
         </section>
 

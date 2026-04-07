@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
 using CompeteDesk.ViewModels.Admin;
 using CompeteDesk.Services.Security;
+using CompeteDesk.Services.Billing;
 
 namespace CompeteDesk.Controllers;
 
@@ -14,12 +15,14 @@ public class AdminController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly FeaturePermissionService _permissionService;
+    private readonly SubscriptionService _subscriptionService;
 
-    public AdminController(ApplicationDbContext db, UserManager<IdentityUser> userManager, FeaturePermissionService permissionService)
+    public AdminController(ApplicationDbContext db, UserManager<IdentityUser> userManager, FeaturePermissionService permissionService, SubscriptionService subscriptionService)
     {
         _db = db;
         _userManager = userManager;
         _permissionService = permissionService;
+        _subscriptionService = subscriptionService;
     }
 
     // GET: /Admin
@@ -161,6 +164,80 @@ public class AdminController : Controller
         await _permissionService.SavePermissionsAsync(userId, grantedPermissions, ct);
         TempData["ToastSuccess"] = $"Updated feature permissions for {user.Email}.";
         return RedirectToAction(nameof(Permissions), new { id = userId });
+    }
+
+
+    public async Task<IActionResult> Subscriptions(CancellationToken ct)
+    {
+        ViewData["Title"] = "Subscriptions";
+        ViewData["LayoutFluid"] = true;
+        ViewData["UseSidebar"] = true;
+
+        var vm = new AdminSubscriptionsViewModel();
+
+        vm.PendingRequests = await _db.SubscriptionPaymentRequests
+            .AsNoTracking()
+            .OrderByDescending(x => x.SubmittedAtUtc)
+            .Take(100)
+            .Select(x => new AdminPaymentRequestRow
+            {
+                Id = x.Id,
+                UserEmail = x.UserEmail,
+                RequestedTier = x.RequestedTier,
+                PaymentMethod = x.PaymentMethod,
+                ReferenceNumber = x.ReferenceNumber,
+                Status = x.Status,
+                Notes = x.Notes,
+                SubmittedAtUtc = x.SubmittedAtUtc
+            })
+            .ToListAsync(ct);
+
+        var subscriptions = await _db.UserSubscriptions
+            .AsNoTracking()
+            .OrderByDescending(x => x.ApprovedAtUtc ?? x.CreatedAtUtc)
+            .Take(200)
+            .ToListAsync(ct);
+
+        var userIds = subscriptions.Select(x => x.UserId).Distinct().ToList();
+        var emails = await _db.Users
+            .AsNoTracking()
+            .Where(x => userIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Email, ct);
+
+        vm.Users = subscriptions.Select(x => new AdminSubscriptionUserRow
+        {
+            UserId = x.UserId,
+            Email = emails.TryGetValue(x.UserId, out var email) ? email : null,
+            Tier = x.Tier,
+            Status = x.Status,
+            MonthlyAiLimit = x.MonthlyAiLimit,
+            MonthlyExportLimit = x.MonthlyExportLimit,
+            WorkspaceLimit = x.WorkspaceLimit,
+            ExternalReference = x.ExternalReference,
+            ApprovedAtUtc = x.ApprovedAtUtc
+        }).ToList();
+
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveSubscriptionRequest(int requestId, CancellationToken ct)
+    {
+        var adminId = _userManager.GetUserId(User) ?? string.Empty;
+        await _subscriptionService.ApprovePaymentRequestAsync(requestId, adminId, ct);
+        TempData["ToastSuccess"] = "Subscription request approved.";
+        return RedirectToAction(nameof(Subscriptions));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectSubscriptionRequest(int requestId, string? notes, CancellationToken ct)
+    {
+        var adminId = _userManager.GetUserId(User) ?? string.Empty;
+        await _subscriptionService.RejectPaymentRequestAsync(requestId, adminId, notes, ct);
+        TempData["ToastSuccess"] = "Subscription request rejected.";
+        return RedirectToAction(nameof(Subscriptions));
     }
 
     public async Task<IActionResult> AuditLogs(CancellationToken ct)
