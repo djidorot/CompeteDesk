@@ -1,25 +1,9 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Http;
+using CompeteDesk.Data;
+using CompeteDesk.Extensions;
+using CompeteDesk.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using CompeteDesk.Data;
-using CompeteDesk.Services.Gemini;
-using CompeteDesk.Services.OpenAI;
-using CompeteDesk.Services.WebsiteAnalysis;
-using CompeteDesk.Services.BusinessAnalysis;
-using CompeteDesk.Services.WarRoom;
-using CompeteDesk.Services.Ai;
-using CompeteDesk.Services.Habits;
-using CompeteDesk.Services.StrategyCopilot;
-using CompeteDesk.Services.Notifications;
 
-// Render/Linux environments can hit low inotify limits during startup when the
-// default configuration system tries to watch appsettings files for changes.
-// Force polling/no-op style watching before CreateBuilder runs so startup does
-// not crash with "The configured user limit on the number of inotify instances
-// has been reached".
 if (OperatingSystem.IsLinux() && !string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
 {
     AppContext.SetSwitch("Microsoft.Extensions.FileProviders.UsePollingFileWatcher", true);
@@ -29,213 +13,18 @@ if (OperatingSystem.IsLinux() && !string.Equals(Environment.GetEnvironmentVariab
 
 var builder = WebApplication.CreateBuilder(args);
 
-var isDev = builder.Environment.IsDevelopment();
-
-// Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-var normalizedConnectionString = SqliteConnectionStringHelper.NormalizeForAppData(builder.Environment, connectionString);
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options
-        .UseSqlite(normalizedConnectionString)
-        .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
-
-// Needed for audit trail (CreatedBy/UpdatedBy) in ApplicationDbContext.
-builder.Services.AddHttpContextAccessor();
-
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-// Basic in-memory caching (used for frequent dropdown data like Workspaces/Strategies)
-builder.Services.AddMemoryCache();
-
-// ------------------------------------------------------------
-// Website Analysis + OpenAI
-// ------------------------------------------------------------
-builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection("OpenAI"));
-
-// ------------------------------------------------------------
-// Gemini (Topbar AI Search)
-// ------------------------------------------------------------
-builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("Gemini"));
-builder.Services.AddHttpClient<GeminiClient>(c =>
-{
-    c.Timeout = TimeSpan.FromSeconds(40);
-});
-
-// HttpClient for site fetches (analysis).
-builder.Services.AddHttpClient("site-analyzer", c =>
-{
-    c.Timeout = TimeSpan.FromSeconds(20);
-    c.DefaultRequestHeaders.UserAgent.ParseAdd("CompeteDeskSiteAnalyzer/1.0");
-});
-
-// HttpClient for OpenAI.
-builder.Services.AddHttpClient<OpenAiChatClient>(c =>
-{
-    // BusinessAnalysis / WarRoom prompts can be larger and occasionally take longer than 40s.
-    // 120s prevents noisy timeouts while still keeping requests bounded.
-    c.Timeout = TimeSpan.FromSeconds(120);
-});
-
-builder.Services.AddScoped<WebsiteAnalysisService>();
-builder.Services.AddScoped<BusinessAnalysisService>();
-builder.Services.AddScoped<WarRoomAiService>();
-builder.Services.AddScoped<HabitsAiService>();
-builder.Services.AddScoped<StrategyCopilotAiService>();
-builder.Services.AddScoped<DecisionTraceService>();
-builder.Services.AddScoped<AiContextPackBuilder>();
-builder.Services.AddScoped<StrategyAiAssistService>();
-
-// Strategic upgrades
-builder.Services.AddScoped<CompeteDesk.Services.Gamification.GamificationService>();
-builder.Services.AddScoped<CompeteDesk.Services.StudyPlanner.StudyPlannerService>();
-builder.Services.AddScoped<CompeteDesk.Services.Recommendations.RecommendationsService>();
-builder.Services.AddScoped<CompeteDesk.Services.Exports.ExportReportService>();
-
-// Email/SMS providers
-builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection("SendGrid"));
-var sendGridConfigured = !string.IsNullOrWhiteSpace(builder.Configuration["SendGrid:ApiKey"])
-    && !string.IsNullOrWhiteSpace(builder.Configuration["SendGrid:FromEmail"]);
-builder.Services.AddTransient<IEmailSender>(sp =>
-    sendGridConfigured
-        ? new SendGridEmailSender(
-            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SendGridOptions>>(),
-            sp.GetRequiredService<ILogger<SendGridEmailSender>>())
-        : new NullEmailSender(sp.GetRequiredService<ILogger<NullEmailSender>>()));
-
-builder.Services.Configure<TwilioOptions>(builder.Configuration.GetSection("Twilio"));
-var twilioConfigured = !string.IsNullOrWhiteSpace(builder.Configuration["Twilio:AccountSid"])
-    && !string.IsNullOrWhiteSpace(builder.Configuration["Twilio:AuthToken"])
-    && !string.IsNullOrWhiteSpace(builder.Configuration["Twilio:FromPhoneNumber"]);
-if (twilioConfigured)
-{
-    builder.Services.AddTransient<TwilioSmsSender>();
-}
-
-// Identity + External Login (Google)
-builder.Services
-    .AddDefaultIdentity<IdentityUser>(options =>
-    {
-        // For consumer apps, requiring confirmed account often blocks external logins
-        // unless you implement an email confirmation flow. Keep it simple for now.
-        options.SignIn.RequireConfirmedAccount = false;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
-// Authorization policies (granular permissions)
-builder.Services.AddAuthorization(options =>
-{
-    // CanEdit: allow creating/updating/deleting core data
-    // NOTE: CompeteDesk is a self-serve app. Every authenticated user should be able to
-    // create/update/delete their own workspace data by default.
-    // (Admin-only controls remain protected via [Authorize(Roles = "Admin")]).
-    options.AddPolicy("CanEdit", policy =>
-        policy.RequireRole(
-            IdentitySeeder.AdminRoleName,
-            IdentitySeeder.EditorRoleName,
-            IdentitySeeder.UserRoleName));
-
-    // Read-only users can still view app pages (authenticated) but can't POST/edit
-    options.AddPolicy("ReadOnly", policy =>
-        policy.RequireRole(IdentitySeeder.ReadOnlyRoleName));
-});
-
-// Cookie settings for external auth (fixes "Correlation failed" on some browsers)
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    // In Development we often run on http://localhost; Secure cookies would not be sent.
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = isDev ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-    options.LoginPath = "/Identity/Account/Login";
-    options.LogoutPath = "/Identity/Account/Logout";
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-});
-
-builder.Services.ConfigureExternalCookie(options =>
-{
-    // External auth cookies: SameSite=None is required for cross-site OAuth in production,
-    // but browsers require Secure for SameSite=None. For local dev over http, use Lax.
-    options.Cookie.SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None;
-    options.Cookie.SecurePolicy = isDev ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-});
-
-// If CookiePolicy forces SameSite=Lax, it can break the OAuth roundtrip and cause
-// "AuthenticationFailureException: Correlation failed." Ensure None cookies remain None.
-builder.Services.Configure<CookiePolicyOptions>(options =>
-{
-    options.MinimumSameSitePolicy = SameSiteMode.Unspecified;
-
-    // Only force Secure when the cookie is SameSite=None AND we're on https.
-    // (In local dev on http, forcing Secure breaks login persistence.)
-    options.OnAppendCookie = ctx =>
-    {
-        if (!isDev && ctx.CookieOptions.SameSite == SameSiteMode.None)
-        {
-            ctx.CookieOptions.Secure = true;
-        }
-    };
-
-    options.OnDeleteCookie = ctx =>
-    {
-        if (!isDev && ctx.CookieOptions.SameSite == SameSiteMode.None)
-        {
-            ctx.CookieOptions.Secure = true;
-        }
-    };
-});
-
-// External Login (Google) - only enable if credentials exist.
-// Prevents runtime crash: ArgumentException "ClientId cannot be empty".
-var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
-var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-
-if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
-{
-    // IMPORTANT: Explicitly keep Identity defaults so the external sign-in cookie works reliably.
-    builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddGoogle(options =>
-    {
-        options.ClientId = googleClientId;
-        options.ClientSecret = googleClientSecret;
-        // CallbackPath defaults to /signin-google (keep default)
-
-        // Make the correlation cookie compatible with modern SameSite rules.
-        // Without this, Chrome/Safari can drop the correlation cookie and the callback
-        // will fail with "Correlation failed".
-        options.CorrelationCookie.SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None;
-        options.CorrelationCookie.SecurePolicy = isDev ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-    });
-}
-
-builder.Services.AddControllersWithViews();
-
-// Workspace context resolver (used by Dashboard + create flows)
-builder.Services.AddScoped<CompeteDesk.Services.ActiveWorkspaceService>();
+builder.Services.AddCompeteDeskApplication(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 
-// Ensure the database path exists, run normal EF migrations, then backfill legacy tables
-// that still use bootstrap-style creation while the app transitions fully to migrations.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
     await DbBootstrapper.EnsureCoreTablesAsync(db);
-
-    // Ensure the Admin role exists and assign Admin to the configured seed email.
-    // (Important for Google external login scenarios where we don't pre-create a password-based user.)
     await IdentitySeeder.EnsureAdminAsync(scope.ServiceProvider);
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -246,8 +35,6 @@ else
     app.UseHsts();
 }
 
-// Respect reverse proxy headers from Render so ASP.NET correctly sees the original scheme as HTTPS.
-// This fixes Google OAuth redirect_uri_mismatch where the app sends http://... instead of https://...
 var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
@@ -258,90 +45,18 @@ forwardedHeadersOptions.KnownProxies.Clear();
 
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
-// In Development, Google external login callbacks can fail with HTTP 400 if the flow
-// is initiated on http:// but redirected mid-flight to https:// (correlation/state mismatch).
-// Keep dev stable by avoiding forced scheme changes.
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
 
 app.UseStatusCodePagesWithReExecute("/updating");
-
 app.UseRouting();
-
-// Must be before UseAuthentication so external auth cookies keep SameSite=None.
 app.UseCookiePolicy();
-
-// IMPORTANT: Auth must run before Authorization
 app.UseAuthentication();
-
-// Ensure every signed-in user has a baseline role (User by default).
-app.Use(async (context, next) =>
-{
-    if (context.User?.Identity?.IsAuthenticated == true)
-    {
-        using var scope = context.RequestServices.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-
-        var user = await userManager.GetUserAsync(context.User);
-        if (user is not null)
-        {
-            await IdentitySeeder.EnsureUserHasDefaultRoleAsync(scope.ServiceProvider, user);
-        }
-    }
-
-    await next();
-});
-
+app.UseMiddleware<EnsureUserRoleMiddleware>();
 app.UseAuthorization();
-
-// ------------------------------------------------------------
-// Role-based onboarding gate
-// Only protect authenticated application pages. Public marketing and account pages
-// stay public so the landing experience remains predictable.
-// ------------------------------------------------------------
-app.Use(async (context, next) =>
-{
-    if (context.User?.Identity?.IsAuthenticated == true
-        && (HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method)))
-    {
-        var path = context.Request.Path;
-
-        // Allow public pages, Identity UI, static files, API endpoints, and the onboarding page itself.
-        var isRootPath = path == "/" || string.IsNullOrWhiteSpace(path.Value);
-        var skip = isRootPath
-                   || path.StartsWithSegments("/Home")
-                   || path.StartsWithSegments("/Privacy")
-                   || path.StartsWithSegments("/Onboarding")
-                   || path.StartsWithSegments("/Identity")
-                   || path.StartsWithSegments("/css")
-                   || path.StartsWithSegments("/js")
-                   || path.StartsWithSegments("/lib")
-                   || path.StartsWithSegments("/images")
-                   || path.StartsWithSegments("/api")
-                   || path.StartsWithSegments("/favicon")
-                   || path.StartsWithSegments("/updating");
-
-        if (!skip)
-        {
-            var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrWhiteSpace(userId))
-            {
-                using var scope = context.RequestServices.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                var hasProfile = await db.UserProfiles.AnyAsync(x => x.UserId == userId);
-                if (!hasProfile)
-                {
-                    context.Response.Redirect("/Onboarding");
-                    return;
-                }
-            }
-        }
-    }
-
-    await next();
-});
+app.UseMiddleware<OnboardingGateMiddleware>();
 
 app.MapStaticAssets();
 

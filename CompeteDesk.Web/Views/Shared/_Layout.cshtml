@@ -1,3 +1,4 @@
+@using CompeteDesk.Infrastructure
 @using Microsoft.AspNetCore.Identity
 @using System.Linq
 @inject UserManager<IdentityUser> UserManager
@@ -20,7 +21,8 @@
 
 @{
     // Layout switches
-    var useSidebar = ViewData["UseSidebar"] as bool? == true;
+    var isAuthenticated = User?.Identity?.IsAuthenticated == true;
+    var useSidebar = AppShellPolicy.ShouldUseSidebar(ViewData["UseSidebar"] as bool? == true, isAuthenticated);
     var containerClass = (ViewData["LayoutFluid"] as bool? == true ? "container-fluid" : "container");
 
     // Topbar role label
@@ -77,7 +79,7 @@
                             <img src="~/images/cd-logo.png" alt="CompeteDesk" style="height:28px;" />
                             <span class="d-flex flex-column lh-sm">
                                 <span class="fw-semibold">CompeteDesk</span>
-                                <span class="small text-muted">Strategic Prep</span>
+                                <span class="small text-muted">Strategy Workspace</span>
                             </span>
                         </a>
 
@@ -207,10 +209,10 @@
                                 <span>CompeteDesk</span>
                             </a>
                             <p class="cd-site-footer__tagline">
-                                AI-powered strategic preparation for focused study, better planning, and measurable progress.
+                                AI-powered competitive planning for focused execution, sharper decisions, and measurable progress.
                             </p>
                             <div class="cd-site-footer__meta">
-                                <span>Built for exam preparation</span>
+                                <span>Competitive planning workspace</span>
                                 <span>Strategy-first workflow</span>
                                 <span>Progress reporting</span>
                             </div>

@@ -1,5 +1,6 @@
 @{
-    ViewData["Title"] = "AI-powered Strategic Preparation";
+    ViewData["Title"] = "AI-powered Competitive Planning";
+    var isAuthenticated = User?.Identity?.IsAuthenticated == true;
 }
 
 @section Styles {
@@ -13,19 +14,27 @@
                 <div class="cd-hero__pill">🧠 Intelligence • 🎯 Strategy • 🧭 Guidance • 📈 Measurable Improvement</div>
                 <h1 class="cd-hero__title">
                     CompeteDesk
-                    <span class="cd-hero__titleSub">AI-powered Strategic Preparation System</span>
+                    <span class="cd-hero__titleSub">AI-powered Competitive Planning System</span>
                 </h1>
                 <p class="cd-hero__lead">
-                    Stop guessing what to study next. Build a focused plan, get AI guidance, and track progress with clear metrics.
+                    Stop guessing your next move. Build a focused execution plan, get AI guidance, and track progress with clear metrics.
                 </p>
 
                 <div class="cd-hero__cta">
-                    <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Create Account</a>
-                    <a class="btn btn-outline-secondary btn-lg" asp-area="Identity" asp-page="/Account/Login">Sign In</a>
+                    @if (isAuthenticated)
+                    {
+                        <a class="btn btn-primary btn-lg" asp-controller="Dashboard" asp-action="Index">Open Dashboard</a>
+                        <a class="btn btn-outline-secondary btn-lg" asp-controller="Workspaces" asp-action="Index">View Workspaces</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Create Account</a>
+                        <a class="btn btn-outline-secondary btn-lg" asp-area="Identity" asp-page="/Account/Login">Sign In</a>
+                    }
                 </div>
 
                 <div class="cd-hero__micro">
-                    Designed for exam preparation — with strategy-first planning, AI insights, and progress reports.
+                    Designed for strategic teams and focused operators — with AI insights, execution planning, and progress reports.
                 </div>
             </div>
 
@@ -36,7 +45,7 @@
                 </div>
                 <div class="cd-hero__panelCard cd-hero__panelCard--good">
                     <div class="cd-hero__panelTitle">It should feel like…</div>
-                    <div class="cd-hero__panelValue">An AI-powered Strategic Preparation System</div>
+                    <div class="cd-hero__panelValue">An AI-powered Competitive Planning System</div>
                 </div>
             </div>
         </div>
@@ -51,15 +60,15 @@
         <div class="cd-landing__grid">
             <div class="cd-landing__card">
                 <div class="cd-landing__cardTitle">🧠 Intelligence</div>
-                <div class="cd-landing__cardText">Organize competencies, resources, and insights in one place—so you always know where you stand.</div>
+                <div class="cd-landing__cardText">Organize workspaces, resources, and signals in one place so you always know where you stand.</div>
             </div>
             <div class="cd-landing__card">
                 <div class="cd-landing__cardTitle">🎯 Strategy</div>
-                <div class="cd-landing__cardText">Turn goals into weekly plans and daily actions. Focus on high-impact topics first.</div>
+                <div class="cd-landing__cardText">Turn goals into weekly plans and daily actions. Focus on the highest-impact moves first.</div>
             </div>
             <div class="cd-landing__card">
                 <div class="cd-landing__cardTitle">🧭 Guidance</div>
-                <div class="cd-landing__cardText">Use AI recommendations and a study planner to remove decision fatigue and stay consistent.</div>
+                <div class="cd-landing__cardText">Use AI recommendations and planning tools to remove decision fatigue and stay consistent.</div>
             </div>
             <div class="cd-landing__card">
                 <div class="cd-landing__cardTitle">📈 Measurable improvement</div>
@@ -73,9 +82,9 @@
             <h2 class="cd-landing__h2">Start in 3 steps</h2>
         </div>
         <ol class="cd-landing__steps">
-            <li><span class="cd-stepNum">1</span> Create a workspace for your exam prep.</li>
-            <li><span class="cd-stepNum">2</span> Generate a weekly plan using Study Planner + AI roadmap.</li>
-            <li><span class="cd-stepNum">3</span> Execute daily actions and export progress PDFs.</li>
+            <li><span class="cd-stepNum">1</span> Create a workspace for a project, campaign, or competitive objective.</li>
+            <li><span class="cd-stepNum">2</span> Build a plan using Strategy Copilot, analysis tools, and recommendations.</li>
+            <li><span class="cd-stepNum">3</span> Execute actions, review metrics, and export decision-ready reports.</li>
         </ol>
     </section>
 </div>

@@ -15,14 +15,6 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
-        // If a user is already authenticated, send them straight to the app dashboard.
-        // Identity's default UI commonly redirects to "/" after login when no returnUrl is provided.
-        // This makes the post-login experience land on the dashboard automatically.
-        if (User?.Identity?.IsAuthenticated == true)
-        {
-            return RedirectToAction("Index", "Dashboard");
-        }
-
         return View();
     }
 

@@ -1,6 +1,6 @@
 # CompeteDesk
 
-CompeteDesk is a strategic decision-support web application designed to help individuals and teams plan, analyze, and execute competitive strategies using structured frameworks and AI-assisted insights.
+CompeteDesk is an AI-assisted competitive planning web application for individuals and teams that need one place to organize workspaces, analyze signals, execute strategies, and measure progress.
 
 ## Favorite Quote
 
