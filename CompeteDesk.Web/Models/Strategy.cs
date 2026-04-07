@@ -54,11 +54,21 @@ public class Strategy : IAuditableEntity, ISoftDeletable
     public string StrategyType { get; set; } = "Growth";
 
     /// <summary>
-    /// "Active" | "Archived"
+    /// Draft | Active | Completed | Archived
     /// </summary>
     [Required]
     [StringLength(24)]
-    public string Status { get; set; } = "Active";
+    public string Status { get; set; } = "Draft";
+
+    [Range(0, 100)]
+    public int ProgressPercent { get; set; }
+
+    public DateTime? DeadlineUtc { get; set; }
+
+    public DateTime? ReminderUtc { get; set; }
+
+    [StringLength(240)]
+    public string? Tags { get; set; }
 
     /// <summary>
     /// Higher = more important.

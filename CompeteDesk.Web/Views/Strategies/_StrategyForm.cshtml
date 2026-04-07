@@ -34,7 +34,9 @@
     <div class="cd-field">
         <div class="form-floating">
             <select asp-for="Status" class="form-select cd-input">
+            <option value="Draft">Draft</option>
             <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
             <option value="Archived">Archived</option>
             </select>
             <label asp-for="Status" class="cd-required"></label>
@@ -51,6 +53,26 @@
         <span asp-validation-for="Priority" class="invalid-feedback d-block"></span>
     </div>
 
+    <div class="cd-field">
+        <div class="form-floating">
+            <input asp-for="ProgressPercent" type="number" min="0" max="100" class="form-control cd-input" placeholder="Progress" />
+            <label asp-for="ProgressPercent">Progress %</label>
+        </div>
+        <span asp-validation-for="ProgressPercent" class="invalid-feedback d-block"></span>
+    </div>
+
+    <div class="cd-field">
+        <label asp-for="DeadlineUtc" class="cd-label">Deadline</label>
+        <input asp-for="DeadlineUtc" type="datetime-local" class="form-control cd-input" />
+        <span asp-validation-for="DeadlineUtc" class="invalid-feedback d-block"></span>
+    </div>
+
+    <div class="cd-field">
+        <label asp-for="ReminderUtc" class="cd-label">Reminder</label>
+        <input asp-for="ReminderUtc" type="datetime-local" class="form-control cd-input" />
+        <span asp-validation-for="ReminderUtc" class="invalid-feedback d-block"></span>
+    </div>
+
     <div class="cd-field cd-field--full">
         <div class="form-floating">
             <input asp-for="CorePrinciple" class="form-control cd-input" placeholder="Core principle" />
@@ -65,6 +87,15 @@
             <label asp-for="Summary"></label>
         </div>
         <span asp-validation-for="Summary" class="invalid-feedback d-block"></span>
+    </div>
+
+    <div class="cd-field cd-field--full">
+        <div class="form-floating">
+            <input asp-for="Tags" class="form-control cd-input" placeholder="Tags" />
+            <label asp-for="Tags">Tags (comma separated)</label>
+        </div>
+        <div class="cd-help">Example: SEO, Launch, High Impact</div>
+        <span asp-validation-for="Tags" class="invalid-feedback d-block"></span>
     </div>
 
 </div>

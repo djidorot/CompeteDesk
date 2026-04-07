@@ -14,7 +14,7 @@
     <div class="cd-page__head">
         <a class="cd-link" asp-action="Index">← Back to Strategies</a>
         <h1 class="cd-h1 mb-1">@Model.Strategy.Name</h1>
-        <div class="cd-sub">@(!string.IsNullOrWhiteSpace(Model.Strategy.Category) ? Model.Strategy.Category : "Uncategorized") • @Model.Strategy.Status • Priority @Model.Strategy.Priority</div>
+        <div class="cd-sub">@(!string.IsNullOrWhiteSpace(Model.Strategy.Category) ? Model.Strategy.Category : "Uncategorized") • @Model.Strategy.Status • Priority @Model.Strategy.Priority • @Model.Strategy.ProgressPercent% complete</div>
     </div>
 
     <partial name="_StrategyCommandHeader" model="Model.Header" />
@@ -29,6 +29,18 @@
                 <div class="cd-details__row">
                     <div class="cd-details__label">Summary</div>
                     <div class="cd-details__value">@(!string.IsNullOrWhiteSpace(Model.Strategy.Summary) ? Model.Strategy.Summary : "—")</div>
+                </div>
+                <div class="cd-details__row">
+                    <div class="cd-details__label">Deadline</div>
+                    <div class="cd-details__value">@(Model.Strategy.DeadlineUtc.HasValue ? Model.Strategy.DeadlineUtc.Value.ToLocalTime().ToString("MMM d, yyyy • h:mm tt") : "—")</div>
+                </div>
+                <div class="cd-details__row">
+                    <div class="cd-details__label">Reminder</div>
+                    <div class="cd-details__value">@(Model.Strategy.ReminderUtc.HasValue ? Model.Strategy.ReminderUtc.Value.ToLocalTime().ToString("MMM d, yyyy • h:mm tt") : "—")</div>
+                </div>
+                <div class="cd-details__row">
+                    <div class="cd-details__label">Tags</div>
+                    <div class="cd-details__value">@(string.IsNullOrWhiteSpace(Model.Strategy.Tags) ? "—" : Model.Strategy.Tags)</div>
                 </div>
                 <div class="cd-details__row">
                     <div class="cd-details__label">Updated</div>

@@ -93,6 +93,36 @@ public sealed class ExportsController : Controller
         return File(bytes, "application/pdf", fileName);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> StrategiesPdf(int? workspaceId, CancellationToken ct)
+    {
+        var userId = await GetUserIdAsync();
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+        var resolvedWorkspaceId = await _activeWorkspace.ResolveAsync(HttpContext, userId, workspaceId, ct);
+        var bytes = await _exports.ExportStrategiesPdfAsync(userId, resolvedWorkspaceId, ct);
+        return File(bytes, "application/pdf", $"strategies-{resolvedWorkspaceId ?? 0}.pdf");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> StrategiesExcel(int? workspaceId, CancellationToken ct)
+    {
+        var userId = await GetUserIdAsync();
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+        var resolvedWorkspaceId = await _activeWorkspace.ResolveAsync(HttpContext, userId, workspaceId, ct);
+        var bytes = await _exports.ExportStrategiesCsvAsync(userId, resolvedWorkspaceId, ct);
+        return File(bytes, "text/csv", $"strategies-{resolvedWorkspaceId ?? 0}.csv");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> MonthlySummaryPdf(int? workspaceId, CancellationToken ct)
+    {
+        var userId = await GetUserIdAsync();
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+        var resolvedWorkspaceId = await _activeWorkspace.ResolveAsync(HttpContext, userId, workspaceId, ct);
+        var bytes = await _exports.ExportMonthlySummaryPdfAsync(userId, resolvedWorkspaceId, ct);
+        return File(bytes, "application/pdf", $"monthly-summary-{resolvedWorkspaceId ?? 0}.pdf");
+    }
+
     public sealed class ExportIndexViewModel
     {
         public int? WorkspaceId { get; set; }

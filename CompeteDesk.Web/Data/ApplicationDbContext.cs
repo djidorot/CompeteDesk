@@ -70,6 +70,7 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<WorkspaceMember> WorkspaceMembers => Set<WorkspaceMember>();
     public DbSet<StrategyComment> StrategyComments => Set<StrategyComment>();
     public DbSet<UserFeaturePermission> UserFeaturePermissions => Set<UserFeaturePermission>();
+    public DbSet<NotificationItem> Notifications => Set<NotificationItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -118,6 +119,10 @@ public class ApplicationDbContext : IdentityDbContext
             b.Property(x => x.Summary).HasMaxLength(2000);
             b.Property(x => x.Category).HasMaxLength(80);
             b.Property(x => x.Status).IsRequired().HasMaxLength(24);
+            b.Property(x => x.ProgressPercent);
+            b.Property(x => x.DeadlineUtc);
+            b.Property(x => x.ReminderUtc);
+            b.Property(x => x.Tags).HasMaxLength(240);
             b.Property(x => x.AiInsightsJson);
             b.Property(x => x.AiSummary);
 
@@ -255,6 +260,17 @@ public class ApplicationDbContext : IdentityDbContext
             b.Property(x => x.UserId).IsRequired();
             b.Property(x => x.PermissionKey).IsRequired().HasMaxLength(128);
             b.HasIndex(x => new { x.UserId, x.PermissionKey }).IsUnique();
+        });
+
+        builder.Entity<NotificationItem>(b =>
+        {
+            b.ToTable("Notifications");
+            b.Property(x => x.OwnerId).IsRequired();
+            b.Property(x => x.Type).IsRequired().HasMaxLength(32);
+            b.Property(x => x.Title).IsRequired().HasMaxLength(160);
+            b.Property(x => x.Message).IsRequired().HasMaxLength(400);
+            b.Property(x => x.LinkUrl).HasMaxLength(256);
+            b.HasIndex(x => new { x.OwnerId, x.IsRead, x.CreatedAtUtc });
         });
         builder.Entity<WorkspaceMember>(b =>
         {

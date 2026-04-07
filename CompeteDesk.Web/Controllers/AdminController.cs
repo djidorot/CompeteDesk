@@ -163,6 +163,21 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Permissions), new { id = userId });
     }
 
+    public async Task<IActionResult> AuditLogs(CancellationToken ct)
+    {
+        ViewData["Title"] = "Audit Logs";
+        ViewData["LayoutFluid"] = true;
+        ViewData["UseSidebar"] = true;
+
+        var items = await _db.AuditLogs
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(200)
+            .ToListAsync(ct);
+
+        return View(items);
+    }
+
     // POST: /Admin/SetRole
     [HttpPost]
     [ValidateAntiForgeryToken]

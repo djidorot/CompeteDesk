@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Caching.Memory;
 using CompeteDesk.Models.Common;
 using CompeteDesk.Services;
+using CompeteDesk.Services.Notifications;
 
 namespace CompeteDesk.Controllers;
 
@@ -29,14 +30,16 @@ public class StrategiesController : Controller
     private readonly OpenAiChatClient _openAi;
     private readonly IMemoryCache _cache;
     private readonly ActiveWorkspaceService _activeWs;
+    private readonly InAppNotificationService _notifications;
 
-    public StrategiesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, OpenAiChatClient openAi, IMemoryCache cache, ActiveWorkspaceService activeWs)
+    public StrategiesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, OpenAiChatClient openAi, IMemoryCache cache, ActiveWorkspaceService activeWs, InAppNotificationService notifications)
     {
         _db = db;
         _userManager = userManager;
         _openAi = openAi;
         _cache = cache;
         _activeWs = activeWs;
+        _notifications = notifications;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -46,7 +49,7 @@ public class StrategiesController : Controller
     }
 
     // GET: /Strategies
-    public async Task<IActionResult> Index(string? q, string status = "Active", int? workspaceId = null, string sort = "priority", int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
+    public async Task<IActionResult> Index(string? q, string? status = null, int? workspaceId = null, string sort = "priority", string? tag = null, int page = 1, int pageSize = 25, bool partial = false, CancellationToken ct = default)
     {
         ViewData["Title"] = "Strategies";
         ViewData["LayoutFluid"] = true;
@@ -73,9 +76,16 @@ public class StrategiesController : Controller
 
         ViewBag.Workspaces = new SelectList(workspaces, "Id", "Name", workspaceId);
 
+        status ??= "";
         if (!string.IsNullOrWhiteSpace(status))
         {
             query = query.Where(x => x.Status == status);
+        }
+
+        if (!string.IsNullOrWhiteSpace(tag))
+        {
+            var tagTerm = tag.Trim();
+            query = query.Where(x => x.Tags != null && x.Tags.Contains(tagTerm));
         }
 
         if (workspaceId != null)
@@ -115,6 +125,7 @@ public class StrategiesController : Controller
         ViewBag.Status = status;
         ViewBag.WorkspaceId = workspaceId;
         ViewBag.Sort = sort;
+        ViewBag.Tag = tag ?? string.Empty;
 
         if (partial || Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             return PartialView("_StrategiesList", paged.Items.ToList());
@@ -220,8 +231,9 @@ public class StrategiesController : Controller
         var model = new Strategy
         {
             SourceBook = null,
-            Status = "Active",
-            Priority = 0
+            Status = "Draft",
+            Priority = 0,
+            ProgressPercent = 0
         };
 
         // Auto-attach to the active workspace so Dashboard summary counts stay in sync.
@@ -265,7 +277,9 @@ public class StrategiesController : Controller
 
         model.CreatedAtUtc = DateTime.UtcNow;
         model.UpdatedAtUtc = DateTime.UtcNow;
-        model.Status = string.IsNullOrWhiteSpace(model.Status) ? "Active" : model.Status;
+        model.Status = NormalizeStrategyStatus(model.Status, "Draft");
+        model.ProgressPercent = Math.Clamp(model.ProgressPercent, 0, 100);
+        model.Tags = NormalizeTags(model.Tags);
         model.SourceBook = string.IsNullOrWhiteSpace(model.SourceBook) ? null : model.SourceBook;
         model.StrategyType = string.IsNullOrWhiteSpace(model.StrategyType) ? "Growth" : model.StrategyType;
 
@@ -273,6 +287,7 @@ public class StrategiesController : Controller
 
         _db.Strategies.Add(model);
         await _db.SaveChangesAsync();
+        await _notifications.CreateAsync(userId, "Strategy created", $"{model.Name} was created as {model.Status}.", "Strategy", $"/Strategies/Details/{model.Id}");
         TempData["ToastSuccess"] = "Strategy created.";
         return RedirectToAction(nameof(Index));
     }
@@ -322,12 +337,17 @@ public class StrategiesController : Controller
         item.Summary = model.Summary;
         item.Category = model.Category;
         item.StrategyType = string.IsNullOrWhiteSpace(model.StrategyType) ? item.StrategyType : model.StrategyType;
-        item.Status = string.IsNullOrWhiteSpace(model.Status) ? item.Status : model.Status;
+        item.Status = NormalizeStrategyStatus(model.Status, item.Status);
+        item.ProgressPercent = Math.Clamp(model.ProgressPercent, 0, 100);
+        item.DeadlineUtc = model.DeadlineUtc;
+        item.ReminderUtc = model.ReminderUtc;
+        item.Tags = NormalizeTags(model.Tags);
         item.Priority = model.Priority;
         item.WorkspaceId = model.WorkspaceId;
         item.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        await _notifications.CreateAsync(userId, "Strategy updated", $"{item.Name} is now {item.Status} at {item.ProgressPercent}% progress.", "Strategy", $"/Strategies/Details/{item.Id}");
         TempData["ToastSuccess"] = "Strategy updated.";
         return RedirectToAction(nameof(Index));
     }
@@ -472,7 +492,7 @@ public class StrategiesController : Controller
         {
             s.OwnerId = userId;
             s.SourceBook = null;
-            s.Status = "Active";
+            s.Status = "Draft";
             s.CreatedAtUtc = now;
             s.UpdatedAtUtc = now;
         }
@@ -760,5 +780,30 @@ Rules:
 
         [JsonPropertyName("category")]
         public string? Category { get; set; }
+    }
+
+
+    private static string NormalizeStrategyStatus(string? value, string fallback = "Draft")
+    {
+        return (value ?? string.Empty).Trim() switch
+        {
+            "Draft" => "Draft",
+            "Active" => "Active",
+            "Completed" => "Completed",
+            "Archived" => "Archived",
+            _ => fallback
+        };
+    }
+
+    private static string? NormalizeTags(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        var tags = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+        var normalized = string.Join(", ", tags);
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
     }
 }

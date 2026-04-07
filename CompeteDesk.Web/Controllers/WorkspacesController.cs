@@ -10,6 +10,8 @@ using CompeteDesk.Data;
 using CompeteDesk.Models;
 using CompeteDesk.ViewModels.Workspaces;
 using CompeteDesk.Models.Common;
+using CompeteDesk.Services.Notifications;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace CompeteDesk.Controllers;
 
@@ -18,11 +20,13 @@ public class WorkspacesController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly InAppNotificationService _notifications;
 
-    public WorkspacesController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
+    public WorkspacesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, InAppNotificationService notifications)
     {
         _db = db;
         _userManager = userManager;
+        _notifications = notifications;
     }
 
     private async Task<IdentityUser?> GetUserAsync() => await _userManager.GetUserAsync(User);
@@ -283,6 +287,11 @@ public class WorkspacesController : Controller
         }
 
         await _db.SaveChangesAsync(ct);
+        var invitedUser = await _userManager.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email, ct);
+        if (invitedUser != null)
+        {
+            await _notifications.CreateAsync(invitedUser.Id, "Workspace invitation", $"You were invited to join {workspace.Name} as {role}.", "Workspace", "/Workspaces");
+        }
         TempData["ToastSuccess"] = "Workspace invite saved.";
         return RedirectToAction(nameof(Details), new { id = workspaceId });
     }
@@ -367,6 +376,7 @@ public class WorkspacesController : Controller
         invite.AcceptedByUserId = userId;
 
         await _db.SaveChangesAsync(ct);
+        await _notifications.CreateAsync(invite.InvitedByUserId, "Workspace invitation accepted", $"{email} accepted the invitation for workspace #{invite.WorkspaceId}.", "Workspace", $"/Workspaces/Details/{invite.WorkspaceId}");
         TempData["ToastSuccess"] = "Workspace invite accepted.";
         return RedirectToAction(nameof(Details), new { id = invite.WorkspaceId });
     }

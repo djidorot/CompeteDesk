@@ -36,16 +36,13 @@
                 <p class="text-muted mb-4">Exports use your selected workspace context instead of relying on a raw sidebar link.</p>
 
                 <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-primary"
-                       asp-controller="Exports"
-                       asp-action="CompetencySummaryPdf"
-                       asp-route-workspaceId="@Model.WorkspaceId">Download Competency Summary PDF</a>
-
-                    <a class="btn btn-outline-secondary"
-                       asp-controller="Exports"
-                       asp-action="ProgressReportPdf"
-                       asp-route-workspaceId="@Model.WorkspaceId">Download Progress Report PDF</a>
+                    <a class="btn btn-primary" asp-controller="Exports" asp-action="CompetencySummaryPdf" asp-route-workspaceId="@Model.WorkspaceId">Competency Summary PDF</a>
+                    <a class="btn btn-outline-secondary" asp-controller="Exports" asp-action="ProgressReportPdf" asp-route-workspaceId="@Model.WorkspaceId">Progress Report PDF</a>
+                    <a class="btn btn-outline-secondary" asp-controller="Exports" asp-action="StrategiesPdf" asp-route-workspaceId="@Model.WorkspaceId">Strategies PDF</a>
+                    <a class="btn btn-outline-secondary" asp-controller="Exports" asp-action="StrategiesExcel" asp-route-workspaceId="@Model.WorkspaceId">Strategies Excel/CSV</a>
+                    <a class="btn btn-outline-secondary" asp-controller="Exports" asp-action="MonthlySummaryPdf" asp-route-workspaceId="@Model.WorkspaceId">Monthly Summary PDF</a>
                 </div>
+                <div class="small text-muted mt-3">Shareable reports can be downloaded and sent as attachments to your team or stakeholders.</div>
             </div>
         </div>
     }

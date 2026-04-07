@@ -112,6 +112,8 @@ public class RegisterModel : PageModel
 
         await _signInManager.SignInAsync(user, isPersistent: false);
         _logger.LogInformation("User created a new account with password.");
+        _db.AuditLogs.Add(new AuditLog { OwnerId = user.Id, ActorUserId = user.Id, ActorEmail = user.Email, Action = "Register", EntityType = "Identity", EntityId = user.Id, Summary = "User created a new account.", CreatedAtUtc = DateTime.UtcNow });
+        await _db.SaveChangesAsync();
 
         return LocalRedirect(GetPostLoginReturnUrl(ReturnUrl));
     }

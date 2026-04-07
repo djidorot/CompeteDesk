@@ -8,9 +8,10 @@
     var totalPages = (int)(ViewBag.TotalPages ?? 0);
 
     var q = (string)(ViewBag.Query ?? "");
-    var status = (string)(ViewBag.Status ?? "Active");
+    var status = (string)(ViewBag.Status ?? "");
     var workspaceId = (int?)(ViewBag.WorkspaceId ?? null);
     var sort = (string)(ViewBag.Sort ?? "priority");
+    var tag = (string)(ViewBag.Tag ?? "");
 }
 
 @if (!Model.Any())
@@ -18,7 +19,7 @@
     <div class="card shadow-sm cd-strategies__emptyState">
         <div class="card-body">
             <div class="cd-strategies__emptyTitle">No strategies found</div>
-            <div class="cd-strategies__emptySub">Try changing your search, workspace, or status filters.</div>
+            <div class="cd-strategies__emptySub">Try changing your search, workspace, status, or tag filters.</div>
         </div>
     </div>
 }
@@ -29,7 +30,9 @@ else
         {
             var statusClass = string.Equals(s.Status, "Archived", StringComparison.OrdinalIgnoreCase)
                 ? "cd-badge--archived"
-                : "cd-badge--active";
+                : string.Equals(s.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                    ? "cd-badge--active"
+                    : "cd-badge--active";
 
             <article class="card shadow-sm cd-strategy">
                 <div class="card-body cd-strategy__body">
@@ -42,6 +45,7 @@ else
                         <div class="cd-strategy__badges">
                             <span class="cd-pill">@(!string.IsNullOrWhiteSpace(s.Category) ? s.Category : "Uncategorized")</span>
                             <span class="cd-badge @statusClass">@s.Status</span>
+                            <span class="cd-pill">@s.ProgressPercent%</span>
                         </div>
                     </div>
 
@@ -53,6 +57,10 @@ else
                         <div class="cd-strategy__stat">
                             <span class="cd-strategy__statLabel">Type</span>
                             <span class="cd-strategy__statValue">@(string.IsNullOrWhiteSpace(s.StrategyType) ? "Growth" : s.StrategyType)</span>
+                        </div>
+                        <div class="cd-strategy__stat">
+                            <span class="cd-strategy__statLabel">Deadline</span>
+                            <span class="cd-strategy__statValue">@(s.DeadlineUtc.HasValue ? s.DeadlineUtc.Value.ToLocalTime().ToString("MMM d") : "—")</span>
                         </div>
                     </div>
 
@@ -66,6 +74,14 @@ else
                             <div class="cd-strategy__sectionLabel">Summary</div>
                             <div class="cd-strategy__summary">@(string.IsNullOrWhiteSpace(s.Summary) ? "No summary available yet." : s.Summary)</div>
                         </div>
+
+                        @if (!string.IsNullOrWhiteSpace(s.Tags))
+                        {
+                            <div class="cd-strategy__section">
+                                <div class="cd-strategy__sectionLabel">Tags</div>
+                                <div class="cd-strategy__summary">@s.Tags</div>
+                            </div>
+                        }
                     </div>
 
                     <div class="cd-strategy__actions">
@@ -94,6 +110,7 @@ else
         ["q"] = q,
         ["status"] = status,
         ["workspaceId"] = workspaceId,
-        ["sort"] = sort
+        ["sort"] = sort,
+        ["tag"] = tag
     }
 })

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using CompeteDesk.Data;
+using CompeteDesk.Models;
 
 namespace CompeteDesk.Areas.Identity.Pages.Account;
 
@@ -13,14 +15,17 @@ public class LoginModel : PageModel
     private readonly SignInManager<IdentityUser> _signInManager;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly ILogger<LoginModel> _logger;
+    private readonly ApplicationDbContext _db;
 
     public LoginModel(
         SignInManager<IdentityUser> signInManager,
         UserManager<IdentityUser> userManager,
+        ApplicationDbContext db,
         ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
+        _db = db;
         _logger = logger;
     }
 
@@ -124,6 +129,8 @@ public class LoginModel : PageModel
         if (result.Succeeded)
         {
             _logger.LogInformation("User logged in.");
+            _db.AuditLogs.Add(new AuditLog { OwnerId = user.Id, ActorUserId = user.Id, ActorEmail = user.Email, Action = "Login", EntityType = "Identity", EntityId = user.Id, Summary = "User logged in.", CreatedAtUtc = DateTime.UtcNow });
+            await _db.SaveChangesAsync();
             return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
         }
 

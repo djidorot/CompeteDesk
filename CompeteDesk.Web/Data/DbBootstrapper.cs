@@ -48,6 +48,7 @@ namespace CompeteDesk.Data
             await EnsureEntityChangeHistoryTableAsync(db);
             await EnsureWorkspaceCollaborationTablesAsync(db);
             await EnsureUserFeaturePermissionsTableAsync(db);
+            await EnsureNotificationsTableAsync(db);
 
             await NormalizeSourceBooksAsync(db);
         }
@@ -393,6 +394,42 @@ CREATE INDEX IF NOT EXISTS IX_EntityChangeHistories_Entity_ChangedAtUtc
 ON EntityChangeHistories (EntityType, EntityId, ChangedAtUtc);");
         }
 
+
+        private static async Task EnsureNotificationsTableAsync(ApplicationDbContext db)
+        {
+            if (!await TableExistsAsync(db, "Notifications"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE Notifications (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    OwnerId TEXT NOT NULL,
+    Type TEXT NOT NULL DEFAULT 'General',
+    Title TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    LinkUrl TEXT NULL,
+    IsRead INTEGER NOT NULL DEFAULT 0,
+    SendEmail INTEGER NOT NULL DEFAULT 0,
+    EmailSent INTEGER NOT NULL DEFAULT 0,
+    CreatedAtUtc TEXT NOT NULL,
+    ReadAtUtc TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "Notifications", "OwnerId", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "Notifications", "Type", "TEXT", nullable: false, defaultSql: "'General'");
+                await EnsureColumnAsync(db, "Notifications", "Title", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "Notifications", "Message", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "Notifications", "LinkUrl", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Notifications", "IsRead", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "Notifications", "SendEmail", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "Notifications", "EmailSent", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "Notifications", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Notifications", "ReadAtUtc", "TEXT", nullable: true);
+            }
+
+            await EnsureIndexAsync(db, "IX_Notifications_OwnerId_IsRead_CreatedAtUtc", "Notifications", "OwnerId, IsRead, CreatedAtUtc");
+        }
 
         private static async Task EnsureWorkspaceCollaborationTablesAsync(ApplicationDbContext db)
         {
@@ -961,6 +998,10 @@ CREATE TABLE Strategies (
     Category TEXT NULL,
     StrategyType TEXT NOT NULL DEFAULT 'Growth',
     Status TEXT NOT NULL,
+    ProgressPercent INTEGER NOT NULL DEFAULT 0,
+    DeadlineUtc TEXT NULL,
+    ReminderUtc TEXT NULL,
+    Tags TEXT NULL,
     Priority INTEGER NOT NULL DEFAULT 0,
     AiInsightsJson TEXT NULL,
     AiSummary TEXT NULL,
@@ -984,6 +1025,10 @@ CREATE TABLE Strategies (
                 // materialization (SqliteValueReader.GetString on NULL).
                 await EnsureColumnAsync(db, "Strategies", "StrategyType", "TEXT", nullable: false, defaultSql: "'Growth'");
                 await EnsureColumnAsync(db, "Strategies", "Status", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Strategies", "ProgressPercent", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "Strategies", "DeadlineUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Strategies", "ReminderUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "Strategies", "Tags", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Strategies", "Priority", "INTEGER", nullable: true);
                 await EnsureColumnAsync(db, "Strategies", "AiInsightsJson", "TEXT", nullable: true);
                 await EnsureColumnAsync(db, "Strategies", "AiSummary", "TEXT", nullable: true);
@@ -1030,6 +1075,10 @@ CREATE TABLE Actions (
     Description TEXT NULL,
     Category TEXT NULL,
     Status TEXT NOT NULL,
+    ProgressPercent INTEGER NOT NULL DEFAULT 0,
+    DeadlineUtc TEXT NULL,
+    ReminderUtc TEXT NULL,
+    Tags TEXT NULL,
     Priority INTEGER NOT NULL DEFAULT 0,
     DueAtUtc TEXT NULL,
 	    SourceBook TEXT NULL,

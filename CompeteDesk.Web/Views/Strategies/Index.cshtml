@@ -5,9 +5,10 @@
     ViewData["UseSidebar"] = true;
 
     var q = (string)(ViewBag.Query ?? "");
-    var status = (string)(ViewBag.Status ?? "Active");
+    var status = (string)(ViewBag.Status ?? "");
     var workspaceId = (int?)(ViewBag.WorkspaceId ?? null);
     var sort = (string)(ViewBag.Sort ?? "priority");
+    var tag = (string)(ViewBag.Tag ?? "");
     var totalCount = (int)(ViewBag.TotalCount ?? Model.Count);
 }
 
@@ -37,7 +38,10 @@
                     <div class="cd-field">
                         <label class="cd-label" for="status">Status</label>
                         <select id="status" name="status" class="form-select cd-input">
+                            <option value="" selected="@(string.IsNullOrEmpty(status))">All</option>
+                            <option value="Draft" selected="@(status == "Draft")">Draft</option>
                             <option value="Active" selected="@(status == "Active")">Active</option>
+                            <option value="Completed" selected="@(status == "Completed")">Completed</option>
                             <option value="Archived" selected="@(status == "Archived")">Archived</option>
                         </select>
                     </div>
@@ -47,6 +51,11 @@
                         <select id="workspaceId" name="workspaceId" class="form-select cd-input" asp-items="ViewBag.Workspaces">
                             <option value="">All</option>
                         </select>
+                    </div>
+
+                    <div class="cd-field">
+                        <label class="cd-label" for="tag">Tag</label>
+                        <input id="tag" name="tag" class="form-control cd-input" value="@tag" placeholder="e.g. SEO, Launch" />
                     </div>
 
                     <div class="cd-field">

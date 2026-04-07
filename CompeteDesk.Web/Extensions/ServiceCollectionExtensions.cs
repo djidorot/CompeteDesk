@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddRazorPages();
         services.AddScoped<CompeteDesk.Services.ActiveWorkspaceService>();
         services.AddScoped<FeaturePermissionService>();
+        services.AddScoped<InAppNotificationService>();
 
         ConfigureAiServices(services, configuration);
         ConfigureMessaging(services, configuration);

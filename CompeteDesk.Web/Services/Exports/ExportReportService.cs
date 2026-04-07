@@ -136,4 +136,71 @@ public sealed class ExportReportService
 
         return SimplePdfWriter.CreateTextPdf(title, lines);
     }
+
+
+    public async Task<byte[]> ExportStrategiesPdfAsync(string ownerId, int? workspaceId, CancellationToken ct)
+    {
+        var strategies = await _db.Strategies.AsNoTracking()
+            .Where(s => s.OwnerId == ownerId && (!workspaceId.HasValue || s.WorkspaceId == workspaceId))
+            .OrderByDescending(s => s.Priority)
+            .ThenBy(s => s.Name)
+            .ToListAsync(ct);
+
+        var lines = new List<string>
+        {
+            $"Strategies exported: {strategies.Count}",
+            ""
+        };
+
+        lines.AddRange(strategies.Select(s => $"- {s.Name} | {s.Status} | {s.ProgressPercent}% | Due {(s.DeadlineUtc.HasValue ? s.DeadlineUtc.Value.ToString("yyyy-MM-dd") : "—")} | Tags {s.Tags ?? "—"}"));
+        return SimplePdfWriter.CreateTextPdf("Strategies Export", lines);
+    }
+
+    public async Task<byte[]> ExportStrategiesCsvAsync(string ownerId, int? workspaceId, CancellationToken ct)
+    {
+        var rows = await _db.Strategies.AsNoTracking()
+            .Where(s => s.OwnerId == ownerId && (!workspaceId.HasValue || s.WorkspaceId == workspaceId))
+            .OrderByDescending(s => s.Priority)
+            .ThenBy(s => s.Name)
+            .Select(s => new { s.Name, s.Category, s.Status, s.ProgressPercent, s.Priority, s.DeadlineUtc, s.ReminderUtc, s.Tags })
+            .ToListAsync(ct);
+
+        static string Csv(string? value) => """ + (value ?? string.Empty).Replace(""", """") + """;
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Name,Category,Status,ProgressPercent,Priority,DeadlineUtc,ReminderUtc,Tags");
+        foreach (var r in rows)
+        {
+            sb.AppendLine(string.Join(',', Csv(r.Name), Csv(r.Category), Csv(r.Status), r.ProgressPercent.ToString(), r.Priority.ToString(), Csv(r.DeadlineUtc?.ToString("u")), Csv(r.ReminderUtc?.ToString("u")), Csv(r.Tags)));
+        }
+
+        return System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
+    public async Task<byte[]> ExportMonthlySummaryPdfAsync(string ownerId, int? workspaceId, CancellationToken ct)
+    {
+        var from = DateTime.UtcNow.Date.AddDays(-30);
+        var strategies = await _db.Strategies.AsNoTracking()
+            .Where(s => s.OwnerId == ownerId && (!workspaceId.HasValue || s.WorkspaceId == workspaceId))
+            .ToListAsync(ct);
+
+        var created = strategies.Count(s => s.CreatedAtUtc >= from);
+        var completed = strategies.Count(s => s.Status == "Completed");
+        var avgProgress = strategies.Count == 0 ? 0 : (int)Math.Round(strategies.Average(s => s.ProgressPercent));
+        var overdue = strategies.Count(s => s.DeadlineUtc.HasValue && s.DeadlineUtc.Value < DateTime.UtcNow && s.Status != "Completed");
+
+        var lines = new List<string>
+        {
+            $"Window: {from:yyyy-MM-dd} to {DateTime.UtcNow:yyyy-MM-dd}",
+            $"New strategies: {created}",
+            $"Completed strategies: {completed}",
+            $"Average progress: {avgProgress}%",
+            $"Overdue strategies: {overdue}",
+            "",
+            "Top priorities:"
+        };
+
+        lines.AddRange(strategies.OrderByDescending(s => s.Priority).Take(10).Select(s => $"- {s.Name} ({s.Status}, {s.ProgressPercent}%)"));
+        return SimplePdfWriter.CreateTextPdf("Monthly Dashboard Summary", lines);
+    }
 }
