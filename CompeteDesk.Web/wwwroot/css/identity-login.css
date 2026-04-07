@@ -1,4 +1,4 @@
-.cd-auth-page{
+section.cd-auth-page{
   min-height: calc(100vh - 180px);
   display: flex;
   align-items: center;
@@ -320,7 +320,7 @@
 }
 
 @media (max-width: 575.98px){
-  .cd-auth-page{
+  section.cd-auth-page{
     padding-top: 16px;
   }
 

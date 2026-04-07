@@ -399,7 +399,7 @@ body {
    ------------------------------------------------------------ */
 .cd-auth-page{
   position: relative;
-  padding: clamp(20px, 4vw, 44px) 0 18px;
+  padding: 0 0 18px;
 }
 
 .cd-auth-page::before{
