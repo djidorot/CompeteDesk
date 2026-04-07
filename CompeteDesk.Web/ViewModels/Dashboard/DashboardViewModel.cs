@@ -72,6 +72,15 @@ namespace CompeteDesk.ViewModels.Dashboard
         // Metrics/KPIs
         public List<MetricKpiItem> Kpis { get; set; } = new();
 
+        // Analytics
+        public List<DashboardAnalyticsCard> AnalyticsCards { get; set; } = new();
+        public List<DashboardChartPoint> MonthlyProgress { get; set; } = new();
+        public List<DashboardChartPoint> CategoryDistribution { get; set; } = new();
+
+        // AI-powered insights
+        public List<string> AiSuggestions { get; set; } = new();
+        public string? CompetitorSummary { get; set; }
+
         // Back-compat for older dashboard view
         public List<MetricKpiItem> KeyMetrics
         {
@@ -219,6 +228,19 @@ namespace CompeteDesk.ViewModels.Dashboard
         public string CorePrinciple { get; set; } = "";
         public int ExecutionRate { get; set; } // 0-100
         public string Effectiveness { get; set; } = "Medium"; // Low/Medium/High
+    }
+
+    public sealed class DashboardAnalyticsCard
+    {
+        public string Title { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string Subtitle { get; set; } = "";
+    }
+
+    public sealed class DashboardChartPoint
+    {
+        public string Label { get; set; } = "";
+        public int Value { get; set; }
     }
 
     public sealed class MetricKpiItem

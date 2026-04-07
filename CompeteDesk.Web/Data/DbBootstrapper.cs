@@ -46,6 +46,7 @@ namespace CompeteDesk.Data
             // Security & audit
             await EnsureAuditLogsTableAsync(db);
             await EnsureEntityChangeHistoryTableAsync(db);
+            await EnsureWorkspaceCollaborationTablesAsync(db);
 
             await NormalizeSourceBooksAsync(db);
         }

@@ -74,6 +74,47 @@ namespace CompeteDesk.Controllers
             return View(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> LatestReport(int workspaceId, CancellationToken ct)
+        {
+            var userId = await GetUserIdAsync();
+            if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+            var ws = await _db.Workspaces
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w => w.Id == workspaceId && w.OwnerId == userId, ct);
+
+            var vm = new BusinessAnalysisPageViewModel
+            {
+                NeedsWorkspace = ws is null,
+                WorkspaceId = ws?.Id ?? 0,
+                WorkspaceName = ws?.Name ?? "No workspace yet",
+                BusinessType = ws?.BusinessType,
+                Country = ws?.Country,
+                NeedsBusinessProfile = ws is not null && (string.IsNullOrWhiteSpace(ws.BusinessType) || string.IsNullOrWhiteSpace(ws.Country))
+            };
+
+            if (ws is not null)
+            {
+                var latest = await _db.BusinessAnalysisReports
+                    .AsNoTracking()
+                    .Where(r => r.OwnerId == userId && r.WorkspaceId == ws.Id)
+                    .OrderByDescending(r => r.CreatedAtUtc)
+                    .FirstOrDefaultAsync(ct);
+
+                if (latest is not null)
+                {
+                    vm.Latest = MapBusinessAnalysis(latest);
+                    vm.Latest.WorkspaceId = ws.Id;
+                    vm.Latest.WorkspaceName = ws.Name;
+                    vm.Latest.BusinessType = ws.BusinessType ?? "";
+                    vm.Latest.Country = ws.Country ?? "";
+                }
+            }
+
+            return PartialView("_LatestReport", vm);
+        }
+
         private async Task<string?> GetUserIdAsync()
         {
             var user = await _userManager.GetUserAsync(User);

@@ -176,6 +176,21 @@
             }
 
             bsModal.hide();
+            if (window.fetch && workspaceId) {
+                try {
+                    const reportHost = document.querySelector('[data-cd-biz-report]');
+                    if (reportHost) {
+                        const reportRes = await fetch(`/BusinessAnalysis/LatestReport?workspaceId=${encodeURIComponent(workspaceId)}`, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        if (reportRes.ok) {
+                            reportHost.innerHTML = await reportRes.text();
+                            return;
+                        }
+                    }
+                } catch {
+                }
+            }
             window.location.reload();
         } catch (err) {
             showError(err?.message || 'Save failed.');

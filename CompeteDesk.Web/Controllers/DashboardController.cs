@@ -453,6 +453,51 @@ public class DashboardController : Controller
             vm.BusinessAnalysis = MapBusinessAnalysis(latest);
         }
 
+        // ------------------------------------------------------------
+        // Dashboard analytics (real metrics)
+        // ------------------------------------------------------------
+        vm.AnalyticsCards = new()
+        {
+            new DashboardAnalyticsCard { Title = "Growth", Value = done7.ToString(), Subtitle = "completed actions in the last 7 days" },
+            new DashboardAnalyticsCard { Title = "Performance", Value = $"{habitAdherence}%", Subtitle = "habit adherence over the last 7 days" },
+            new DashboardAnalyticsCard { Title = "Risk Level", Value = overdueCount == 0 ? "Low" : overdueCount <= 2 ? "Medium" : "High", Subtitle = overdueCount == 0 ? "no overdue actions" : $"{overdueCount} overdue action(s)" }
+        };
+
+        var monthStart = new DateTime(todayUtc.Year, todayUtc.Month, 1).AddMonths(-5);
+        vm.MonthlyProgress = Enumerable.Range(0, 6)
+            .Select(i => monthStart.AddMonths(i))
+            .Select(m => new DashboardChartPoint
+            {
+                Label = m.ToString("MMM"),
+                Value = actions.Count(a => string.Equals(a.Status, "Done", StringComparison.OrdinalIgnoreCase)
+                    && a.UpdatedAtUtc.HasValue
+                    && a.UpdatedAtUtc.Value.Year == m.Year
+                    && a.UpdatedAtUtc.Value.Month == m.Month)
+            })
+            .ToList();
+
+        vm.CategoryDistribution = strategies
+            .GroupBy(s => string.IsNullOrWhiteSpace(s.Category) ? "Uncategorized" : s.Category!)
+            .Select(g => new DashboardChartPoint { Label = g.Key, Value = g.Count() })
+            .OrderByDescending(x => x.Value)
+            .Take(6)
+            .ToList();
+
+        if (overdueCount > 0)
+            vm.AiSuggestions.Add($"Reduce risk by clearing {overdueCount} overdue action(s) before adding new priorities.");
+        if (habitAdherence < 70)
+            vm.AiSuggestions.Add("Improve execution rhythm by tightening cues and reducing friction in your habit system.");
+        if (strategies.Count > 0 && strategies.All(s => string.IsNullOrWhiteSpace(s.AiSummary)))
+            vm.AiSuggestions.Add("Generate strategy suggestions for your top priorities so each strategy has an AI-backed playbook.");
+        if (vm.AiSuggestions.Count == 0)
+            vm.AiSuggestions.Add("Current signals look healthy. Use AI to compare competitors and strengthen your next growth move.");
+
+        if (vm.BusinessAnalysis?.Competitors?.Count > 0)
+        {
+            var topCompetitor = vm.BusinessAnalysis.Competitors.First();
+            vm.CompetitorSummary = $"Top competitor to watch: {topCompetitor.Name}. {topCompetitor.WhyRelevant}";
+        }
+
         // Workspace switcher options
         vm.Workspaces = await LoadUserWorkspacesAsync(userId, ct);
 

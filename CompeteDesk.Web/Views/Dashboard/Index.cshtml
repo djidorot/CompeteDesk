@@ -306,6 +306,95 @@
             </div>
         </section>
 
+
+        <!-- Analytics -->
+        <section class="cd-panel card shadow-sm">
+            <div class="card-body">
+                <div class="cd-panel-head">
+                    <h2 class="cd-h2">Dashboard Analytics</h2>
+                    <div class="cd-panel-sub">Real metrics for growth, performance, risk level, monthly progress, and category distribution.</div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    @foreach (var card in Model.AnalyticsCards)
+                    {
+                        <div class="col-12 col-md-4">
+                            <div class="border rounded-3 p-3 h-100">
+                                <div class="text-muted small">@card.Title</div>
+                                <div class="fs-4 fw-bold">@card.Value</div>
+                                <div class="text-muted small">@card.Subtitle</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-lg-6">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="fw-semibold mb-2">Monthly Progress</div>
+                            @if (Model.MonthlyProgress.Count == 0)
+                            {
+                                <div class="text-muted small">No progress data yet.</div>
+                            }
+                            else
+                            {
+                                @foreach (var point in Model.MonthlyProgress)
+                                {
+                                    var width = Math.Max(6, point.Value * 18);
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between small mb-1"><span>@point.Label</span><span>@point.Value</span></div>
+                                        <div class="progress" style="height:10px;"><div class="progress-bar" role="progressbar" style="width:@($"{width}px")"></div></div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="fw-semibold mb-2">Category Distribution</div>
+                            @if (Model.CategoryDistribution.Count == 0)
+                            {
+                                <div class="text-muted small">No categories yet.</div>
+                            }
+                            else
+                            {
+                                @foreach (var point in Model.CategoryDistribution)
+                                {
+                                    var width = Math.Max(6, point.Value * 22);
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between small mb-1"><span>@point.Label</span><span>@point.Value</span></div>
+                                        <div class="progress" style="height:10px;"><div class="progress-bar" role="progressbar" style="width:@($"{width}px")"></div></div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Recommendations -->
+        <section class="cd-panel card shadow-sm">
+            <div class="card-body">
+                <div class="cd-panel-head">
+                    <h2 class="cd-h2">AI-Powered Insights</h2>
+                    <div class="cd-panel-sub">Strategy suggestions, competitor summary, and smart recommendations based on workspace data.</div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.CompetitorSummary))
+                {
+                    <div class="alert alert-light border mb-3">@Model.CompetitorSummary</div>
+                }
+
+                <div class="d-grid gap-2">
+                    @foreach (var suggestion in Model.AiSuggestions)
+                    {
+                        <div class="border rounded-3 p-3">@suggestion</div>
+                    }
+                </div>
+            </div>
+        </section>
+
         <!-- Weekly Review -->
         <section class="cd-panel card shadow-sm">
             <div class="card-body">

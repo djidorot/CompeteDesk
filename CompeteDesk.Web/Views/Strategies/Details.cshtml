@@ -156,6 +156,47 @@
             </div>
         </div>
     </div>
+
+    <div class="card shadow-sm" id="comments">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                    <h2 class="h5 mb-1">Comments & Notes</h2>
+                    <div class="cd-sub">Team notes, feedback, and execution reminders for this strategy.</div>
+                </div>
+                <span class="badge text-bg-light">@Model.Comments.Count comment(s)</span>
+            </div>
+
+            <form asp-action="AddComment" asp-route-id="@Model.Strategy.Id" method="post" class="mb-3">
+                @Html.AntiForgeryToken()
+                <div class="mb-2">
+                    <textarea name="body" class="form-control" rows="3" maxlength="2000" placeholder="Add a note, feedback item, or collaboration comment..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Add Comment</button>
+            </form>
+
+            @if (Model.Comments.Count == 0)
+            {
+                <div class="text-muted">No comments yet.</div>
+            }
+            else
+            {
+                <div class="d-grid gap-3">
+                    @foreach (var comment in Model.Comments)
+                    {
+                        <div class="border rounded-3 p-3">
+                            <div class="d-flex justify-content-between gap-2 mb-2">
+                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(comment.AuthorEmail) ? "Workspace member" : comment.AuthorEmail)</div>
+                                <div class="text-muted small">@comment.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy • h:mm tt")</div>
+                            </div>
+                            <div>@comment.Body</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
 </div>
 
 @section Scripts {

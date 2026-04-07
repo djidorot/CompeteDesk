@@ -66,6 +66,9 @@ public class ApplicationDbContext : IdentityDbContext
     // Security + audit
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<EntityChangeHistory> EntityChangeHistories => Set<EntityChangeHistory>();
+    public DbSet<WorkspaceInvite> WorkspaceInvites => Set<WorkspaceInvite>();
+    public DbSet<WorkspaceMember> WorkspaceMembers => Set<WorkspaceMember>();
+    public DbSet<StrategyComment> StrategyComments => Set<StrategyComment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -227,6 +230,54 @@ public class ApplicationDbContext : IdentityDbContext
                 .HasForeignKey(x => x.StrategyId)
                 .OnDelete(DeleteBehavior.SetNull);
             b.HasIndex(x => new { x.OwnerId, x.IsDeleted, x.IsActive });
+        });
+
+
+
+        builder.Entity<WorkspaceInvite>(b =>
+        {
+            b.ToTable("WorkspaceInvites");
+            b.Property(x => x.Email).IsRequired().HasMaxLength(256);
+            b.Property(x => x.Role).IsRequired().HasMaxLength(24);
+            b.Property(x => x.Status).IsRequired().HasMaxLength(24);
+            b.HasIndex(x => new { x.WorkspaceId, x.Email, x.Status });
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<WorkspaceMember>(b =>
+        {
+            b.ToTable("WorkspaceMembers");
+            b.Property(x => x.UserId).IsRequired();
+            b.Property(x => x.UserEmail).HasMaxLength(256);
+            b.Property(x => x.Role).IsRequired().HasMaxLength(24);
+            b.HasIndex(x => new { x.WorkspaceId, x.UserId }).IsUnique();
+            b.HasIndex(x => new { x.UserId, x.Role });
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<StrategyComment>(b =>
+        {
+            b.ToTable("StrategyComments");
+            b.Property(x => x.OwnerId).IsRequired();
+            b.Property(x => x.AuthorUserId).IsRequired();
+            b.Property(x => x.AuthorEmail).HasMaxLength(256);
+            b.Property(x => x.Body).IsRequired().HasMaxLength(2000);
+            b.HasIndex(x => new { x.StrategyId, x.CreatedAtUtc });
+            b.HasIndex(x => new { x.WorkspaceId, x.CreatedAtUtc });
+            b.HasOne(x => x.Strategy)
+                .WithMany()
+                .HasForeignKey(x => x.StrategyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(x => x.Workspace)
+                .WithMany()
+                .HasForeignKey(x => x.WorkspaceId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<UserAiPreferences>(b =>

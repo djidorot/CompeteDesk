@@ -150,6 +150,20 @@ public class StrategiesController : Controller
 
         var activeStrategyCount = await activeCountQuery.CountAsync();
 
+        var comments = await _db.StrategyComments
+            .AsNoTracking()
+            .Where(c => c.StrategyId == item.Id && c.OwnerId == userId)
+            .OrderByDescending(c => c.CreatedAtUtc)
+            .Take(20)
+            .Select(c => new StrategyCommentItem
+            {
+                Id = c.Id,
+                AuthorEmail = c.AuthorEmail,
+                Body = c.Body,
+                CreatedAtUtc = c.CreatedAtUtc
+            })
+            .ToListAsync();
+
         // Score signals (simple & transparent):
         // - Completeness (0..40)
         // - Execution via action completion (0..60)
@@ -180,6 +194,7 @@ public class StrategiesController : Controller
             Strategy = item,
             TotalActions = totalActions,
             DoneActions = doneActions,
+            Comments = comments,
             Header = new StrategyCommandHeaderViewModel
             {
                 WorkspaceName = item.Workspace?.Name ?? "No Workspace",
@@ -350,6 +365,44 @@ public class StrategiesController : Controller
         await _db.SaveChangesAsync();
         TempData["ToastSuccess"] = "Strategy deleted.";
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [Authorize(Policy = "CanEdit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddComment(int id, string body, CancellationToken ct)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        var userId = user?.Id ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        var strategy = await _db.Strategies
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId, ct);
+
+        if (strategy == null) return NotFound();
+
+        body = (body ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            TempData["ToastError"] = "Comment cannot be empty.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        _db.StrategyComments.Add(new StrategyComment
+        {
+            StrategyId = strategy.Id,
+            WorkspaceId = strategy.WorkspaceId,
+            OwnerId = strategy.OwnerId,
+            AuthorUserId = userId,
+            AuthorEmail = user.Email,
+            Body = body,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync(ct);
+        TempData["ToastSuccess"] = "Comment added.";
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     // POST: /Strategies/SeedFromBook

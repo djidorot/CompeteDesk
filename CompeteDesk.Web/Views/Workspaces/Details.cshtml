@@ -1,0 +1,246 @@
+@model CompeteDesk.ViewModels.Workspaces.WorkspaceDetailsViewModel
+@{
+    ViewData["Title"] = "Workspace Details";
+    ViewData["LayoutFluid"] = true;
+    ViewData["UseSidebar"] = true;
+}
+
+<link rel="stylesheet" href="~/css/workspaces.css" asp-append-version="true" />
+
+<div class="cd-page">
+    <div class="cd-page__head">
+        <div>
+            <a class="cd-link" asp-action="Index">← Back to Workspaces</a>
+            <h1 class="cd-page__title mt-2">@Model.Workspace.Name</h1>
+            <p class="cd-page__sub">@(!string.IsNullOrWhiteSpace(Model.Workspace.Description) ? Model.Workspace.Description : "Workspace collaboration hub")</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-secondary" asp-controller="Dashboard" asp-action="Index" asp-route-workspaceId="@Model.Workspace.Id">Open Dashboard</a>
+            <a class="btn btn-primary" asp-controller="Strategies" asp-action="Create">Add Strategy</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Strategies</div><div class="fs-3 fw-bold">@Model.StrategyCount</div></div></div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Active Strategies</div><div class="fs-3 fw-bold">@Model.ActiveStrategyCount</div></div></div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Comments / Notes</div><div class="fs-3 fw-bold">@Model.CommentCount</div></div></div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-xl-5">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Invite Member</h2>
+                            <div class="text-muted small">Email-based collaboration with workspace roles.</div>
+                        </div>
+                    </div>
+
+                    <form asp-action="Invite" method="post" class="row g-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="workspaceId" value="@Model.Workspace.Id" />
+                        <div class="col-12">
+                            <input name="email" class="form-control" placeholder="teammate@example.com" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <select name="role" class="form-select">
+                                <option value="Viewer">Viewer</option>
+                                <option value="Editor">Editor</option>
+                                <option value="Owner">Owner</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 d-grid">
+                            <button class="btn btn-primary" type="submit">Send Invite</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Pending / Recent Invites</h2>
+                            <div class="text-muted small">Track who has been invited and their role.</div>
+                        </div>
+                    </div>
+
+                    @if (Model.Invites.Count == 0)
+                    {
+                        <div class="text-muted">No invites yet.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr><th>Email</th><th>Role</th><th>Status</th><th>Sent</th></tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var invite in Model.Invites)
+                                {
+                                    <tr>
+                                        <td>@invite.Email</td>
+                                        <td><span class="badge text-bg-light">@invite.Role</span></td>
+                                        <td>@invite.Status</td>
+                                        <td class="text-muted small">@invite.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-7">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Workspace Members</h2>
+                            <div class="text-muted small">Roles per workspace: Owner, Editor, Viewer.</div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr><th>Email</th><th>Role</th><th>Joined</th><th style="width:220px;">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var member in Model.Members)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@member.Email</div>
+                                        @if (member.IsOwner)
+                                        {
+                                            <div class="text-muted small">Workspace owner</div>
+                                        }
+                                    </td>
+                                    <td><span class="badge text-bg-light">@member.Role</span></td>
+                                    <td class="text-muted small">@member.JoinedAtUtc.ToLocalTime().ToString("MMM d, yyyy")</td>
+                                    <td>
+                                        @if (member.IsOwner)
+                                        {
+                                            <span class="text-muted small">Locked</span>
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <form asp-action="UpdateMemberRole" method="post" class="d-flex gap-2">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="workspaceId" value="@Model.Workspace.Id" />
+                                                    <input type="hidden" name="memberId" value="@member.Id" />
+                                                    <select name="role" class="form-select form-select-sm">
+                                                        <option value="Viewer" selected="@(member.Role == "Viewer")">Viewer</option>
+                                                        <option value="Editor" selected="@(member.Role == "Editor")">Editor</option>
+                                                    </select>
+                                                    <button class="btn btn-sm btn-outline-secondary" type="submit">Save</button>
+                                                </form>
+                                                <form asp-action="RemoveMember" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="workspaceId" value="@Model.Workspace.Id" />
+                                                    <input type="hidden" name="memberId" value="@member.Id" />
+                                                    <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Strategies in this Workspace</h2>
+                            <div class="text-muted small">Comments make collaboration visible at the strategy level.</div>
+                        </div>
+                    </div>
+
+                    @if (Model.Strategies.Count == 0)
+                    {
+                        <div class="text-muted">No strategies attached to this workspace yet.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr><th>Strategy</th><th>Status</th><th>Comments</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var strategy in Model.Strategies)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@strategy.Name</div>
+                                            <div class="text-muted small">@(!string.IsNullOrWhiteSpace(strategy.Category) ? strategy.Category : "Uncategorized")</div>
+                                        </td>
+                                        <td>@strategy.Status</td>
+                                        <td>@strategy.CommentCount</td>
+                                        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" asp-controller="Strategies" asp-action="Details" asp-route-id="@strategy.Id">Open</a></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Recent Activity</h2>
+                            <div class="text-muted small">Who edited what in this workspace context.</div>
+                        </div>
+                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Activity" asp-action="Index">Open Activity Log</a>
+                    </div>
+
+                    @if (Model.Activity.Count == 0)
+                    {
+                        <div class="text-muted">No activity yet.</div>
+                    }
+                    else
+                    {
+                        <div class="d-grid gap-2">
+                            @foreach (var item in Model.Activity)
+                            {
+                                <div class="border rounded-3 p-3">
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <div>
+                                            <div class="fw-semibold">@item.Action</div>
+                                            <div class="text-muted small">@(string.IsNullOrWhiteSpace(item.ActorEmail) ? "System" : item.ActorEmail)</div>
+                                        </div>
+                                        <div class="text-muted small">@item.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy • h:mm tt")</div>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(item.Summary))
+                                    {
+                                        <div class="mt-2">@item.Summary</div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

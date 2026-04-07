@@ -1,0 +1,145 @@
+@model CompeteDesk.ViewModels.BusinessAnalysis.BusinessAnalysisPageViewModel
+
+@if (Model.NeedsWorkspace)
+{
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="fw-semibold">No workspace yet</div>
+            <div class="cd-muted">Create a workspace first to generate SWOT, Five Forces, and structured insights.</div>
+        </div>
+    </div>
+}
+else if (Model.Latest is null)
+{
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="fw-semibold">No analysis yet</div>
+            <div class="cd-muted">Click <strong>Generate</strong> to create your first Exam Analysis report.</div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="cd-biz-meta mb-3">
+        <span class="cd-chip">Business Type: <strong>@(Model.Latest.BusinessType)</strong></span>
+        <span class="cd-chip">Country: <strong>@(Model.Latest.Country)</strong></span>
+        <span class="cd-chip">Generated: <strong>@Model.Latest.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy • h:mm tt")</strong></span>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="cd-section-title">SWOT</div>
+                    <div class="cd-swot">
+                        <div class="cd-swot-cell">
+                            <div class="cd-swot-head">Strengths</div>
+                            <ul class="cd-list">
+                                @foreach (var x in Model.Latest.Strengths)
+                                {
+                                    <li>@x</li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="cd-swot-cell">
+                            <div class="cd-swot-head">Weaknesses</div>
+                            <ul class="cd-list">
+                                @foreach (var x in Model.Latest.Weaknesses)
+                                {
+                                    <li>@x</li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="cd-swot-cell">
+                            <div class="cd-swot-head">Opportunities</div>
+                            <ul class="cd-list">
+                                @foreach (var x in Model.Latest.Opportunities)
+                                {
+                                    <li>@x</li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="cd-swot-cell">
+                            <div class="cd-swot-head">Threats</div>
+                            <ul class="cd-list">
+                                @foreach (var x in Model.Latest.Threats)
+                                {
+                                    <li>@x</li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="cd-section-title">Porter’s Five Forces</div>
+                    <div class="cd-forces">
+                        <div class="cd-force"><div class="cd-force-name">Rivalry</div><div class="cd-force-pill">@Model.Latest.Rivalry.Level (@Model.Latest.Rivalry.Score/5)</div><div class="cd-muted">@Model.Latest.Rivalry.Notes</div></div>
+                        <div class="cd-force"><div class="cd-force-name">Threat of New Entrants</div><div class="cd-force-pill">@Model.Latest.NewEntrants.Level (@Model.Latest.NewEntrants.Score/5)</div><div class="cd-muted">@Model.Latest.NewEntrants.Notes</div></div>
+                        <div class="cd-force"><div class="cd-force-name">Threat of Substitutes</div><div class="cd-force-pill">@Model.Latest.Substitutes.Level (@Model.Latest.Substitutes.Score/5)</div><div class="cd-muted">@Model.Latest.Substitutes.Notes</div></div>
+                        <div class="cd-force"><div class="cd-force-name">Supplier Power</div><div class="cd-force-pill">@Model.Latest.SupplierPower.Level (@Model.Latest.SupplierPower.Score/5)</div><div class="cd-muted">@Model.Latest.SupplierPower.Notes</div></div>
+                        <div class="cd-force"><div class="cd-force-name">Buyer Power</div><div class="cd-force-pill">@Model.Latest.BuyerPower.Level (@Model.Latest.BuyerPower.Score/5)</div><div class="cd-muted">@Model.Latest.BuyerPower.Notes</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="cd-section-title">Competitors</div>
+                    @if (Model.Latest.Competitors.Count == 0)
+                    {
+                        <div class="cd-muted">No competitors returned by the AI.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle cd-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th class="d-none d-lg-table-cell">Why relevant</th>
+                                        <th class="text-nowrap">Rivalry</th>
+                                        <th class="text-nowrap">New entrants</th>
+                                        <th class="text-nowrap">Substitutes</th>
+                                        <th class="text-nowrap">Supplier power</th>
+                                        <th class="text-nowrap">Buyer power</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in Model.Latest.Competitors)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@c.Name</div>
+                                                @if (!string.IsNullOrWhiteSpace(c.Website))
+                                                {
+                                                    <a class="small" href="@c.Website" target="_blank" rel="noopener">@c.Website</a>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(c.Summary))
+                                                {
+                                                    <div class="cd-muted small">@c.Summary</div>
+                                                }
+                                            </td>
+                                            <td class="d-none d-lg-table-cell"><span class="cd-muted">@c.WhyRelevant</span></td>
+                                            <td><span class="cd-pill" data-level="@c.Rivalry.Level">@c.Rivalry.Level</span></td>
+                                            <td><span class="cd-pill" data-level="@c.NewEntrants.Level">@c.NewEntrants.Level</span></td>
+                                            <td><span class="cd-pill" data-level="@c.Substitutes.Level">@c.Substitutes.Level</span></td>
+                                            <td><span class="cd-pill" data-level="@c.SupplierPower.Level">@c.SupplierPower.Level</span></td>
+                                            <td><span class="cd-pill" data-level="@c.BuyerPower.Level">@c.BuyerPower.Level</span></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
