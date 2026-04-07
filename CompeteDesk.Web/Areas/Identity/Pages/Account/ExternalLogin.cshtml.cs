@@ -292,6 +292,42 @@ public class ExternalLoginModel : PageModel
     }
 
 
+
+    private async Task MaybeAssignSeedAdminAsync(IdentityUser user, string? email)
+    {
+        var seedEmail = _config["AdminSeed:Email"]?.Trim();
+
+        if (string.IsNullOrWhiteSpace(seedEmail) || string.IsNullOrWhiteSpace(email))
+        {
+            return;
+        }
+
+        if (!string.Equals(seedEmail, email, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, user);
+
+        if (!await _roleManager.RoleExistsAsync(IdentitySeeder.AdminRoleName))
+        {
+            var createRoleResult = await _roleManager.CreateAsync(new IdentityRole(IdentitySeeder.AdminRoleName));
+            if (!createRoleResult.Succeeded)
+            {
+                throw new InvalidOperationException($"Unable to create role '{IdentitySeeder.AdminRoleName}': {string.Join("; ", createRoleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+
+        if (!await _userManager.IsInRoleAsync(user, IdentitySeeder.AdminRoleName))
+        {
+            var addToRoleResult = await _userManager.AddToRoleAsync(user, IdentitySeeder.AdminRoleName);
+            if (!addToRoleResult.Succeeded)
+            {
+                throw new InvalidOperationException($"Unable to add '{email}' to role '{IdentitySeeder.AdminRoleName}': {string.Join("; ", addToRoleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+    }
+
     private IdentityUser CreateUser()
     {
         try

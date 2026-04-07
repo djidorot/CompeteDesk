@@ -1,7 +1,5 @@
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/appsettings.Development.json
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/appsettings.json
-/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk.Data/obj/CompeteDesk.Data.csproj.nuget.dgspec.json
-/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk.Data/obj/project.assets.json
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk.staticwebassets.runtime.json
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk.staticwebassets.endpoints.json
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/app.db
