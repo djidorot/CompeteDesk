@@ -1,3 +1,4 @@
+using CompeteDesk.Data;
 using Microsoft.AspNetCore.Identity;
 
 namespace CompeteDesk.Middleware;
