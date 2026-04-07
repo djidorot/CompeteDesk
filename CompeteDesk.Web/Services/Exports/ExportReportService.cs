@@ -131,12 +131,15 @@ public sealed class ExportReportService
 
         lines.Add(" ");
         lines.Add("Suggested next steps:");
-        lines.Add(actionDone == 0 ? "- Complete 1 small action this week to build momentum." : "- Raise the bar: ship 1 higher-impact action." );
-        lines.Add(checkinDays < 7 ? "- Aim for 3+ habit days this week (consistency beats intensity)." : "- Protect your streak: keep daily minimums." );
+        lines.Add(actionDone == 0
+            ? "- Complete 1 small action this week to build momentum."
+            : "- Raise the bar: ship 1 higher-impact action.");
+        lines.Add(checkinDays < 7
+            ? "- Aim for 3+ habit days this week (consistency beats intensity)."
+            : "- Protect your streak: keep daily minimums.");
 
         return SimplePdfWriter.CreateTextPdf(title, lines);
     }
-
 
     public async Task<byte[]> ExportStrategiesPdfAsync(string ownerId, int? workspaceId, CancellationToken ct)
     {
@@ -152,7 +155,9 @@ public sealed class ExportReportService
             ""
         };
 
-        lines.AddRange(strategies.Select(s => $"- {s.Name} | {s.Status} | {s.ProgressPercent}% | Due {(s.DeadlineUtc.HasValue ? s.DeadlineUtc.Value.ToString("yyyy-MM-dd") : "—")} | Tags {s.Tags ?? "—"}"));
+        lines.AddRange(strategies.Select(s =>
+            $"- {s.Name} | {s.Status} | {s.ProgressPercent}% | Due {(s.DeadlineUtc.HasValue ? s.DeadlineUtc.Value.ToString("yyyy-MM-dd") : "—")} | Tags {s.Tags ?? "—"}"));
+
         return SimplePdfWriter.CreateTextPdf("Strategies Export", lines);
     }
 
@@ -162,16 +167,35 @@ public sealed class ExportReportService
             .Where(s => s.OwnerId == ownerId && (!workspaceId.HasValue || s.WorkspaceId == workspaceId))
             .OrderByDescending(s => s.Priority)
             .ThenBy(s => s.Name)
-            .Select(s => new { s.Name, s.Category, s.Status, s.ProgressPercent, s.Priority, s.DeadlineUtc, s.ReminderUtc, s.Tags })
+            .Select(s => new
+            {
+                s.Name,
+                s.Category,
+                s.Status,
+                s.ProgressPercent,
+                s.Priority,
+                s.DeadlineUtc,
+                s.ReminderUtc,
+                s.Tags
+            })
             .ToListAsync(ct);
 
-        static string Csv(string? value) => """ + (value ?? string.Empty).Replace(""", """") + """;
+        static string Csv(string? value) => "\"" + (value ?? string.Empty).Replace("\"", "\"\"") + "\"";
 
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("Name,Category,Status,ProgressPercent,Priority,DeadlineUtc,ReminderUtc,Tags");
+
         foreach (var r in rows)
         {
-            sb.AppendLine(string.Join(',', Csv(r.Name), Csv(r.Category), Csv(r.Status), r.ProgressPercent.ToString(), r.Priority.ToString(), Csv(r.DeadlineUtc?.ToString("u")), Csv(r.ReminderUtc?.ToString("u")), Csv(r.Tags)));
+            sb.AppendLine(string.Join(',',
+                Csv(r.Name),
+                Csv(r.Category),
+                Csv(r.Status),
+                r.ProgressPercent.ToString(),
+                r.Priority.ToString(),
+                Csv(r.DeadlineUtc?.ToString("u")),
+                Csv(r.ReminderUtc?.ToString("u")),
+                Csv(r.Tags)));
         }
 
         return System.Text.Encoding.UTF8.GetBytes(sb.ToString());
@@ -200,7 +224,11 @@ public sealed class ExportReportService
             "Top priorities:"
         };
 
-        lines.AddRange(strategies.OrderByDescending(s => s.Priority).Take(10).Select(s => $"- {s.Name} ({s.Status}, {s.ProgressPercent}%)"));
+        lines.AddRange(strategies
+            .OrderByDescending(s => s.Priority)
+            .Take(10)
+            .Select(s => $"- {s.Name} ({s.Status}, {s.ProgressPercent}%)"));
+
         return SimplePdfWriter.CreateTextPdf("Monthly Dashboard Summary", lines);
     }
 }
