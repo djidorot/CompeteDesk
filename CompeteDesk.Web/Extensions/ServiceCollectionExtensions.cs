@@ -36,6 +36,7 @@ public static class ServiceCollectionExtensions
         services.AddDatabaseDeveloperPageExceptionFilter();
         services.AddMemoryCache();
         services.AddControllersWithViews();
+        services.AddRazorPages();
         services.AddScoped<CompeteDesk.Services.ActiveWorkspaceService>();
 
         ConfigureAiServices(services, configuration);

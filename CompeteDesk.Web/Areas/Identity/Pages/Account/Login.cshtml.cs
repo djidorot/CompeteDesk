@@ -51,6 +51,11 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(string? returnUrl = null)
     {
+        if (User?.Identity?.IsAuthenticated == true)
+        {
+            return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
+        }
+
         if (!string.IsNullOrEmpty(ErrorMessage))
         {
             ModelState.AddModelError(string.Empty, ErrorMessage);
@@ -151,7 +156,27 @@ public class LoginModel : PageModel
             return homeUrl;
         }
 
-        return Url.IsLocalUrl(returnUrl) ? returnUrl : homeUrl;
+        if (!Url.IsLocalUrl(returnUrl))
+        {
+            return homeUrl;
+        }
+
+        var normalized = returnUrl.Trim();
+        var pathOnly = normalized.Split('?', '#')[0];
+
+        if (pathOnly.StartsWith("~/", StringComparison.Ordinal))
+        {
+            pathOnly = "/" + pathOnly[2..];
+        }
+
+        if (string.Equals(pathOnly, "/Identity/Account/Login", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(pathOnly, "/Identity/Account/Register", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(pathOnly, "/Identity/Account/Logout", StringComparison.OrdinalIgnoreCase))
+        {
+            return homeUrl;
+        }
+
+        return normalized;
     }
 
     private string GetPostLoginReturnUrl(string? returnUrl)
