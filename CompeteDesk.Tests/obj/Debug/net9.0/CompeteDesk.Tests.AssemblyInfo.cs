@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CompeteDesk.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1027fe0b4a3e735d11fac6520d6938846536b3ad")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2dc54d6388fd12891cc39c632675cb298f5472dc")]
 [assembly: System.Reflection.AssemblyProductAttribute("CompeteDesk.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CompeteDesk.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

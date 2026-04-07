@@ -1,0 +1,99 @@
+@page
+@model CompeteDesk.Areas.Identity.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Welcome back";
+}
+
+<section class="cd-auth-page">
+    <div class="cd-auth-shell">
+        <div class="cd-auth-card cd-auth-card--split">
+            <div class="cd-auth-panel cd-auth-panel--brand">
+                <span class="cd-auth-eyebrow">CompeteDesk</span>
+                <h1>Welcome back</h1>
+                <p class="cd-auth-lead">Sign in to continue building strategies, tracking progress, and managing your workspaces in one place.</p>
+
+                <div class="cd-auth-featureList">
+                    <div class="cd-auth-featureItem">
+                        <span class="cd-auth-featureIcon">✓</span>
+                        <div>
+                            <strong>Focused dashboard</strong>
+                            <p>See priorities, workspaces, and recent activity without extra clicks.</p>
+                        </div>
+                    </div>
+                    <div class="cd-auth-featureItem">
+                        <span class="cd-auth-featureIcon">✓</span>
+                        <div>
+                            <strong>Smart planning</strong>
+                            <p>Keep your competitive analysis and execution plans organized.</p>
+                        </div>
+                    </div>
+                    <div class="cd-auth-featureItem">
+                        <span class="cd-auth-featureIcon">✓</span>
+                        <div>
+                            <strong>Secure access</strong>
+                            <p>Use your local account or sign in with an external provider.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cd-auth-panel cd-auth-panel--form">
+                <div class="cd-auth-formWrap">
+                    <div class="cd-auth-headingRow">
+                        <div>
+                            <span class="cd-auth-kicker">Sign in</span>
+                            <h2>Access your account</h2>
+                            <p>Enter your details below to continue.</p>
+                        </div>
+                    </div>
+
+                    <form id="account" method="post" class="cd-auth-form">
+                        <div asp-validation-summary="ModelOnly" class="text-danger small" role="alert"></div>
+
+                        <div class="cd-auth-field">
+                            <label asp-for="Input.Email"></label>
+                            <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="cd-auth-field">
+                            <div class="cd-auth-labelRow">
+                                <label asp-for="Input.Password"></label>
+                                <a asp-page="./ForgotPassword">Forgot password?</a>
+                            </div>
+                            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
+                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                        </div>
+
+                        <label asp-for="Input.RememberMe" class="cd-auth-check">
+                            <input class="form-check-input" asp-for="Input.RememberMe" />
+                            <span>Keep me signed in on this device</span>
+                        </label>
+
+                        <button id="login-submit" type="submit" class="btn btn-primary cd-auth-submit">Sign in</button>
+                    </form>
+
+                    <div class="cd-auth-links">
+                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create a new account</a>
+                        <a asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
+                    </div>
+
+                    @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+                    {
+                        <div class="cd-auth-divider"><span>or continue with</span></div>
+                        <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="cd-auth-externalWrap">
+                            @foreach (var provider in Model.ExternalLogins!)
+                            {
+                                <button type="submit" class="btn cd-auth-externalBtn" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                            }
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

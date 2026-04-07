@@ -1,0 +1,87 @@
+@page
+@model CompeteDesk.Areas.Identity.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Create account";
+}
+
+<section class="cd-auth-page">
+    <div class="cd-auth-shell">
+        <div class="cd-auth-card cd-auth-card--split">
+            <div class="cd-auth-panel cd-auth-panel--brand">
+                <span class="cd-auth-eyebrow">Join CompeteDesk</span>
+                <h1>Create your workspace-ready account</h1>
+                <p class="cd-auth-lead">Get started with a cleaner strategy workflow, collaborative planning, and progress tracking built for execution.</p>
+
+                <div class="cd-auth-statGrid">
+                    <div class="cd-auth-stat">
+                        <strong>Plan</strong>
+                        <span>Turn ideas into clear priorities and action steps.</span>
+                    </div>
+                    <div class="cd-auth-stat">
+                        <strong>Track</strong>
+                        <span>Monitor goals, timelines, and strategic progress.</span>
+                    </div>
+                    <div class="cd-auth-stat">
+                        <strong>Collaborate</strong>
+                        <span>Work across teams with one structured workspace.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cd-auth-panel cd-auth-panel--form">
+                <div class="cd-auth-formWrap">
+                    <div class="cd-auth-headingRow">
+                        <div>
+                            <span class="cd-auth-kicker">Register</span>
+                            <h2>Create a new account</h2>
+                            <p>Use your email and password to get started.</p>
+                        </div>
+                    </div>
+
+                    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="cd-auth-form">
+                        <div asp-validation-summary="ModelOnly" class="text-danger small" role="alert"></div>
+
+                        <div class="cd-auth-field">
+                            <label asp-for="Input.Email"></label>
+                            <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="cd-auth-field">
+                            <label asp-for="Input.Password"></label>
+                            <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Create a password" />
+                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="cd-auth-field">
+                            <label asp-for="Input.ConfirmPassword"></label>
+                            <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Confirm your password" />
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                        </div>
+
+                        <button id="registerSubmit" type="submit" class="btn btn-primary cd-auth-submit">Create account</button>
+                    </form>
+
+                    <div class="cd-auth-links">
+                        <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Already have an account? Sign in</a>
+                    </div>
+
+                    @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+                    {
+                        <div class="cd-auth-divider"><span>or sign up with</span></div>
+                        <form id="external-register-form" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="cd-auth-externalWrap">
+                            @foreach (var provider in Model.ExternalLogins!)
+                            {
+                                <button type="submit" class="btn cd-auth-externalBtn" name="provider" value="@provider.Name" title="Register using your @provider.DisplayName account">@provider.DisplayName</button>
+                            }
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

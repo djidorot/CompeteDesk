@@ -1,0 +1,20 @@
+@page
+@model CompeteDesk.Areas.Identity.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Logged out";
+}
+
+<section class="cd-auth-page cd-auth-page--centered">
+    <div class="cd-auth-shell cd-auth-shell--narrow">
+        <div class="cd-auth-card cd-auth-card--single cd-auth-logoutCard">
+            <div class="cd-auth-logoutIcon" aria-hidden="true">✓</div>
+            <span class="cd-auth-kicker">Signed out</span>
+            <h1>You have successfully logged out.</h1>
+            <p>Your session has ended and your workspace is secure. You can sign in again whenever you're ready.</p>
+            <div class="cd-auth-logoutActions">
+                <a asp-page="./Login" class="btn btn-primary cd-auth-submit">Sign in again</a>
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn cd-auth-externalBtn">Back to home</a>
+            </div>
+        </div>
+    </div>
+</section>
