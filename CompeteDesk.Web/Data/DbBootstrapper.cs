@@ -392,6 +392,102 @@ CREATE INDEX IF NOT EXISTS IX_EntityChangeHistories_Entity_ChangedAtUtc
 ON EntityChangeHistories (EntityType, EntityId, ChangedAtUtc);");
         }
 
+
+        private static async Task EnsureWorkspaceCollaborationTablesAsync(ApplicationDbContext db)
+        {
+            if (!await TableExistsAsync(db, "WorkspaceInvites"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE WorkspaceInvites (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    WorkspaceId INTEGER NOT NULL,
+    Email TEXT NOT NULL,
+    Role TEXT NOT NULL DEFAULT 'Viewer',
+    Status TEXT NOT NULL DEFAULT 'Pending',
+    InvitedByUserId TEXT NOT NULL,
+    InvitedByEmail TEXT NULL,
+    AcceptedByUserId TEXT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    AcceptedAtUtc TEXT NULL,
+    FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE CASCADE
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "WorkspaceInvites", "WorkspaceId", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "WorkspaceInvites", "Email", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "WorkspaceInvites", "Role", "TEXT", nullable: false, defaultSql: "'Viewer'");
+                await EnsureColumnAsync(db, "WorkspaceInvites", "Status", "TEXT", nullable: false, defaultSql: "'Pending'");
+                await EnsureColumnAsync(db, "WorkspaceInvites", "InvitedByUserId", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "WorkspaceInvites", "InvitedByEmail", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WorkspaceInvites", "AcceptedByUserId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WorkspaceInvites", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WorkspaceInvites", "AcceptedAtUtc", "TEXT", nullable: true);
+            }
+
+            await EnsureIndexAsync(db, "IX_WorkspaceInvites_WorkspaceId_Email_Status", "WorkspaceInvites", "WorkspaceId, Email, Status");
+
+            if (!await TableExistsAsync(db, "WorkspaceMembers"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE WorkspaceMembers (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    WorkspaceId INTEGER NOT NULL,
+    UserId TEXT NOT NULL,
+    UserEmail TEXT NULL,
+    Role TEXT NOT NULL DEFAULT 'Viewer',
+    JoinedAtUtc TEXT NOT NULL,
+    InvitedByUserId TEXT NULL,
+    FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE CASCADE
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "WorkspaceMembers", "WorkspaceId", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "WorkspaceMembers", "UserId", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "WorkspaceMembers", "UserEmail", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WorkspaceMembers", "Role", "TEXT", nullable: false, defaultSql: "'Viewer'");
+                await EnsureColumnAsync(db, "WorkspaceMembers", "JoinedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "WorkspaceMembers", "InvitedByUserId", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE UNIQUE INDEX IF NOT EXISTS IX_WorkspaceMembers_WorkspaceId_UserId
+ON WorkspaceMembers (WorkspaceId, UserId);");
+
+            await EnsureIndexAsync(db, "IX_WorkspaceMembers_UserId_Role", "WorkspaceMembers", "UserId, Role");
+
+            if (!await TableExistsAsync(db, "StrategyComments"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE StrategyComments (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    StrategyId INTEGER NOT NULL,
+    WorkspaceId INTEGER NULL,
+    OwnerId TEXT NOT NULL,
+    AuthorUserId TEXT NOT NULL,
+    AuthorEmail TEXT NULL,
+    Body TEXT NOT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    FOREIGN KEY (StrategyId) REFERENCES Strategies (Id) ON DELETE CASCADE,
+    FOREIGN KEY (WorkspaceId) REFERENCES Workspaces (Id) ON DELETE SET NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "StrategyComments", "StrategyId", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "StrategyComments", "WorkspaceId", "INTEGER", nullable: true);
+                await EnsureColumnAsync(db, "StrategyComments", "OwnerId", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "StrategyComments", "AuthorUserId", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "StrategyComments", "AuthorEmail", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "StrategyComments", "Body", "TEXT", nullable: false, defaultSql: "''");
+                await EnsureColumnAsync(db, "StrategyComments", "CreatedAtUtc", "TEXT", nullable: true);
+            }
+
+            await EnsureIndexAsync(db, "IX_StrategyComments_StrategyId_CreatedAtUtc", "StrategyComments", "StrategyId, CreatedAtUtc");
+            await EnsureIndexAsync(db, "IX_StrategyComments_WorkspaceId_CreatedAtUtc", "StrategyComments", "WorkspaceId, CreatedAtUtc");
+        }
+
         private static async Task EnsureWarIntelTableAsync(ApplicationDbContext db)
         {
             if (!await TableExistsAsync(db, "WarIntel"))

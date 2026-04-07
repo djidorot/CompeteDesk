@@ -395,7 +395,7 @@ public class StrategiesController : Controller
             WorkspaceId = strategy.WorkspaceId,
             OwnerId = strategy.OwnerId,
             AuthorUserId = userId,
-            AuthorEmail = user.Email,
+            AuthorEmail = user?.Email,
             Body = body,
             CreatedAtUtc = DateTime.UtcNow
         });
