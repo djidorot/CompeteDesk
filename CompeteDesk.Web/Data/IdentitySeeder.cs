@@ -11,7 +11,6 @@ namespace CompeteDesk.Data;
 /// </summary>
 public static class IdentitySeeder
 {
-    public const string GuestEmail = "guest@competedesk.local";
     public const string UserRoleName = "User";
     public const string AdminRoleName = "Admin";
     public const string EditorRoleName = "Editor";
@@ -91,50 +90,6 @@ public static class IdentitySeeder
         if (roles is not null && roles.Count > 0) return;
 
         await EnsureUserInRoleAsync(userManager, user, UserRoleName);
-    }
-
-    public static async Task<IdentityUser> EnsureGuestUserAsync(IServiceProvider services)
-    {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-        var db = services.GetRequiredService<ApplicationDbContext>();
-
-        await EnsureBaselineRolesAsync(roleManager);
-
-        var guestUser = await userManager.FindByEmailAsync(GuestEmail);
-        if (guestUser is null)
-        {
-            guestUser = new IdentityUser
-            {
-                UserName = GuestEmail,
-                Email = GuestEmail,
-                EmailConfirmed = true
-            };
-
-            var createResult = await userManager.CreateAsync(guestUser);
-            if (!createResult.Succeeded)
-            {
-                throw new InvalidOperationException($"Unable to create guest user '{GuestEmail}': {string.Join("; ", createResult.Errors.Select(e => e.Description))}");
-            }
-        }
-
-        await EnsureUserInRoleAsync(userManager, guestUser, UserRoleName);
-
-        var hasProfile = await db.UserProfiles.AnyAsync(x => x.UserId == guestUser.Id);
-        if (!hasProfile)
-        {
-            db.UserProfiles.Add(new Models.UserProfile
-            {
-                UserId = guestUser.Id,
-                PersonaRole = "Guest",
-                PrimaryGoal = "Explore CompeteDesk features without signing in.",
-                CreatedAtUtc = DateTime.UtcNow
-            });
-
-            await db.SaveChangesAsync();
-        }
-
-        return guestUser;
     }
 
     public static async Task EnsurePasswordAsync(UserManager<IdentityUser> userManager, IdentityUser user, string password)

@@ -1,23 +1,20 @@
 @using Microsoft.AspNetCore.Identity
 @using System.Security.Claims
 @inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
 
 @{
-    // Display only the prefix of the email/username (before '@'), fallback to "User"
-    var rawName = User?.Identity?.Name ?? "";
+    var rawName = User?.Identity?.Name ?? string.Empty;
     var at = rawName.IndexOf('@');
-    var displayName = (at > 0 ? rawName.Substring(0, at) : rawName);
+    var displayName = at > 0 ? rawName[..at] : rawName;
     if (string.IsNullOrWhiteSpace(displayName))
     {
         displayName = "User";
     }
-}
 
-<ul class="navbar-nav">
-@{
     var principal = User ?? new ClaimsPrincipal();
 }
+
+<ul class="navbar-nav align-items-lg-center gap-lg-2">
 @if (SignInManager.IsSignedIn(principal))
 {
     <li class="nav-item">
@@ -25,6 +22,20 @@
     </li>
     <li class="nav-item">
         <a class="nav-link text-dark" asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+    </li>
+    <li class="nav-item">
+        <form class="d-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="~/" method="post">
+            <button type="submit" class="nav-link btn btn-link text-dark p-0 border-0 align-baseline">Logout</button>
+        </form>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
     </li>
 }
 </ul>

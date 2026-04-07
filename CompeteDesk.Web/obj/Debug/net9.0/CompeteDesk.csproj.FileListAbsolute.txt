@@ -2,7 +2,6 @@
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/appsettings.json
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk.staticwebassets.runtime.json
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk.staticwebassets.endpoints.json
-/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/app.db
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk.deps.json
 /Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/bin/Debug/net9.0/CompeteDesk.runtimeconfig.json

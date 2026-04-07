@@ -34,8 +34,10 @@ var isDev = builder.Environment.IsDevelopment();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
+var normalizedConnectionString = SqliteConnectionStringHelper.NormalizeForAppData(builder.Environment, connectionString);
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseSqlite(normalizedConnectionString));
 
 // Needed for audit trail (CreatedBy/UpdatedBy) in ApplicationDbContext.
 builder.Services.AddHttpContextAccessor();
@@ -132,6 +134,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     // In Development we often run on http://localhost; Secure cookies would not be sent.
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = isDev ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+    options.LoginPath = "/Identity/Account/Login";
+    options.LogoutPath = "/Identity/Account/Logout";
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
 builder.Services.ConfigureExternalCookie(options =>
@@ -201,12 +206,13 @@ builder.Services.AddScoped<CompeteDesk.Services.ActiveWorkspaceService>();
 
 var app = builder.Build();
 
-// Ensure Workspace CRUD works even if you already have an existing app.db.
-// (Creates the Workspaces table if missing.)
+// Ensure the database path exists, run normal EF migrations, then backfill legacy tables
+// that still use bootstrap-style creation while the app transitions fully to migrations.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await DbBootstrapper.EnsureCoreTablesAsync(app.Services);
+    await db.Database.MigrateAsync();
+    await DbBootstrapper.EnsureCoreTablesAsync(db);
 
     // Ensure the Admin role exists and assign Admin to the configured seed email.
     // (Important for Google external login scenarios where we don't pre-create a password-based user.)
@@ -254,7 +260,6 @@ app.UseCookiePolicy();
 // IMPORTANT: Auth must run before Authorization
 app.UseAuthentication();
 
-
 // Ensure every signed-in user has a baseline role (User by default).
 app.Use(async (context, next) =>
 {
@@ -277,8 +282,8 @@ app.UseAuthorization();
 
 // ------------------------------------------------------------
 // Role-based onboarding gate
-// If a signed-in user has not completed onboarding (UserProfiles record),
-// redirect them to /Onboarding.
+// Only protect authenticated application pages. Public marketing and account pages
+// stay public so the landing experience remains predictable.
 // ------------------------------------------------------------
 app.Use(async (context, next) =>
 {
@@ -287,14 +292,20 @@ app.Use(async (context, next) =>
     {
         var path = context.Request.Path;
 
-        // Allow Identity UI, static files, API endpoints, and the onboarding page itself.
-        var skip = path.StartsWithSegments("/Onboarding", StringComparison.OrdinalIgnoreCase)
-                   || path.StartsWithSegments("/Identity", StringComparison.OrdinalIgnoreCase)
-                   || path.StartsWithSegments("/css", StringComparison.OrdinalIgnoreCase)
-                   || path.StartsWithSegments("/js", StringComparison.OrdinalIgnoreCase)
-                   || path.StartsWithSegments("/lib", StringComparison.OrdinalIgnoreCase)
-                   || path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
-                   || path.StartsWithSegments("/favicon", StringComparison.OrdinalIgnoreCase);
+        // Allow public pages, Identity UI, static files, API endpoints, and the onboarding page itself.
+        var isRootPath = path == "/" || string.IsNullOrWhiteSpace(path.Value);
+        var skip = isRootPath
+                   || path.StartsWithSegments("/Home")
+                   || path.StartsWithSegments("/Privacy")
+                   || path.StartsWithSegments("/Onboarding")
+                   || path.StartsWithSegments("/Identity")
+                   || path.StartsWithSegments("/css")
+                   || path.StartsWithSegments("/js")
+                   || path.StartsWithSegments("/lib")
+                   || path.StartsWithSegments("/images")
+                   || path.StartsWithSegments("/api")
+                   || path.StartsWithSegments("/favicon")
+                   || path.StartsWithSegments("/updating");
 
         if (!skip)
         {

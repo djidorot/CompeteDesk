@@ -7,10 +7,9 @@
     <UserSecretsId>aspnet-CompeteDesk-a62b44a0-6c1f-4965-9641-8901a7fc2899</UserSecretsId>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
-  </ItemGroup>
-
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);CompeteDesk.Data/**;CompeteDesk.Domain/**;**/bin/**;**/obj/**;App_Data/**</DefaultItemExcludes>
+  </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="CompeteDesk.Data/**/*.cs" />

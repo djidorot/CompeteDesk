@@ -6,9 +6,8 @@ namespace CompeteDesk.Data
     public static class DbBootstrapper
     {
         /// <summary>
-        /// Create missing tables for the current MVP without requiring EF migrations.
-        /// Why: The project currently uses Identity migrations, but MVP tables (Workspaces, Strategies)
-        /// are created at runtime so devs can just run the app.
+        /// Backfill legacy SQLite tables that are still managed outside the main EF migration stream.
+        /// Startup now applies normal EF migrations first, then this bootstrapper patches older local databases.
         /// </summary>
         public static async Task EnsureCoreTablesAsync(IServiceProvider services)
         {
@@ -19,11 +18,8 @@ namespace CompeteDesk.Data
 
         public static async Task EnsureCoreTablesAsync(ApplicationDbContext db)
         {
-            // Ensure SQLite file exists and Identity tables exist (via migrations/ensure)
-            await db.Database.EnsureCreatedAsync();
-
             // IMPORTANT:
-            // - EnsureCreatedAsync() will NOT update an existing schema.
+            // - Normal EF migrations are applied during startup before this bootstrapper runs.
             // - Your repo may already contain an older app.db with a Workspaces table
             //   missing newer columns (e.g., OwnerId). Creating indexes on missing columns
             //   will crash the app.
