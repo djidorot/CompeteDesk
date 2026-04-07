@@ -1,0 +1,99 @@
+@model List<CompeteDesk.Models.Strategy>
+@using CompeteDesk.ViewModels.Common
+
+@{
+    var page = (int)(ViewBag.Page ?? 1);
+    var pageSize = (int)(ViewBag.PageSize ?? 25);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+    var totalPages = (int)(ViewBag.TotalPages ?? 0);
+
+    var q = (string)(ViewBag.Query ?? "");
+    var status = (string)(ViewBag.Status ?? "Active");
+    var workspaceId = (int?)(ViewBag.WorkspaceId ?? null);
+    var sort = (string)(ViewBag.Sort ?? "priority");
+}
+
+@if (!Model.Any())
+{
+    <div class="card shadow-sm cd-strategies__emptyState">
+        <div class="card-body">
+            <div class="cd-strategies__emptyTitle">No strategies found</div>
+            <div class="cd-strategies__emptySub">Try changing your search, workspace, or status filters.</div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="cd-strategies__grid">
+        @foreach (var s in Model)
+        {
+            var statusClass = string.Equals(s.Status, "Archived", StringComparison.OrdinalIgnoreCase)
+                ? "cd-badge--archived"
+                : "cd-badge--active";
+
+            <article class="card shadow-sm cd-strategy">
+                <div class="card-body cd-strategy__body">
+                    <div class="cd-strategy__header">
+                        <div class="cd-strategy__titleWrap">
+                            <div class="cd-strategy__eyebrow">Strategy</div>
+                            <div class="cd-strategy__name" title="@s.Name">@s.Name</div>
+                        </div>
+
+                        <div class="cd-strategy__badges">
+                            <span class="cd-pill">@(!string.IsNullOrWhiteSpace(s.Category) ? s.Category : "Uncategorized")</span>
+                            <span class="cd-badge @statusClass">@s.Status</span>
+                        </div>
+                    </div>
+
+                    <div class="cd-strategy__stats">
+                        <div class="cd-strategy__stat">
+                            <span class="cd-strategy__statLabel">Priority</span>
+                            <span class="cd-strategy__statValue">@s.Priority</span>
+                        </div>
+                        <div class="cd-strategy__stat">
+                            <span class="cd-strategy__statLabel">Type</span>
+                            <span class="cd-strategy__statValue">@(string.IsNullOrWhiteSpace(s.StrategyType) ? "Growth" : s.StrategyType)</span>
+                        </div>
+                    </div>
+
+                    <div class="cd-strategy__content">
+                        <div class="cd-strategy__section">
+                            <div class="cd-strategy__sectionLabel">Core principle</div>
+                            <div class="cd-strategy__principle">@(string.IsNullOrWhiteSpace(s.CorePrinciple) ? "No core principle added yet." : s.CorePrinciple)</div>
+                        </div>
+
+                        <div class="cd-strategy__section">
+                            <div class="cd-strategy__sectionLabel">Summary</div>
+                            <div class="cd-strategy__summary">@(string.IsNullOrWhiteSpace(s.Summary) ? "No summary available yet." : s.Summary)</div>
+                        </div>
+                    </div>
+
+                    <div class="cd-strategy__actions">
+                        <a class="btn btn-sm btn-outline-secondary cd-strategy__actionBtn" asp-action="Details" asp-route-id="@s.Id">View</a>
+                        <a class="btn btn-sm btn-outline-secondary cd-strategy__actionBtn" asp-action="Details" asp-route-id="@s.Id" asp-fragment="ai">AI</a>
+                        <a class="btn btn-sm btn-outline-secondary cd-strategy__actionBtn" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
+                        <a class="btn btn-sm btn-outline-danger cd-strategy__actionBtn" asp-action="Delete" asp-route-id="@s.Id">Delete</a>
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@await Html.PartialAsync("_Pager", new PagerViewModel
+{
+    Controller = "Strategies",
+    Action = "Index",
+    Page = page,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = totalPages,
+    Async = true,
+    RouteValues = new Dictionary<string, object?>
+    {
+        ["q"] = q,
+        ["status"] = status,
+        ["workspaceId"] = workspaceId,
+        ["sort"] = sort
+    }
+})

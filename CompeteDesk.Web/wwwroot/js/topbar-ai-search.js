@@ -1,4 +1,11 @@
 (() => {
+  const DEFAULT_FILTERS = {
+    entity: "all",
+    category: "",
+    priority: "",
+    status: ""
+  };
+
   function escapeHtml(str) {
     return (str || "")
       .replaceAll("&", "&amp;")
@@ -14,113 +21,161 @@
     panel.dataset.open = "0";
   }
 
-  async function runAiSearch(input, panel) {
-    const q = (input.value || "").trim();
-    if (!q) return;
+  function getFilters(panel) {
+    return {
+      entity: panel.dataset.entity || DEFAULT_FILTERS.entity,
+      category: panel.dataset.category || DEFAULT_FILTERS.category,
+      priority: panel.dataset.priority || DEFAULT_FILTERS.priority,
+      status: panel.dataset.status || DEFAULT_FILTERS.status
+    };
+  }
 
-    const url = input.dataset.aiSearchUrl || "/api/ai-search";
+  function setFilters(panel, next) {
+    panel.dataset.entity = next.entity || DEFAULT_FILTERS.entity;
+    panel.dataset.category = next.category || DEFAULT_FILTERS.category;
+    panel.dataset.priority = next.priority || DEFAULT_FILTERS.priority;
+    panel.dataset.status = next.status || DEFAULT_FILTERS.status;
+  }
+
+  function renderSelect(label, key, options, selectedValue, allLabel) {
+    const optionHtml = [`<option value="">${escapeHtml(allLabel)}</option>`]
+      .concat((options || []).map((value) => {
+        const selected = value === selectedValue ? ' selected' : '';
+        return `<option value="${escapeHtml(value)}"${selected}>${escapeHtml(value)}</option>`;
+      }))
+      .join("");
+
+    return `
+      <label class="cd-searchPanel__filter">
+        <span>${escapeHtml(label)}</span>
+        <select data-search-filter="${escapeHtml(key)}">${optionHtml}</select>
+      </label>
+    `;
+  }
+
+  function renderSection(title, items) {
+    if (!items || !items.length) return "";
+
+    return `
+      <section class="cd-searchPanel__section">
+        <div class="cd-searchPanel__sectionTitle">${escapeHtml(title)}</div>
+        <div class="cd-searchPanel__cards">
+          ${items.map((item) => `
+            <a class="cd-searchPanel__card" href="${escapeHtml(item.url || '#')}">
+              <div class="cd-searchPanel__cardType">${escapeHtml(item.entityType || "item")}</div>
+              <div class="cd-searchPanel__cardTitle">${escapeHtml(item.title || "Untitled")}</div>
+              <div class="cd-searchPanel__cardSubtitle">${escapeHtml(item.subtitle || "")}</div>
+              ${item.meta ? `<div class="cd-searchPanel__cardMeta">${escapeHtml(item.meta)}</div>` : ""}
+            </a>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderResults(panel, q, data) {
+    const filters = getFilters(panel);
+    const categories = Array.isArray(data.categories) ? data.categories : [];
+    const priorities = Array.isArray(data.priorityOptions) ? data.priorityOptions : ["High", "Medium", "Low"];
+    const statuses = Array.isArray(data.statusOptions) ? data.statusOptions : ["Active", "Archived"];
+    const canSearchUsers = Boolean(data.canSearchUsers);
 
     panel.hidden = false;
     panel.dataset.open = "1";
     panel.innerHTML = `
-      <div class="cd-aiSearchPanel__hdr">
-        <div class="cd-aiSearchPanel__title"><span class="cd-aiSearchPanel__spinner"></span>Gemini AI</div>
-        <div class="cd-aiSearchPanel__actions">
-          <button type="button" class="cd-aiSearchPanel__btn" data-cd-ai-close>Close</button>
+      <div class="cd-searchPanel__hdr">
+        <div>
+          <div class="cd-searchPanel__eyebrow">Global search</div>
+          <div class="cd-searchPanel__title">${escapeHtml(q)}</div>
+        </div>
+        <div class="cd-searchPanel__actions">
+          <button type="button" class="cd-searchPanel__btn" data-cd-ai-close>Close</button>
         </div>
       </div>
-      <div class="cd-aiSearchPanel__body cd-aiSearchPanel__muted">Thinking…</div>
-    `;
 
+      <div class="cd-searchPanel__filtersRow">
+        ${renderSelect("Type", "entity", ["all", "strategies", "workspaces"].concat(canSearchUsers ? ["users"] : []), filters.entity, "All")}
+        ${renderSelect("Category", "category", categories, filters.category, "All categories")}
+        ${renderSelect("Priority", "priority", priorities, filters.priority, "All priorities")}
+        ${renderSelect("Status", "status", statuses, filters.status, "All statuses")}
+      </div>
+
+      <div class="cd-searchPanel__summary">
+        <span>${escapeHtml(String(data.totalCount || 0))} result(s)</span>
+        <span>Strategies: ${escapeHtml(String(data.strategyCount || 0))}</span>
+        <span>Workspaces: ${escapeHtml(String(data.workspaceCount || 0))}</span>
+        ${canSearchUsers ? `<span>Users: ${escapeHtml(String(data.userCount || 0))}</span>` : ""}
+      </div>
+
+      <div class="cd-searchPanel__body">
+        ${(data.totalCount || 0) === 0
+          ? `<div class="cd-searchPanel__empty">No matches found. Try a shorter query or adjust the filters.</div>`
+          : `${renderSection("Strategies", data.strategies)}${renderSection("Workspaces", data.workspaces)}${canSearchUsers ? renderSection("Users", data.users) : ""}`}
+      </div>
+    `;
+  }
+
+  function renderLoading(panel, q) {
+    panel.hidden = false;
+    panel.dataset.open = "1";
+    panel.innerHTML = `
+      <div class="cd-searchPanel__hdr">
+        <div>
+          <div class="cd-searchPanel__eyebrow">Global search</div>
+          <div class="cd-searchPanel__title">${escapeHtml(q)}</div>
+        </div>
+        <div class="cd-searchPanel__actions">
+          <button type="button" class="cd-searchPanel__btn" data-cd-ai-close>Close</button>
+        </div>
+      </div>
+      <div class="cd-searchPanel__loading">
+        <span class="cd-searchPanel__spinner"></span>
+        Searching your workspace…
+      </div>
+    `;
+  }
+
+  async function runSearch(input, panel) {
+    const q = (input.value || "").trim();
+    if (!q) {
+      closePanel(panel);
+      return;
+    }
+
+    const filters = getFilters(panel);
+    const url = input.dataset.globalSearchUrl || "/api/search/global";
+    const params = new URLSearchParams({ q });
+    if (filters.entity) params.set("entity", filters.entity);
+    if (filters.category) params.set("category", filters.category);
+    if (filters.priority) params.set("priority", filters.priority);
+    if (filters.status) params.set("status", filters.status);
+
+    renderLoading(panel, q);
     input.setAttribute("aria-busy", "true");
-    input.disabled = true;
 
     try {
-      const res = await fetch(`${url}?q=${encodeURIComponent(q)}`, {
+      const res = await fetch(`${url}?${params.toString()}`, {
         method: "GET",
-        headers: { "Accept": "application/json" }
+        headers: { Accept: "application/json" }
       });
 
       const text = await res.text();
       if (!res.ok) {
-        // Best-effort parse error payload
-        let msg = text;
+        let msg = text || `Request failed (${res.status}).`;
         try {
-          const j = JSON.parse(text);
-          if (j && j.error) msg = j.error;
-          if (j && j.code === "AI_NOT_CONFIGURED") {
-            msg = (j.error || "AI is not configured.") + " Add your Gemini/OpenAI API key in appsettings.json or user-secrets.";
-          }
-        } catch { /* ignore */ }
-
-        panel.querySelector(".cd-aiSearchPanel__body").innerHTML =
-          `<div class="cd-aiSearchPanel__muted">Request failed (${res.status}).</div><div class="cd-aiSearchPanel__muted">${escapeHtml(msg)}</div>`;
+          const json = JSON.parse(text);
+          if (json && json.error) msg = json.error;
+        } catch {}
+        panel.innerHTML = `<div class="cd-searchPanel__empty">${escapeHtml(msg)}</div>`;
         return;
       }
 
       const data = JSON.parse(text);
-
-      // New (Gemini AI Overview) shape:
-      // { topic, overview, keyAspects:[], examples:[], elapsedMs }
-      // Back-compat (plain text): { answer, elapsedMs }
-      const hasOverview = data && (data.topic || data.overview || (Array.isArray(data.keyAspects) && data.keyAspects.length) || (Array.isArray(data.examples) && data.examples.length));
-      const answer = (!hasOverview && data && data.answer) ? String(data.answer) : "";
-      const meta = [];
-      if (data && typeof data.elapsedMs === "number") meta.push(`${data.elapsedMs}ms`);
-
-      const bodyHtml = hasOverview
-        ? (() => {
-            const topic = escapeHtml(String(data.topic || q));
-            const overview = escapeHtml(String(data.overview || ""));
-            const keyAspects = Array.isArray(data.keyAspects) ? data.keyAspects.filter(Boolean).slice(0, 8) : [];
-            const examples = Array.isArray(data.examples) ? data.examples.filter(Boolean).slice(0, 8) : [];
-
-            const bullets = (items) => {
-              if (!items || !items.length) return "";
-              return `<ul class="cd-aiSearchPanel__list">${items.map(i => `<li>${escapeHtml(String(i))}</li>`).join("")}</ul>`;
-            };
-
-            return `
-              <div class="cd-aiSearchPanel__topic">${topic}</div>
-              ${overview ? `<div class="cd-aiSearchPanel__overview">${overview}</div>` : ""}
-              ${keyAspects.length ? `<div class="cd-aiSearchPanel__sectionTitle">Key aspects</div>${bullets(keyAspects)}` : ""}
-              ${examples.length ? `<div class="cd-aiSearchPanel__sectionTitle">Examples</div>${bullets(examples)}` : ""}
-            `;
-          })()
-        : (escapeHtml(answer) || '<span class="cd-aiSearchPanel__muted">No answer returned.</span>');
-
-      panel.innerHTML = `
-        <div class="cd-aiSearchPanel__hdr">
-          <div class="cd-aiSearchPanel__title">Gemini AI ${meta.length ? `• ${escapeHtml(meta.join(" • "))}` : ""}</div>
-          <div class="cd-aiSearchPanel__actions">
-            <button type="button" class="cd-aiSearchPanel__btn" data-cd-ai-copy>Copy</button>
-            <button type="button" class="cd-aiSearchPanel__btn" data-cd-ai-close>Close</button>
-          </div>
-        </div>
-        <div class="cd-aiSearchPanel__body">${bodyHtml}</div>
-      `;
-
-      const copyBtn = panel.querySelector("[data-cd-ai-copy]");
-      if (copyBtn) {
-        copyBtn.addEventListener("click", async () => {
-          try {
-            const copyText = hasOverview ? text : answer;
-            await navigator.clipboard.writeText(copyText);
-            copyBtn.textContent = "Copied";
-            setTimeout(() => (copyBtn.textContent = "Copy"), 900);
-          } catch {
-            copyBtn.textContent = "Copy failed";
-            setTimeout(() => (copyBtn.textContent = "Copy"), 900);
-          }
-        });
-      }
+      renderResults(panel, q, data);
     } catch (err) {
-      panel.querySelector(".cd-aiSearchPanel__body").innerHTML =
-        `<div class="cd-aiSearchPanel__muted">Error: ${escapeHtml(err && err.message ? err.message : String(err))}</div>`;
+      panel.innerHTML = `<div class="cd-searchPanel__empty">${escapeHtml(err && err.message ? err.message : String(err))}</div>`;
     } finally {
-      input.disabled = false;
       input.removeAttribute("aria-busy");
-      input.focus();
     }
   }
 
@@ -129,23 +184,45 @@
     const panel = document.getElementById("cdTopbarAiSearchPanel");
     if (!input || !panel) return;
 
-    // Enter triggers AI search
+    setFilters(panel, DEFAULT_FILTERS);
+
+    let debounceHandle = 0;
+    const scheduleSearch = () => {
+      window.clearTimeout(debounceHandle);
+      debounceHandle = window.setTimeout(() => runSearch(input, panel), 220);
+    };
+
+    input.addEventListener("input", scheduleSearch);
+    input.addEventListener("focus", () => {
+      if ((input.value || "").trim()) {
+        scheduleSearch();
+      }
+    });
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        runAiSearch(input, panel);
+        runSearch(input, panel);
       } else if (e.key === "Escape") {
         closePanel(panel);
       }
     });
 
-    // Close buttons inside panel
     panel.addEventListener("click", (e) => {
-      const btn = e.target && e.target.closest ? e.target.closest("[data-cd-ai-close]") : null;
-      if (btn) closePanel(panel);
+      const closeBtn = e.target && e.target.closest ? e.target.closest("[data-cd-ai-close]") : null;
+      if (closeBtn) {
+        closePanel(panel);
+      }
     });
 
-    // Click outside closes panel
+    panel.addEventListener("change", (e) => {
+      const target = e.target;
+      if (!target || !target.matches || !target.matches("[data-search-filter]")) return;
+      const filters = getFilters(panel);
+      filters[target.dataset.searchFilter] = target.value || "";
+      setFilters(panel, filters);
+      runSearch(input, panel);
+    });
+
     document.addEventListener("click", (e) => {
       if (panel.hidden) return;
       const withinSearch = input.closest(".cd-topbar__search");
