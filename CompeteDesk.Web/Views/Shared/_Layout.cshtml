@@ -26,6 +26,24 @@
     var isAuthenticated = User?.Identity?.IsAuthenticated == true;
     var useSidebar = AppShellPolicy.ShouldUseSidebar(ViewData["UseSidebar"] as bool? == true, isAuthenticated);
     var containerClass = (ViewData["LayoutFluid"] as bool? == true ? "container-fluid" : "container");
+    var requestPath = Context?.Request?.Path.Value ?? string.Empty;
+    var isAuthEntryPage = requestPath.StartsWith("/Identity/Account/Login", System.StringComparison.OrdinalIgnoreCase)
+        || requestPath.StartsWith("/Identity/Account/Register", System.StringComparison.OrdinalIgnoreCase)
+        || requestPath.StartsWith("/Identity/Account/Logout", System.StringComparison.OrdinalIgnoreCase);
+
+    var pageClass = string.Empty;
+    if (requestPath.StartsWith("/Identity/Account/Login", System.StringComparison.OrdinalIgnoreCase))
+    {
+        pageClass = "cd-auth-page cd-auth-login";
+    }
+    else if (requestPath.StartsWith("/Identity/Account/Register", System.StringComparison.OrdinalIgnoreCase))
+    {
+        pageClass = "cd-auth-page cd-auth-register";
+    }
+    else if (requestPath.StartsWith("/Identity/Account/Logout", System.StringComparison.OrdinalIgnoreCase))
+    {
+        pageClass = "cd-auth-page cd-auth-logout";
+    }
 
     // Topbar role label
     string roleLabel = "Guest";
@@ -72,12 +90,12 @@
         @RenderSection("Styles", required: false)
     </head>
 
-    <body class="@(useSidebar ? "cd-has-sidebar" : "")">
+    <body class="@(string.Join(" ", new[] { useSidebar ? "cd-has-sidebar" : string.Empty, pageClass }.Where(x => !string.IsNullOrWhiteSpace(x))))">
         @if (!useSidebar)
         {
             <header>
                 <nav
-                    class="navbar cd-navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+                    class="navbar cd-navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow @(isAuthEntryPage ? "cd-auth-navbar" : string.Empty)">
                     <div class="container-fluid">
                         <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-controller="Home"
                             asp-action="Index">
@@ -197,7 +215,7 @@
                     {
                         <partial name="_Breadcrumbs" />
                     }
-                    <main role="main" class="pb-3 cd-main">
+                    <main role="main" class="pb-3 cd-main @(isAuthEntryPage ? "cd-auth-main" : string.Empty)">
                         @RenderBody()
                     </main>
                 </div>
