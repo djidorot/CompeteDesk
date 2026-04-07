@@ -111,12 +111,6 @@ public sealed class MetricsController : Controller
         // -------------------------
         // New items in selected range vs prior
         // -------------------------
-        async Task<int> CountInRangeAsync<T>(IQueryable<T> q, Func<T, DateTime> createdAt)
-        {
-            // Not used - left for clarity (we do per-entity queries below)
-            await Task.CompletedTask;
-            return 0;
-        }
 
         var newWorkspaces = await _db.Workspaces.AsNoTracking()
             .CountAsync(w => w.OwnerId == userId && w.CreatedAtUtc >= startUtc && w.CreatedAtUtc < endUtc, ct);
@@ -160,12 +154,6 @@ public sealed class MetricsController : Controller
         }
 
         // Fetch timestamps once per entity type (small volumes expected for a single user).
-        async Task<List<DateTime>> FetchCreatedAsync<TEntity>(IQueryable<TEntity> set, Func<TEntity, string> owner, Func<TEntity, DateTime> created)
-        {
-            // We can't pass Funcs into SQL; fetch minimal rows via projection per entity type below.
-            await Task.CompletedTask;
-            return new List<DateTime>();
-        }
 
         // Projection queries (SQL-friendly)
         var wsCreated = await _db.Workspaces.AsNoTracking()
@@ -318,11 +306,6 @@ public sealed class MetricsController : Controller
         };
 
         // Prior for module table (only need counts, not series)
-        async Task<int> PriorCountAsync<TEntity>(IQueryable<TEntity> set, Func<TEntity, string> ownerSelector, Func<TEntity, DateTime> createdSelector)
-        {
-            await Task.CompletedTask;
-            return 0;
-        }
 
         var modulePrior = new Dictionary<string, int>
         {

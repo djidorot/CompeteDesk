@@ -604,7 +604,7 @@ public class DashboardController : Controller
         }
 
         var orphanHabits = await _db.Habits
-            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .Where(x => x.OwnerId == userId && x.WorkspaceId <= 0)
             .ToListAsync(ct);
         if (orphanHabits.Count > 0)
         {
@@ -640,7 +640,7 @@ public class DashboardController : Controller
         }
 
         var orphanBiz = await _db.BusinessAnalysisReports
-            .Where(x => x.OwnerId == userId && x.WorkspaceId == null)
+            .Where(x => x.OwnerId == userId && x.WorkspaceId <= 0)
             .ToListAsync(ct);
         if (orphanBiz.Count > 0)
         {

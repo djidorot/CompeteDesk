@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using CompeteDesk.Data;
 using CompeteDesk.Services.Gemini;
 using CompeteDesk.Services.OpenAI;
@@ -37,7 +38,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 var normalizedConnectionString = SqliteConnectionStringHelper.NormalizeForAppData(builder.Environment, connectionString);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(normalizedConnectionString));
+    options
+        .UseSqlite(normalizedConnectionString)
+        .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
 // Needed for audit trail (CreatedBy/UpdatedBy) in ApplicationDbContext.
 builder.Services.AddHttpContextAccessor();

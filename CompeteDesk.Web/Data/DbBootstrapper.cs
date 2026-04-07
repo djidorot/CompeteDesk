@@ -1065,8 +1065,10 @@ await db.Database.ExecuteSqlRawAsync(
             if (string.IsNullOrWhiteSpace(columnsSql)) throw new ArgumentException("Columns SQL is required.", nameof(columnsSql));
 
             // indexName/tableName/columnsSql are constants from code, not user-input.
-            var sql = $"CREATE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" {columnsSql};";
+            var sql = $"CREATE INDEX IF NOT EXISTS "{indexName}" ON "{tableName}" {columnsSql};";
+#pragma warning disable EF1002
             await db.Database.ExecuteSqlRawAsync(sql, ct);
+#pragma warning restore EF1002
         }
 
         private static async Task EnsureWebsiteAnalysisReportsTableAsync(ApplicationDbContext db)
