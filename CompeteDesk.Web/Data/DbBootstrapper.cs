@@ -1065,7 +1065,17 @@ ON Actions (WorkspaceId, OwnerId);");
             if (string.IsNullOrWhiteSpace(columnsSql)) throw new ArgumentException("Columns SQL is required.", nameof(columnsSql));
 
             // indexName/tableName/columnsSql are constants from code, not user-input.
-            var sql = $"CREATE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" ({columnsSql});";
+            // Some callers already pass a parenthesized column list while others pass a raw list.
+            // Normalize here so we do not accidentally generate double parentheses like
+            // ON "Table" ((OwnerId, CreatedAtUtc)), which SQLite rejects with
+            // "row value misused".
+            var normalizedColumnsSql = columnsSql.Trim();
+            if (normalizedColumnsSql.StartsWith("(") && normalizedColumnsSql.EndsWith(")"))
+            {
+                normalizedColumnsSql = normalizedColumnsSql[1..^1].Trim();
+            }
+
+            var sql = $"CREATE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" ({normalizedColumnsSql});";
 #pragma warning disable EF1002
             await db.Database.ExecuteSqlRawAsync(sql, ct);
 #pragma warning restore EF1002
