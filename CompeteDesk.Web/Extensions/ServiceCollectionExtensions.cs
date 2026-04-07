@@ -5,6 +5,7 @@ using CompeteDesk.Services.Gemini;
 using CompeteDesk.Services.Habits;
 using CompeteDesk.Services.Notifications;
 using CompeteDesk.Services.OpenAI;
+using CompeteDesk.Services.Security;
 using CompeteDesk.Services.StrategyCopilot;
 using CompeteDesk.Services.WarRoom;
 using CompeteDesk.Services.WebsiteAnalysis;
@@ -38,6 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddControllersWithViews();
         services.AddRazorPages();
         services.AddScoped<CompeteDesk.Services.ActiveWorkspaceService>();
+        services.AddScoped<FeaturePermissionService>();
 
         ConfigureAiServices(services, configuration);
         ConfigureMessaging(services, configuration);

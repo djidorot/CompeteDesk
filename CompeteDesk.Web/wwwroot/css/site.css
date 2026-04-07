@@ -324,3 +324,35 @@ body {
     gap: 14px;
   }
 }
+
+/* Global mobile safety: prevent card/button overflow on smaller screens */
+.cd-main .card,
+.cd-main .shadow-sm,
+.cd-main .shadow {
+  min-width: 0;
+}
+
+.cd-main .btn,
+.cd-main .form-control,
+.cd-main .form-select,
+.cd-main .input-group,
+.cd-main .badge,
+.cd-main .nav,
+.cd-main .table-responsive {
+  max-width: 100%;
+}
+
+.cd-main * {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+  .cd-main .d-flex {
+    flex-wrap: wrap;
+  }
+
+  .cd-main .btn-group,
+  .cd-main .input-group {
+    width: 100%;
+  }
+}

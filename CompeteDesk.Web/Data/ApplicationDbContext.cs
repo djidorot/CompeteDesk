@@ -69,6 +69,7 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<WorkspaceInvite> WorkspaceInvites => Set<WorkspaceInvite>();
     public DbSet<WorkspaceMember> WorkspaceMembers => Set<WorkspaceMember>();
     public DbSet<StrategyComment> StrategyComments => Set<StrategyComment>();
+    public DbSet<UserFeaturePermission> UserFeaturePermissions => Set<UserFeaturePermission>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -247,6 +248,14 @@ public class ApplicationDbContext : IdentityDbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+
+        builder.Entity<UserFeaturePermission>(b =>
+        {
+            b.ToTable("UserFeaturePermissions");
+            b.Property(x => x.UserId).IsRequired();
+            b.Property(x => x.PermissionKey).IsRequired().HasMaxLength(128);
+            b.HasIndex(x => new { x.UserId, x.PermissionKey }).IsUnique();
+        });
         builder.Entity<WorkspaceMember>(b =>
         {
             b.ToTable("WorkspaceMembers");

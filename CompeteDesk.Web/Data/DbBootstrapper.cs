@@ -47,6 +47,7 @@ namespace CompeteDesk.Data
             await EnsureAuditLogsTableAsync(db);
             await EnsureEntityChangeHistoryTableAsync(db);
             await EnsureWorkspaceCollaborationTablesAsync(db);
+            await EnsureUserFeaturePermissionsTableAsync(db);
 
             await NormalizeSourceBooksAsync(db);
         }
@@ -1081,6 +1082,35 @@ ON Actions (StrategyId, OwnerId);");
             await db.Database.ExecuteSqlRawAsync(@"
 CREATE INDEX IF NOT EXISTS IX_Actions_WorkspaceId_OwnerId
 ON Actions (WorkspaceId, OwnerId);");
+        }
+
+
+        private static async Task EnsureUserFeaturePermissionsTableAsync(ApplicationDbContext db)
+        {
+            if (!await TableExistsAsync(db, "UserFeaturePermissions"))
+            {
+                await db.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE UserFeaturePermissions (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId TEXT NOT NULL,
+    PermissionKey TEXT NOT NULL,
+    IsGranted INTEGER NOT NULL DEFAULT 0,
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NULL
+);");
+            }
+            else
+            {
+                await EnsureColumnAsync(db, "UserFeaturePermissions", "UserId", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserFeaturePermissions", "PermissionKey", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserFeaturePermissions", "IsGranted", "INTEGER", nullable: false, defaultSql: "0");
+                await EnsureColumnAsync(db, "UserFeaturePermissions", "CreatedAtUtc", "TEXT", nullable: true);
+                await EnsureColumnAsync(db, "UserFeaturePermissions", "UpdatedAtUtc", "TEXT", nullable: true);
+            }
+
+            await db.Database.ExecuteSqlRawAsync(@"
+CREATE UNIQUE INDEX IF NOT EXISTS IX_UserFeaturePermissions_User_Permission
+ON UserFeaturePermissions (UserId, PermissionKey);");
         }
 
         private static async Task<bool> TableExistsAsync(ApplicationDbContext db, string tableName)

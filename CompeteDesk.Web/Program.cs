@@ -55,6 +55,7 @@ app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseMiddleware<EnsureUserRoleMiddleware>();
 app.UseAuthorization();
+app.UseMiddleware<FeaturePermissionMiddleware>();
 app.UseMiddleware<OnboardingGateMiddleware>();
 
 app.MapStaticAssets();

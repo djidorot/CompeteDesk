@@ -13,6 +13,7 @@ public class AdminDashboardViewModel
     public int WebsiteReports { get; set; }
     public int BusinessReports { get; set; }
     public int DecisionTraces { get; set; }
+    public int PermissionOverrides { get; set; }
 
     public List<RecentUserItem> RecentUsers { get; set; } = new();
     public List<DecisionTrace> RecentDecisionTraces { get; set; } = new();
