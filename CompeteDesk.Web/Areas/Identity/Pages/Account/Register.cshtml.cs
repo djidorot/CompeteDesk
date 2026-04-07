@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using CompeteDesk.Data;
+using CompeteDesk.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -16,17 +18,20 @@ public class RegisterModel : PageModel
     private readonly IUserStore<IdentityUser> _userStore;
     private readonly IUserEmailStore<IdentityUser> _emailStore;
     private readonly ILogger<RegisterModel> _logger;
+    private readonly ApplicationDbContext _db;
 
     public RegisterModel(
         UserManager<IdentityUser> userManager,
         IUserStore<IdentityUser> userStore,
         SignInManager<IdentityUser> signInManager,
+        ApplicationDbContext db,
         ILogger<RegisterModel> logger)
     {
         _userManager = userManager;
         _userStore = userStore;
         _emailStore = GetEmailStore();
         _signInManager = signInManager;
+        _db = db;
         _logger = logger;
     }
 
@@ -103,6 +108,8 @@ public class RegisterModel : PageModel
             _logger.LogWarning(ex, "Unable to assign the default role during registration for {Email}.", Input.Email);
         }
 
+        await EnsureDefaultProfileAsync(user.Id);
+
         await _signInManager.SignInAsync(user, isPersistent: false);
         _logger.LogInformation("User created a new account with password.");
 
@@ -154,6 +161,33 @@ public class RegisterModel : PageModel
         }
 
         return returnUrl;
+    }
+
+
+    private async Task EnsureDefaultProfileAsync(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return;
+        }
+
+        var hasProfile = await _db.UserProfiles
+            .AsNoTracking()
+            .AnyAsync(x => x.UserId == userId);
+
+        if (hasProfile)
+        {
+            return;
+        }
+
+        _db.UserProfiles.Add(new UserProfile
+        {
+            UserId = userId,
+            PersonaRole = "Business Owner",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync();
     }
 
     private IdentityUser CreateUser()

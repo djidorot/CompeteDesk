@@ -26,11 +26,27 @@ public sealed class OnboardingGateMiddleware
                 if (!string.IsNullOrWhiteSpace(userId))
                 {
                     using var scope = context.RequestServices.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var hasProfile = await db.UserProfiles.AnyAsync(x => x.UserId == userId);
-                    if (!hasProfile)
+                    if (context.Request.Cookies.TryGetValue("cd_onboarding_skipped", out var skipValue)
+                        && string.Equals(skipValue, "1", StringComparison.Ordinal))
                     {
-                        context.Response.Redirect("/Onboarding");
+                        await _next(context);
+                        return;
+                    }
+
+                    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    try
+                    {
+                        var hasProfile = await db.UserProfiles.AnyAsync(x => x.UserId == userId);
+                        if (!hasProfile)
+                        {
+                            context.Response.Redirect("/Onboarding");
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                        await _next(context);
                         return;
                     }
                 }

@@ -1,4 +1,6 @@
 using CompeteDesk.Data;
+using CompeteDesk.Models;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
@@ -20,6 +22,7 @@ public class ExternalLoginModel : PageModel
     private readonly IUserEmailStore<IdentityUser> _emailStore;
     private readonly IConfiguration _config;
     private readonly ILogger<ExternalLoginModel> _logger;
+    private readonly ApplicationDbContext _db;
 
     public ExternalLoginModel(
         SignInManager<IdentityUser> signInManager,
@@ -27,6 +30,7 @@ public class ExternalLoginModel : PageModel
         RoleManager<IdentityRole> roleManager,
         IUserStore<IdentityUser> userStore,
         IConfiguration config,
+        ApplicationDbContext db,
         ILogger<ExternalLoginModel> logger)
     {
         _signInManager = signInManager;
@@ -35,6 +39,7 @@ public class ExternalLoginModel : PageModel
         _userStore = userStore;
         _emailStore = GetEmailStore();
         _config = config;
+        _db = db;
         _logger = logger;
     }
 
@@ -104,6 +109,7 @@ public class ExternalLoginModel : PageModel
                 await MaybeAssignSeedAdminAsync(linkedUser, linkedEmail);
             }
 
+            await EnsureDefaultProfileAsync(linkedUser?.Id);
             return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
         }
 
@@ -127,6 +133,7 @@ public class ExternalLoginModel : PageModel
 
                     await MaybeAssignSeedAdminAsync(existingUser, email);
                     await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, existingUser);
+                    await EnsureDefaultProfileAsync(existingUser.Id);
 
                     return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
                 }
@@ -155,6 +162,7 @@ public class ExternalLoginModel : PageModel
                     {
                         await MaybeAssignSeedAdminAsync(newUser, email);
                         await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, newUser);
+                        await EnsureDefaultProfileAsync(newUser.Id);
 
                         await _signInManager.SignInAsync(newUser, isPersistent: false, info.LoginProvider);
                         _logger.LogInformation("Auto-created local user for external login {Email} via {Provider}.", email, info.LoginProvider);
@@ -213,6 +221,7 @@ public class ExternalLoginModel : PageModel
 
                 await MaybeAssignSeedAdminAsync(existingUser, Input.Email);
                 await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, existingUser);
+                await EnsureDefaultProfileAsync(existingUser.Id);
 
                 return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
             }
@@ -256,6 +265,7 @@ public class ExternalLoginModel : PageModel
         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
         await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, user);
+        await EnsureDefaultProfileAsync(user.Id);
 
         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
         return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
@@ -292,6 +302,33 @@ public class ExternalLoginModel : PageModel
     }
 
 
+
+
+    private async Task EnsureDefaultProfileAsync(string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return;
+        }
+
+        var hasProfile = await _db.UserProfiles
+            .AsNoTracking()
+            .AnyAsync(x => x.UserId == userId);
+
+        if (hasProfile)
+        {
+            return;
+        }
+
+        _db.UserProfiles.Add(new UserProfile
+        {
+            UserId = userId,
+            PersonaRole = "Business Owner",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync();
+    }
 
     private async Task MaybeAssignSeedAdminAsync(IdentityUser user, string? email)
     {
