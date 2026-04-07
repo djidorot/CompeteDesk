@@ -1042,8 +1042,10 @@ ON Actions (WorkspaceId, OwnerId);");
 
             // WARNING EF1002 (SQL injection): table/column names are controlled by code (not user input),
             // so it's acceptable in this bootstrapper.
+#pragma warning disable EF1002
             await db.Database.ExecuteSqlRawAsync(
                 $"ALTER TABLE \"{tableName}\" ADD COLUMN \"{columnName}\" {sqliteType} {nullSql}{defaultClause};");
+#pragma warning restore EF1002
         }
 
         // -----------------------------------------------------------------------------

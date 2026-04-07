@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CompeteDesk.Data;
+using CompeteDesk.Models;
 using CompeteDesk.Services;
 using CompeteDesk.Services.Exports;
 
