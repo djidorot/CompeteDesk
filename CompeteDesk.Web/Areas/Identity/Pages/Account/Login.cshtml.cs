@@ -63,7 +63,7 @@ public class LoginModel : PageModel
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         ReturnUrl = returnUrl;
 
-        return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)

@@ -255,7 +255,6 @@ public class ExternalLoginModel : PageModel
 
         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
-        await MaybeAssignSeedAdminAsync(user, Input.Email);
         await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, user);
 
         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
@@ -279,41 +278,6 @@ public class ExternalLoginModel : PageModel
         return Url.IsLocalUrl(returnUrl) ? returnUrl : homeUrl;
     }
 
-    private async Task MaybeAssignSeedAdminAsync(IdentityUser user, string? email)
-    {
-        if (string.IsNullOrWhiteSpace(email)) return;
-
-        var seedEmail = _config["AdminSeed:Email"];
-        if (string.IsNullOrWhiteSpace(seedEmail)) return;
-
-        if (!string.Equals(email.Trim(), seedEmail.Trim(), StringComparison.OrdinalIgnoreCase)) return;
-
-        const string adminRole = "Admin";
-        try
-        {
-            if (!await _roleManager.RoleExistsAsync(adminRole))
-            {
-                await _roleManager.CreateAsync(new IdentityRole(adminRole));
-            }
-
-            if (!await _userManager.IsInRoleAsync(user, adminRole))
-            {
-                var res = await _userManager.AddToRoleAsync(user, adminRole);
-                if (res.Succeeded)
-                {
-                    _logger.LogInformation("Assigned {Role} role to seed admin email {Email}.", adminRole, email);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed assigning {Role} role to {Email}: {Errors}", adminRole, email, string.Join("; ", res.Errors.Select(e => e.Code)));
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error while assigning seed admin role for {Email}.", email);
-        }
-    }
 
     private string GetPostLoginReturnUrl(string? returnUrl)
     {

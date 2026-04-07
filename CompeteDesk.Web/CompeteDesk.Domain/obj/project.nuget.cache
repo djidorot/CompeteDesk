@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Wdahuha5hgk=",
+  "dgSpecHash": "ge9GOSkSYtk=",
   "success": true,
-  "projectFilePath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.Data/CompeteDesk.Data.csproj",
+  "projectFilePath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.Domain/CompeteDesk.Domain.csproj",
   "expectedPackageFiles": [
     "/Users/djidorot/.nuget/packages/microsoft.netcore.app.ref/8.0.21/microsoft.netcore.app.ref.8.0.21.nupkg.sha512",
     "/Users/djidorot/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.21/microsoft.aspnetcore.app.ref.8.0.21.nupkg.sha512"

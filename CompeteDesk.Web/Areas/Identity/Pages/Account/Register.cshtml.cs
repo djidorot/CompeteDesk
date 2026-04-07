@@ -59,7 +59,7 @@ public class RegisterModel : PageModel
     {
         ReturnUrl = NormalizeReturnUrl(returnUrl);
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-        return LocalRedirect(GetPostLoginReturnUrl(ReturnUrl));
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
@@ -93,7 +93,7 @@ public class RegisterModel : PageModel
         await _signInManager.SignInAsync(user, isPersistent: false);
         _logger.LogInformation("User created a new account with password.");
 
-        return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
+        return Page();
     }
 
     private string NormalizeReturnUrl(string? returnUrl)

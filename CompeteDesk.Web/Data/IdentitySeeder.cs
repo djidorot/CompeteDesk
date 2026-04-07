@@ -6,8 +6,8 @@ namespace CompeteDesk.Data;
 /// <summary>
 /// Lightweight Identity seeding for local/dev scenarios.
 /// - Ensures baseline roles exist.
-/// - Assigns Admin role to a seed user (config-driven) OR the first registered user.
-/// - Can optionally create/reset a local password-based seed admin when configured.
+/// - Assigns Admin role to an explicitly seeded local admin account OR the first registered user.
+/// - Uses AdminSeed:Email together with AdminSeed:Password for explicit seeding.
 /// </summary>
 public static class IdentitySeeder
 {
@@ -35,12 +35,14 @@ public static class IdentitySeeder
 
         var seedEmail = config["AdminSeed:Email"]?.Trim();
         var seedPassword = config["AdminSeed:Password"];
+        var hasExplicitSeedAdmin = !string.IsNullOrWhiteSpace(seedEmail)
+                                   && !string.IsNullOrWhiteSpace(seedPassword);
 
-        if (!string.IsNullOrWhiteSpace(seedEmail))
+        if (hasExplicitSeedAdmin)
         {
-            var seedUser = await userManager.FindByEmailAsync(seedEmail);
+            var seedUser = await userManager.FindByEmailAsync(seedEmail!);
 
-            if (seedUser is null && !string.IsNullOrWhiteSpace(seedPassword))
+            if (seedUser is null)
             {
                 seedUser = new IdentityUser
                 {
@@ -49,25 +51,16 @@ public static class IdentitySeeder
                     EmailConfirmed = true
                 };
 
-                var createResult = await userManager.CreateAsync(seedUser, seedPassword);
+                var createResult = await userManager.CreateAsync(seedUser, seedPassword!);
                 if (!createResult.Succeeded)
                 {
                     throw new InvalidOperationException($"Unable to create configured admin seed user '{seedEmail}': {string.Join("; ", createResult.Errors.Select(e => e.Description))}");
                 }
             }
 
-            if (seedUser is not null)
-            {
-                if (!string.IsNullOrWhiteSpace(seedPassword))
-                {
-                    await EnsurePasswordAsync(userManager, seedUser, seedPassword);
-                }
-
-                await EnsureUserInRoleAsync(userManager, seedUser, UserRoleName);
-                await EnsureUserInRoleAsync(userManager, seedUser, AdminRoleName);
-            }
-
-            // When a seed email is configured, don't auto-promote a random user.
+            await EnsurePasswordAsync(userManager, seedUser, seedPassword!);
+            await EnsureUserInRoleAsync(userManager, seedUser, UserRoleName);
+            await EnsureUserInRoleAsync(userManager, seedUser, AdminRoleName);
             return;
         }
 
