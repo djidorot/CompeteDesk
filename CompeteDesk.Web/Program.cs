@@ -50,7 +50,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseStatusCodePagesWithReExecute("/updating");
 app.UseRouting();
 app.UseCookiePolicy();
 app.UseAuthentication();
@@ -68,6 +67,5 @@ app.MapControllerRoute(
 app.MapRazorPages()
    .WithStaticAssets();
 
-app.MapFallbackToController("Updating", "Home");
 
 app.Run();

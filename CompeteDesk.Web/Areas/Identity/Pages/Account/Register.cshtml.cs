@@ -69,8 +69,8 @@ public class RegisterModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
-        returnUrl ??= Url.Content("~/");
-        ReturnUrl = NormalizeReturnUrl(returnUrl);
+        returnUrl = NormalizeReturnUrl(returnUrl ?? ReturnUrl);
+        ReturnUrl = returnUrl;
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
         if (!ModelState.IsValid)
@@ -94,7 +94,15 @@ public class RegisterModel : PageModel
             return Page();
         }
 
-        await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, user);
+        try
+        {
+            await IdentitySeeder.EnsureUserHasDefaultRoleAsync(HttpContext.RequestServices, user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to assign the default role during registration for {Email}.", Input.Email);
+        }
+
         await _signInManager.SignInAsync(user, isPersistent: false);
         _logger.LogInformation("User created a new account with password.");
 

@@ -14,7 +14,8 @@
                         <p class="text-muted mb-0">Start using CompeteDesk with your email or continue with Google.</p>
                     </div>
 
-                    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" novalidate>
+                    <form id="registerForm" asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" method="post" novalidate>
+                        @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
 
                         <div class="form-floating mb-3">
