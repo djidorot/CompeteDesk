@@ -675,12 +675,12 @@ CREATE TABLE Workspaces (
                 await db.Database.ExecuteSqlRawAsync(@"
 UPDATE Workspaces
 SET OwnerUserId = COALESCE(OwnerUserId, OwnerId)
-WHERE OwnerUserId IS NULL;" );
+WHERE OwnerUserId IS NULL;");
 
                 await db.Database.ExecuteSqlRawAsync(@"
 UPDATE Workspaces
 SET OwnerId = COALESCE(OwnerId, OwnerUserId)
-WHERE OwnerId IS NULL;" );
+WHERE OwnerId IS NULL;");
             }
 
             // Create indexes AFTER columns exist.
@@ -1035,15 +1035,15 @@ ON Actions (WorkspaceId, OwnerId);");
             // If missing, add it.
             // NOTE: SQLite has limited ALTER TABLE support; ADD COLUMN is supported.
             // SQLite allows NOT NULL only if a DEFAULT is provided when adding a column.
-// If caller requests NOT NULL but no default is supplied, we fall back to NULL to avoid migration failures on existing DBs.
-var canBeNotNull = !nullable && !string.IsNullOrWhiteSpace(defaultSql);
-var nullSql = canBeNotNull ? "NOT NULL" : "NULL";
-var defaultClause = canBeNotNull ? $" DEFAULT {defaultSql}" : "";
+            // If caller requests NOT NULL but no default is supplied, we fall back to NULL to avoid migration failures on existing DBs.
+            var canBeNotNull = !nullable && !string.IsNullOrWhiteSpace(defaultSql);
+            var nullSql = canBeNotNull ? "NOT NULL" : "NULL";
+            var defaultClause = canBeNotNull ? $" DEFAULT {defaultSql}" : "";
 
-// WARNING EF1002 (SQL injection): table/column names are controlled by code (not user input),
-// so it's acceptable in this bootstrapper.
-await db.Database.ExecuteSqlRawAsync(
-    $"ALTER TABLE \"{tableName}\" ADD COLUMN \"{columnName}\" {sqliteType} {nullSql}{defaultClause};");
+            // WARNING EF1002 (SQL injection): table/column names are controlled by code (not user input),
+            // so it's acceptable in this bootstrapper.
+            await db.Database.ExecuteSqlRawAsync(
+                $"ALTER TABLE \"{tableName}\" ADD COLUMN \"{columnName}\" {sqliteType} {nullSql}{defaultClause};");
         }
 
         // -----------------------------------------------------------------------------
@@ -1065,7 +1065,7 @@ await db.Database.ExecuteSqlRawAsync(
             if (string.IsNullOrWhiteSpace(columnsSql)) throw new ArgumentException("Columns SQL is required.", nameof(columnsSql));
 
             // indexName/tableName/columnsSql are constants from code, not user-input.
-            var sql = $"CREATE INDEX IF NOT EXISTS "{indexName}" ON "{tableName}" {columnsSql};";
+            var sql = $"CREATE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" ({columnsSql});";
 #pragma warning disable EF1002
             await db.Database.ExecuteSqlRawAsync(sql, ct);
 #pragma warning restore EF1002
@@ -1169,7 +1169,7 @@ CREATE TABLE WebsiteAnalysisReports (
         }
 
 
-        
+
 
 
         private static async Task EnsureUserAiPreferencesTableAsync(ApplicationDbContext db)
