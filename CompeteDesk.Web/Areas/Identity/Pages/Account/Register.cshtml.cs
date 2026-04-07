@@ -93,7 +93,7 @@ public class RegisterModel : PageModel
         await _signInManager.SignInAsync(user, isPersistent: false);
         _logger.LogInformation("User created a new account with password.");
 
-        return Page();
+        return LocalRedirect(GetPostLoginReturnUrl(ReturnUrl));
     }
 
     private string NormalizeReturnUrl(string? returnUrl)

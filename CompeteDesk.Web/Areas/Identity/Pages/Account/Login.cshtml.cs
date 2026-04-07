@@ -77,12 +77,21 @@ public class LoginModel : PageModel
             return Page();
         }
 
+        var user = await _userManager.FindByEmailAsync(Input.Email)
+                   ?? await _userManager.FindByNameAsync(Input.Email);
+
+        if (user is null)
+        {
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return Page();
+        }
+
         Microsoft.AspNetCore.Identity.SignInResult result;
 
         try
         {
             result = await _signInManager.PasswordSignInAsync(
-                Input.Email,
+                user,
                 Input.Password,
                 Input.RememberMe,
                 lockoutOnFailure: false);
@@ -91,37 +100,26 @@ public class LoginModel : PageModel
         {
             _logger.LogWarning(ex, "Invalid password hash detected for user {Email}. Resetting password hash.", Input.Email);
 
-            var user = await _userManager.FindByEmailAsync(Input.Email);
-            if (user is not null)
-            {
-                user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, Input.Password);
-                var updateResult = await _userManager.UpdateAsync(user);
+            user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, Input.Password);
+            var updateResult = await _userManager.UpdateAsync(user);
 
-                if (updateResult.Succeeded)
-                {
-                    result = await _signInManager.PasswordSignInAsync(
-                        Input.Email,
-                        Input.Password,
-                        Input.RememberMe,
-                        lockoutOnFailure: false);
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Unable to repair this account automatically.");
-                    return Page();
-                }
-            }
-            else
+            if (!updateResult.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(string.Empty, "Unable to repair this account automatically.");
                 return Page();
             }
+
+            result = await _signInManager.PasswordSignInAsync(
+                user,
+                Input.Password,
+                Input.RememberMe,
+                lockoutOnFailure: false);
         }
 
         if (result.Succeeded)
         {
             _logger.LogInformation("User logged in.");
-            return LocalRedirect(returnUrl);
+            return LocalRedirect(GetPostLoginReturnUrl(returnUrl));
         }
 
         if (result.RequiresTwoFactor)
