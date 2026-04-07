@@ -4,16 +4,379 @@
     ViewData["Title"] = "Logged out";
 }
 
-<section class="cd-auth-page cd-auth-page--centered">
-    <div class="cd-auth-shell cd-auth-shell--narrow">
-        <div class="cd-auth-card cd-auth-card--single cd-auth-logoutCard">
-            <div class="cd-auth-logoutIcon" aria-hidden="true">✓</div>
-            <span class="cd-auth-kicker">Signed out</span>
-            <h1>You have successfully logged out.</h1>
-            <p>Your session has ended and your workspace is secure. You can sign in again whenever you're ready.</p>
-            <div class="cd-auth-logoutActions">
-                <a asp-page="./Login" class="btn btn-primary cd-auth-submit">Sign in again</a>
-                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn cd-auth-externalBtn">Back to home</a>
+@section Styles {
+    <style>
+        body.cd-auth-page.cd-auth-logout .cd-navbar,
+        body.cd-auth-page.cd-auth-logout .cd-site-footer {
+            display: none;
+        }
+
+        body.cd-auth-page.cd-auth-logout .container,
+        body.cd-auth-page.cd-auth-logout .container-fluid {
+            max-width: 100%;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        body.cd-auth-page.cd-auth-logout .cd-main.cd-auth-main {
+            padding: 0;
+        }
+
+        .cd-logout-screen {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: clamp(24px, 4vw, 40px);
+            background:
+                radial-gradient(circle at top left, rgba(124, 58, 237, 0.22), transparent 30%),
+                radial-gradient(circle at 85% 15%, rgba(91, 19, 110, 0.18), transparent 26%),
+                linear-gradient(180deg, #f8f5ff 0%, #f5f7fb 48%, #ffffff 100%);
+        }
+
+        .cd-logout-shell {
+            width: min(1100px, 100%);
+        }
+
+        .cd-logout-card {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+            border-radius: 32px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(255, 255, 255, 0.84);
+            box-shadow: 0 30px 90px rgba(15, 23, 42, 0.14);
+            backdrop-filter: blur(14px);
+        }
+
+        .cd-logout-card::after {
+            content: "";
+            position: absolute;
+            inset: auto -80px -90px auto;
+            width: 240px;
+            height: 240px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.16), transparent 70%);
+            pointer-events: none;
+        }
+
+        .cd-logout-brand {
+            position: relative;
+            padding: clamp(28px, 4vw, 42px);
+            color: #fff;
+            background:
+                radial-gradient(circle at top left, rgba(255,255,255,.16), transparent 30%),
+                linear-gradient(155deg, #2b0b3b 0%, #5b136e 46%, #8b5cf6 100%);
+        }
+
+        .cd-logout-brand::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.2));
+            pointer-events: none;
+        }
+
+        .cd-logout-brand > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cd-logout-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            font-size: 1.05rem;
+        }
+
+        .cd-logout-logo img {
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .cd-logout-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 34px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.14);
+            border: 1px solid rgba(255,255,255,.14);
+            font-size: .82rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .cd-logout-brand h1 {
+            margin: 22px 0 14px;
+            font-size: clamp(2rem, 4vw, 3.35rem);
+            font-weight: 800;
+            line-height: 1.03;
+            letter-spacing: -0.045em;
+            max-width: 8ch;
+        }
+
+        .cd-logout-brand p {
+            margin: 0;
+            max-width: 28rem;
+            color: rgba(255,255,255,.86);
+            line-height: 1.75;
+        }
+
+        .cd-logout-meta {
+            display: grid;
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .cd-logout-metaItem {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.12);
+        }
+
+        .cd-logout-metaIcon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.18);
+            flex: 0 0 34px;
+        }
+
+        .cd-logout-metaItem strong,
+        .cd-logout-metaItem span {
+            display: block;
+        }
+
+        .cd-logout-metaItem strong {
+            font-size: .98rem;
+        }
+
+        .cd-logout-metaItem span {
+            color: rgba(255,255,255,.8);
+            line-height: 1.6;
+            font-size: .95rem;
+        }
+
+        .cd-logout-content {
+            display: flex;
+            align-items: center;
+            padding: clamp(30px, 5vw, 54px);
+        }
+
+        .cd-logout-contentInner {
+            width: min(100%, 520px);
+            margin: 0 auto;
+        }
+
+        .cd-logout-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .cd-logout-statusIcon {
+            width: 76px;
+            height: 76px;
+            border-radius: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            background: linear-gradient(135deg, #5b136e 0%, #7c3aed 100%);
+            box-shadow: 0 18px 40px rgba(91, 19, 110, 0.22);
+        }
+
+        .cd-logout-statusPill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 40px;
+            padding: 0 16px;
+            border-radius: 999px;
+            background: rgba(91, 19, 110, 0.08);
+            border: 1px solid rgba(91, 19, 110, 0.12);
+            color: #5b136e;
+            font-size: .84rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .cd-logout-content h2 {
+            margin: 0;
+            font-size: clamp(2rem, 3.6vw, 3.45rem);
+            line-height: 1.02;
+            letter-spacing: -0.05em;
+            color: #0f172a;
+        }
+
+        .cd-logout-content p {
+            margin: 18px 0 0;
+            font-size: 1.03rem;
+            line-height: 1.85;
+            color: #64748b;
+            max-width: 42rem;
+        }
+
+        .cd-logout-actionRow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 30px;
+        }
+
+        .cd-logout-actionRow .btn {
+            min-width: 182px;
+            min-height: 58px;
+            border-radius: 18px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 22px;
+            text-decoration: none;
+        }
+
+        .cd-logout-secondary {
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: #fff;
+            color: #0f172a;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+        }
+
+        .cd-logout-secondary:hover,
+        .cd-logout-secondary:focus {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: rgba(91, 19, 110, 0.22);
+        }
+
+        .cd-logout-note {
+            margin-top: 18px;
+            font-size: .95rem;
+            color: #94a3b8;
+        }
+
+        @@media (max-width: 991.98px) {
+            .cd-logout-card {
+                grid-template-columns: 1fr;
+            }
+
+            .cd-logout-brand h1 {
+                max-width: none;
+            }
+
+            .cd-logout-contentInner {
+                width: 100%;
+                margin: 0;
+            }
+        }
+
+        @@media (max-width: 575.98px) {
+            .cd-logout-screen {
+                padding: 14px;
+            }
+
+            .cd-logout-card {
+                border-radius: 24px;
+            }
+
+            .cd-logout-brand,
+            .cd-logout-content {
+                padding: 22px;
+            }
+
+            .cd-logout-status {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .cd-logout-actionRow .btn {
+                width: 100%;
+                min-width: 0;
+            }
+        }
+    </style>
+}
+
+<section class="cd-logout-screen">
+    <div class="cd-logout-shell">
+        <div class="cd-logout-card">
+            <aside class="cd-logout-brand" aria-label="CompeteDesk account status">
+                <div class="cd-logout-logo">
+                    <img src="~/images/cd-logo.png" alt="CompeteDesk" />
+                    <span>CompeteDesk</span>
+                </div>
+
+                <span class="cd-logout-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 12l2 2 4-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle>
+                    </svg>
+                    Session closed
+                </span>
+
+                <h1>Signed out safely.</h1>
+                <p>Your workspace is protected and your session has ended cleanly. You can jump back in whenever you are ready.</p>
+
+                <div class="cd-logout-meta">
+                    <div class="cd-logout-metaItem">
+                        <span class="cd-logout-metaIcon" aria-hidden="true">✓</span>
+                        <div>
+                            <strong>Secure exit</strong>
+                            <span>Your account has been logged out successfully.</span>
+                        </div>
+                    </div>
+                    <div class="cd-logout-metaItem">
+                        <span class="cd-logout-metaIcon" aria-hidden="true">↺</span>
+                        <div>
+                            <strong>Quick return</strong>
+                            <span>Sign back in any time to continue your strategy work.</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="cd-logout-content">
+                <div class="cd-logout-contentInner">
+                    <div class="cd-logout-status">
+                        <span class="cd-logout-statusIcon" aria-hidden="true">
+                            <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </span>
+                        <span class="cd-logout-statusPill">Signed out</span>
+                    </div>
+
+                    <h2>You have successfully logged out.</h2>
+                    <p>Your session has ended and your workspace is secure. Choose where you want to go next.</p>
+
+                    <div class="cd-logout-actionRow">
+                        <a asp-page="./Login" class="btn btn-primary cd-auth-submit">Sign in again</a>
+                        <a asp-area="" asp-controller="Home" asp-action="Index" class="btn cd-logout-secondary">Back to home</a>
+                    </div>
+
+                    <p class="cd-logout-note">Tip: use the same account to pick up your saved workspace, strategies, and dashboard activity.</p>
+                </div>
             </div>
         </div>
     </div>
