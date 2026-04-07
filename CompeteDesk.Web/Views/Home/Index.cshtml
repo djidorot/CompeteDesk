@@ -20,16 +20,8 @@
                 </p>
 
                 <div class="cd-hero__cta">
-                    @if (User?.Identity?.IsAuthenticated == true)
-                    {
-                        <a class="btn btn-primary btn-lg" asp-controller="Dashboard" asp-action="Index">Open Dashboard</a>
-                        <a class="btn btn-outline-secondary btn-lg" asp-controller="StudyPlanner" asp-action="Index">Generate Study Plan</a>
-                    }
-                    else
-                    {
-                        <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Create Account</a>
-                        <a class="btn btn-outline-secondary btn-lg" asp-area="Identity" asp-page="/Account/Login">Sign In</a>
-                    }
+                    <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Create Account</a>
+                    <a class="btn btn-outline-secondary btn-lg" asp-area="Identity" asp-page="/Account/Login">Sign In</a>
                 </div>
 
                 <div class="cd-hero__micro">

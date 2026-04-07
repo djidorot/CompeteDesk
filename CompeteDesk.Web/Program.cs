@@ -96,10 +96,23 @@ builder.Services.AddScoped<CompeteDesk.Services.Exports.ExportReportService>();
 
 // Email/SMS providers
 builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection("SendGrid"));
-builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
+var sendGridConfigured = !string.IsNullOrWhiteSpace(builder.Configuration["SendGrid:ApiKey"])
+    && !string.IsNullOrWhiteSpace(builder.Configuration["SendGrid:FromEmail"]);
+builder.Services.AddTransient<IEmailSender>(sp =>
+    sendGridConfigured
+        ? new SendGridEmailSender(
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SendGridOptions>>(),
+            sp.GetRequiredService<ILogger<SendGridEmailSender>>())
+        : new NullEmailSender(sp.GetRequiredService<ILogger<NullEmailSender>>()));
 
 builder.Services.Configure<TwilioOptions>(builder.Configuration.GetSection("Twilio"));
-builder.Services.AddTransient<TwilioSmsSender>();
+var twilioConfigured = !string.IsNullOrWhiteSpace(builder.Configuration["Twilio:AccountSid"])
+    && !string.IsNullOrWhiteSpace(builder.Configuration["Twilio:AuthToken"])
+    && !string.IsNullOrWhiteSpace(builder.Configuration["Twilio:FromPhoneNumber"]);
+if (twilioConfigured)
+{
+    builder.Services.AddTransient<TwilioSmsSender>();
+}
 
 // Identity + External Login (Google)
 builder.Services
