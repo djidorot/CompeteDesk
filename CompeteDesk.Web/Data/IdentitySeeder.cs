@@ -39,21 +39,54 @@ public static class IdentitySeeder
 
         if (hasExplicitSeedAdmin)
         {
-            var seedUser = await userManager.FindByEmailAsync(seedEmail!);
+            var normalizedSeedEmail = seedEmail!;
+            var seedUser = await userManager.FindByEmailAsync(normalizedSeedEmail)
+                ?? await userManager.FindByNameAsync(normalizedSeedEmail);
 
             if (seedUser is null)
             {
                 seedUser = new IdentityUser
                 {
-                    UserName = seedEmail,
-                    Email = seedEmail,
+                    UserName = normalizedSeedEmail,
+                    Email = normalizedSeedEmail,
                     EmailConfirmed = true
                 };
 
                 var createResult = await userManager.CreateAsync(seedUser, seedPassword!);
                 if (!createResult.Succeeded)
                 {
-                    throw new InvalidOperationException($"Unable to create configured admin seed user '{seedEmail}': {string.Join("; ", createResult.Errors.Select(e => e.Description))}");
+                    throw new InvalidOperationException($"Unable to create configured admin seed user '{normalizedSeedEmail}': {string.Join("; ", createResult.Errors.Select(e => e.Description))}");
+                }
+            }
+            else
+            {
+                var needsUpdate = false;
+
+                if (!string.Equals(seedUser.Email, normalizedSeedEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    seedUser.Email = normalizedSeedEmail;
+                    needsUpdate = true;
+                }
+
+                if (!string.Equals(seedUser.UserName, normalizedSeedEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    seedUser.UserName = normalizedSeedEmail;
+                    needsUpdate = true;
+                }
+
+                if (!seedUser.EmailConfirmed)
+                {
+                    seedUser.EmailConfirmed = true;
+                    needsUpdate = true;
+                }
+
+                if (needsUpdate)
+                {
+                    var updateResult = await userManager.UpdateAsync(seedUser);
+                    if (!updateResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Unable to update configured admin seed user '{normalizedSeedEmail}': {string.Join("; ", updateResult.Errors.Select(e => e.Description))}");
+                    }
                 }
             }
 

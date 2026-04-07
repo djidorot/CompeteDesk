@@ -83,9 +83,21 @@ public class RegisterModel : PageModel
             return Page();
         }
 
+        var normalizedEmail = NormalizeEmail(Input.Email);
+        Input.Email = normalizedEmail;
+
+        var existingUser = await _userManager.FindByEmailAsync(normalizedEmail)
+            ?? await _userManager.FindByNameAsync(normalizedEmail);
+
+        if (existingUser is not null)
+        {
+            ModelState.AddModelError(string.Empty, "An account with this email already exists. Please log in instead.");
+            return Page();
+        }
+
         var user = CreateUser();
-        await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+        await _userStore.SetUserNameAsync(user, normalizedEmail, CancellationToken.None);
+        await _emailStore.SetEmailAsync(user, normalizedEmail, CancellationToken.None);
         user.EmailConfirmed = true;
 
         var result = await _userManager.CreateAsync(user, Input.Password);
@@ -190,6 +202,11 @@ public class RegisterModel : PageModel
         });
 
         await _db.SaveChangesAsync();
+    }
+
+    private static string NormalizeEmail(string? email)
+    {
+        return (email ?? string.Empty).Trim().ToLowerInvariant();
     }
 
     private IdentityUser CreateUser()

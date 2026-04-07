@@ -87,8 +87,11 @@ public class LoginModel : PageModel
             return Page();
         }
 
-        var user = await _userManager.FindByEmailAsync(Input.Email)
-                   ?? await _userManager.FindByNameAsync(Input.Email);
+        var normalizedEmail = NormalizeEmail(Input.Email);
+        Input.Email = normalizedEmail;
+
+        var user = await _userManager.FindByEmailAsync(normalizedEmail)
+                   ?? await _userManager.FindByNameAsync(normalizedEmail);
 
         if (user is null)
         {
@@ -147,6 +150,11 @@ public class LoginModel : PageModel
 
         ModelState.AddModelError(string.Empty, "Invalid login attempt.");
         return Page();
+    }
+
+    private static string NormalizeEmail(string? email)
+    {
+        return (email ?? string.Empty).Trim().ToLowerInvariant();
     }
 
     private string NormalizeReturnUrl(string? returnUrl)
