@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Tests/CompeteDesk.Tests.csproj": {}
+    "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Tests/CompeteDesk.Tests.csproj": {}
   },
   "projects": {
-    "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Tests/CompeteDesk.Tests.csproj": {
+    "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Tests/CompeteDesk.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Tests/CompeteDesk.Tests.csproj",
+        "projectUniqueName": "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Tests/CompeteDesk.Tests.csproj",
         "projectName": "CompeteDesk.Tests",
-        "projectPath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Tests/CompeteDesk.Tests.csproj",
+        "projectPath": "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Tests/CompeteDesk.Tests.csproj",
         "packagesPath": "/Users/djidorot/.nuget/packages/",
-        "outputPath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Tests/obj/",
+        "outputPath": "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Tests/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/djidorot/.nuget/NuGet/NuGet.Config"
@@ -39,7 +39,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net9.0": {
@@ -86,7 +86,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

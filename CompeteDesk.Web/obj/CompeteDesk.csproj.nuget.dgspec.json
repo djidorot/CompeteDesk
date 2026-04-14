@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj": {}
+    "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj": {}
   },
   "projects": {
-    "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj": {
+    "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj",
+        "projectUniqueName": "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj",
         "projectName": "CompeteDesk",
-        "projectPath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj",
+        "projectPath": "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Web/CompeteDesk.csproj",
         "packagesPath": "/Users/djidorot/.nuget/packages/",
-        "outputPath": "/Users/djidorot/Downloads/CompeteDesk/CompeteDesk.Web/obj/",
+        "outputPath": "/Users/djidorot/Documents/GitHub/CompeteDesk/CompeteDesk.Web/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/djidorot/.nuget/NuGet/NuGet.Config"
@@ -39,7 +39,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net9.0": {
@@ -99,7 +99,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

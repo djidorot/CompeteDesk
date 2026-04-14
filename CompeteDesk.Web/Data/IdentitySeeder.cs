@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace CompeteDesk.Data;
 
 /// <summary>
-/// Lightweight Identity seeding for local/dev scenarios.
+/// Identity seeding with production-safe defaults.
 /// - Ensures baseline roles exist.
-/// - Assigns Admin role to an explicitly seeded local admin account OR the first registered user.
-/// - Uses AdminSeed:Email together with AdminSeed:Password for explicit seeding.
+/// - Seeds an admin only when explicit seed credentials are configured.
+/// - Skips automatic admin creation/promotion in production unless explicitly allowed.
 /// </summary>
 public static class IdentitySeeder
 {
@@ -29,87 +28,84 @@ public static class IdentitySeeder
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
         var config = services.GetRequiredService<IConfiguration>();
+        var environment = services.GetRequiredService<IWebHostEnvironment>();
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("IdentitySeeder");
 
         await EnsureBaselineRolesAsync(roleManager);
 
         var seedEmail = config["AdminSeed:Email"]?.Trim();
         var seedPassword = config["AdminSeed:Password"];
+        var allowInProduction = config.GetValue<bool>("AdminSeed:AllowInProduction");
         var hasExplicitSeedAdmin = !string.IsNullOrWhiteSpace(seedEmail)
                                    && !string.IsNullOrWhiteSpace(seedPassword);
 
-        if (hasExplicitSeedAdmin)
+        if (!hasExplicitSeedAdmin)
         {
-            var normalizedSeedEmail = seedEmail!;
-            var seedUser = await userManager.FindByEmailAsync(normalizedSeedEmail)
-                ?? await userManager.FindByNameAsync(normalizedSeedEmail);
-
-            if (seedUser is null)
-            {
-                seedUser = new IdentityUser
-                {
-                    UserName = normalizedSeedEmail,
-                    Email = normalizedSeedEmail,
-                    EmailConfirmed = true
-                };
-
-                var createResult = await userManager.CreateAsync(seedUser, seedPassword!);
-                if (!createResult.Succeeded)
-                {
-                    throw new InvalidOperationException($"Unable to create configured admin seed user '{normalizedSeedEmail}': {string.Join("; ", createResult.Errors.Select(e => e.Description))}");
-                }
-            }
-            else
-            {
-                var needsUpdate = false;
-
-                if (!string.Equals(seedUser.Email, normalizedSeedEmail, StringComparison.OrdinalIgnoreCase))
-                {
-                    seedUser.Email = normalizedSeedEmail;
-                    needsUpdate = true;
-                }
-
-                if (!string.Equals(seedUser.UserName, normalizedSeedEmail, StringComparison.OrdinalIgnoreCase))
-                {
-                    seedUser.UserName = normalizedSeedEmail;
-                    needsUpdate = true;
-                }
-
-                if (!seedUser.EmailConfirmed)
-                {
-                    seedUser.EmailConfirmed = true;
-                    needsUpdate = true;
-                }
-
-                if (needsUpdate)
-                {
-                    var updateResult = await userManager.UpdateAsync(seedUser);
-                    if (!updateResult.Succeeded)
-                    {
-                        throw new InvalidOperationException($"Unable to update configured admin seed user '{normalizedSeedEmail}': {string.Join("; ", updateResult.Errors.Select(e => e.Description))}");
-                    }
-                }
-            }
-
-            await EnsurePasswordAsync(userManager, seedUser, seedPassword!);
-            await EnsureUserInRoleAsync(userManager, seedUser, UserRoleName);
-            await EnsureUserInRoleAsync(userManager, seedUser, AdminRoleName);
+            logger.LogInformation("No explicit admin seed credentials configured. Skipping admin seeding.");
             return;
         }
 
-        var anyAdmin = await userManager.GetUsersInRoleAsync(AdminRoleName);
-        if (anyAdmin.Count > 0) return;
-
-        // Fallback: promote the first registered user to Admin.
-        var db = services.GetRequiredService<ApplicationDbContext>();
-        var firstUser = await db.Users
-            .OrderBy(u => u.Id)
-            .FirstOrDefaultAsync();
-
-        if (firstUser is not null)
+        if (!environment.IsDevelopment() && !allowInProduction)
         {
-            await EnsureUserInRoleAsync(userManager, firstUser, UserRoleName);
-            await EnsureUserInRoleAsync(userManager, firstUser, AdminRoleName);
+            logger.LogWarning(
+                "Admin seed credentials were provided, but admin seeding is disabled outside Development unless AdminSeed:AllowInProduction=true.");
+            return;
         }
+
+        var normalizedSeedEmail = seedEmail!;
+        var seedUser = await userManager.FindByEmailAsync(normalizedSeedEmail)
+            ?? await userManager.FindByNameAsync(normalizedSeedEmail);
+
+        if (seedUser is null)
+        {
+            seedUser = new IdentityUser
+            {
+                UserName = normalizedSeedEmail,
+                Email = normalizedSeedEmail,
+                EmailConfirmed = true
+            };
+
+            var createResult = await userManager.CreateAsync(seedUser, seedPassword!);
+            if (!createResult.Succeeded)
+            {
+                throw new InvalidOperationException($"Unable to create configured admin seed user '{normalizedSeedEmail}': {string.Join("; ", createResult.Errors.Select(e => e.Description))}");
+            }
+        }
+        else
+        {
+            var needsUpdate = false;
+
+            if (!string.Equals(seedUser.Email, normalizedSeedEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                seedUser.Email = normalizedSeedEmail;
+                needsUpdate = true;
+            }
+
+            if (!string.Equals(seedUser.UserName, normalizedSeedEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                seedUser.UserName = normalizedSeedEmail;
+                needsUpdate = true;
+            }
+
+            if (!seedUser.EmailConfirmed)
+            {
+                seedUser.EmailConfirmed = true;
+                needsUpdate = true;
+            }
+
+            if (needsUpdate)
+            {
+                var updateResult = await userManager.UpdateAsync(seedUser);
+                if (!updateResult.Succeeded)
+                {
+                    throw new InvalidOperationException($"Unable to update configured admin seed user '{normalizedSeedEmail}': {string.Join("; ", updateResult.Errors.Select(e => e.Description))}");
+                }
+            }
+        }
+
+        await EnsurePasswordAsync(userManager, seedUser, seedPassword!);
+        await EnsureUserInRoleAsync(userManager, seedUser, UserRoleName);
+        await EnsureUserInRoleAsync(userManager, seedUser, AdminRoleName);
     }
 
     public static async Task EnsureUserHasDefaultRoleAsync(IServiceProvider services, IdentityUser user)
@@ -136,7 +132,6 @@ public static class IdentitySeeder
         }
         catch (FormatException)
         {
-            // Corrupted legacy password hash in the DB. Reset it below.
             hasPassword = true;
         }
 

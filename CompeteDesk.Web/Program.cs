@@ -3,6 +3,7 @@ using CompeteDesk.Extensions;
 using CompeteDesk.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 if (OperatingSystem.IsLinux() && !string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
 {
@@ -19,10 +20,20 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var services = scope.ServiceProvider;
+    var db = services.GetRequiredService<ApplicationDbContext>();
+    var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+    var enableLegacyBootstrapper = builder.Configuration.GetValue<bool>("Database:EnableLegacyBootstrapper");
+
     await db.Database.MigrateAsync();
-    await DbBootstrapper.EnsureCoreTablesAsync(db);
-    await IdentitySeeder.EnsureAdminAsync(scope.ServiceProvider);
+
+    if (enableLegacyBootstrapper)
+    {
+        logger.LogWarning("Legacy database bootstrapper is enabled. This should only be used to patch older local databases during development or controlled maintenance windows.");
+        await DbBootstrapper.EnsureCoreTablesAsync(db);
+    }
+
+    await IdentitySeeder.EnsureAdminAsync(services);
 }
 
 if (app.Environment.IsDevelopment())
