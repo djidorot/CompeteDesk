@@ -24,7 +24,7 @@ using (var scope = app.Services.CreateScope())
     var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
     var db = services.GetRequiredService<ApplicationDbContext>();
 
-    var hasMigrations = (await db.Database.GetMigrationsAsync()).Any();
+    var hasMigrations = db.Database.GetMigrations().Any();
 
     if (hasMigrations)
     {
