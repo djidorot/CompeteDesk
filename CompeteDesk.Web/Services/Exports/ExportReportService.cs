@@ -39,7 +39,7 @@ public sealed class ExportReportService
     private IQueryable<Habit> HabitsScope(string userId)
     {
         var accessibleWorkspaceIds = AccessibleWorkspaceIds(userId);
-        return _db.Habits.AsNoTracking().Where(h => h.OwnerId == userId || (h.WorkspaceId != null && h.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(h.WorkspaceId.Value)));
+        return _db.Habits.AsNoTracking().Where(h => h.OwnerId == userId || (h.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(h.WorkspaceId)));
     }
 
     public async Task<byte[]> ExportCompetencySummaryPdfAsync(string ownerId, int? workspaceId, CancellationToken ct)
@@ -132,7 +132,7 @@ public sealed class ExportReportService
         // Also, label/unit come from the Definition navigation.
         var metrics = await _db.KeyMetricEntries.AsNoTracking()
             .Include(m => m.Definition)
-            .Where(m => m.OwnerId == ownerId && m.DateUtc >= from && (!workspaceId.HasValue || m.WorkspaceId == workspaceId))
+            .Where(m => m.OwnerId == ownerId && m.DateUtc >= from)
             .OrderByDescending(m => m.DateUtc)
             .Take(10)
             .ToListAsync(ct);

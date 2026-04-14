@@ -89,11 +89,11 @@ public sealed class MetricsController : Controller
         var accessibleWorkspaceIds = _workspaceAccess.AccessibleWorkspaceIds(userId);
         var strategiesScope = _db.Strategies.AsNoTracking().Where(s => s.OwnerId == userId || (s.WorkspaceId != null && accessibleWorkspaceIds.Contains(s.WorkspaceId.Value)));
         var actionsScope = _db.ActionItems.AsNoTracking().Where(a => a.OwnerId == userId || (a.WorkspaceId != null && accessibleWorkspaceIds.Contains(a.WorkspaceId.Value)));
-        var habitsScope = _db.Habits.AsNoTracking().Where(h => h.OwnerId == userId || (h.WorkspaceId != null && h.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(h.WorkspaceId.Value)));
+        var habitsScope = _db.Habits.AsNoTracking().Where(h => h.OwnerId == userId || (h.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(h.WorkspaceId)));
         var intelScope = _db.WarIntel.AsNoTracking().Where(i => i.OwnerId == userId || (i.WorkspaceId != null && accessibleWorkspaceIds.Contains(i.WorkspaceId.Value)));
         var plansScope = _db.WarPlans.AsNoTracking().Where(p => p.OwnerId == userId || (p.WorkspaceId != null && accessibleWorkspaceIds.Contains(p.WorkspaceId.Value)));
         var webReportsScope = _db.WebsiteAnalysisReports.AsNoTracking().Where(r => r.OwnerId == userId || (r.WorkspaceId != null && accessibleWorkspaceIds.Contains(r.WorkspaceId.Value)));
-        var bizReportsScope = _db.BusinessAnalysisReports.AsNoTracking().Where(r => r.OwnerId == userId || (r.WorkspaceId != null && r.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(r.WorkspaceId.Value)));
+        var bizReportsScope = _db.BusinessAnalysisReports.AsNoTracking().Where(r => r.OwnerId == userId || (r.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(r.WorkspaceId)));
         var aiTracesScope = _db.DecisionTraces.AsNoTracking().Where(t => t.OwnerId == userId || (t.WorkspaceId != null && accessibleWorkspaceIds.Contains(t.WorkspaceId.Value)));
 
         // -------------------------
