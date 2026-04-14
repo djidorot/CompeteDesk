@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace CompeteDesk.Extensions;
 
@@ -30,7 +31,8 @@ public static class ServiceCollectionExtensions
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options
-                .UseSqlite(normalizedConnectionString));
+                .UseSqlite(normalizedConnectionString)
+                .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
         services.AddHttpContextAccessor();
         services.AddDatabaseDeveloperPageExceptionFilter();
