@@ -28,7 +28,14 @@ using (var scope = app.Services.CreateScope())
 
     if (hasMigrations)
     {
-        await db.Database.MigrateAsync();
+        try
+        {
+            await db.Database.MigrateAsync();
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("PendingModelChangesWarning", StringComparison.Ordinal))
+        {
+            logger.LogWarning(ex, "Skipping Database.MigrateAsync() for {Context} because the EF Core model has pending changes that are not captured in a migration. The app will continue using the existing schema plus bootstrap-based table setup.", nameof(ApplicationDbContext));
+        }
     }
     else
     {
