@@ -2,6 +2,7 @@ using CompeteDesk.Data;
 using CompeteDesk.Extensions;
 using CompeteDesk.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -25,8 +26,14 @@ using (var scope = app.Services.CreateScope())
     var db = services.GetRequiredService<ApplicationDbContext>();
 
     var hasMigrations = db.Database.GetMigrations().Any();
+    var useLegacyBootstrapper = builder.Configuration.GetValue<bool>("Database:EnableLegacyBootstrapper");
 
-    if (hasMigrations)
+    if (useLegacyBootstrapper)
+    {
+        logger.LogInformation("Legacy SQLite bootstrapper is enabled. Ensuring Identity schema and legacy app tables without replaying the full EF migration history.");
+        await IdentitySchemaBootstrapper.EnsureIdentityTablesAsync(db);
+    }
+    else if (hasMigrations)
     {
         try
         {
@@ -36,10 +43,16 @@ using (var scope = app.Services.CreateScope())
         {
             logger.LogWarning(ex, "Skipping Database.MigrateAsync() for {Context} because the EF Core model has pending changes that are not captured in a migration. The app will continue using the existing schema plus bootstrap-based table setup.", nameof(ApplicationDbContext));
         }
+        catch (SqliteException ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogWarning(ex, "Skipping Database.MigrateAsync() for {Context} because the current SQLite database already contains legacy tables created outside EF migrations. Falling back to the legacy bootstrapper path.", nameof(ApplicationDbContext));
+            await IdentitySchemaBootstrapper.EnsureIdentityTablesAsync(db);
+        }
     }
     else
     {
         logger.LogWarning("No EF Core migrations were found for {Context}. Skipping Database.MigrateAsync() and using bootstrap-based schema setup.", nameof(ApplicationDbContext));
+        await IdentitySchemaBootstrapper.EnsureIdentityTablesAsync(db);
     }
 
     await DbBootstrapper.EnsureCoreTablesAsync(db);
