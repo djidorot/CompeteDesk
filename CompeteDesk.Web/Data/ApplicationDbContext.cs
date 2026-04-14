@@ -97,6 +97,11 @@ public class ApplicationDbContext : IdentityDbContext
         builder.Entity<StudyPlan>().HasQueryFilter(x => !x.IsDeleted);
         builder.Entity<StudyPlanItem>().HasQueryFilter(x => !x.IsDeleted);
 
+        // Matching filters for dependents prevent EF warnings when the principal is soft-deleted.
+        builder.Entity<StrategyComment>().HasQueryFilter(x => x.Strategy != null && !x.Strategy.IsDeleted);
+        builder.Entity<WorkspaceInvite>().HasQueryFilter(x => x.Workspace != null && !x.Workspace.IsDeleted);
+        builder.Entity<WorkspaceMember>().HasQueryFilter(x => x.Workspace != null && !x.Workspace.IsDeleted);
+
         builder.Entity<Workspace>(b =>
         {
             b.Property(x => x.Name).IsRequired().HasMaxLength(120);

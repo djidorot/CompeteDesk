@@ -21,18 +21,21 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var db = services.GetRequiredService<ApplicationDbContext>();
     var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
-    var enableLegacyBootstrapper = builder.Configuration.GetValue<bool>("Database:EnableLegacyBootstrapper");
+    var db = services.GetRequiredService<ApplicationDbContext>();
 
-    await db.Database.MigrateAsync();
+    var hasMigrations = (await db.Database.GetMigrationsAsync()).Any();
 
-    if (enableLegacyBootstrapper)
+    if (hasMigrations)
     {
-        logger.LogWarning("Legacy database bootstrapper is enabled. This should only be used to patch older local databases during development or controlled maintenance windows.");
-        await DbBootstrapper.EnsureCoreTablesAsync(db);
+        await db.Database.MigrateAsync();
+    }
+    else
+    {
+        logger.LogWarning("No EF Core migrations were found for {Context}. Skipping Database.MigrateAsync() and using bootstrap-based schema setup.", nameof(ApplicationDbContext));
     }
 
+    await DbBootstrapper.EnsureCoreTablesAsync(db);
     await IdentitySeeder.EnsureAdminAsync(services);
 }
 
