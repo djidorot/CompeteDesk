@@ -38,6 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddControllersWithViews();
         services.AddRazorPages();
         services.AddScoped<CompeteDesk.Services.ActiveWorkspaceService>();
+        services.AddScoped<CompeteDesk.Services.WorkspaceAccessService>();
         services.AddScoped<FeaturePermissionService>();
         services.AddScoped<InAppNotificationService>();
 

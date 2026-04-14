@@ -1,3 +1,5 @@
+using CompeteDesk.Models;
+using CompeteDesk.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,34 +13,57 @@ namespace CompeteDesk.Services.Exports;
 public sealed class ExportReportService
 {
     private readonly ApplicationDbContext _db;
+    private readonly WorkspaceAccessService _workspaceAccess;
 
-    public ExportReportService(ApplicationDbContext db)
+    public ExportReportService(ApplicationDbContext db, WorkspaceAccessService workspaceAccess)
     {
         _db = db;
+        _workspaceAccess = workspaceAccess;
+    }
+
+    private IQueryable<int> AccessibleWorkspaceIds(string userId)
+        => _workspaceAccess.AccessibleWorkspaceIds(userId);
+
+    private IQueryable<Strategy> StrategiesScope(string userId)
+    {
+        var accessibleWorkspaceIds = AccessibleWorkspaceIds(userId);
+        return _db.Strategies.AsNoTracking().Where(s => s.OwnerId == userId || (s.WorkspaceId != null && accessibleWorkspaceIds.Contains(s.WorkspaceId.Value)));
+    }
+
+    private IQueryable<ActionItem> ActionsScope(string userId)
+    {
+        var accessibleWorkspaceIds = AccessibleWorkspaceIds(userId);
+        return _db.Actions.AsNoTracking().Where(a => a.OwnerId == userId || (a.WorkspaceId != null && accessibleWorkspaceIds.Contains(a.WorkspaceId.Value)));
+    }
+
+    private IQueryable<Habit> HabitsScope(string userId)
+    {
+        var accessibleWorkspaceIds = AccessibleWorkspaceIds(userId);
+        return _db.Habits.AsNoTracking().Where(h => h.OwnerId == userId || (h.WorkspaceId != null && h.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(h.WorkspaceId.Value)));
     }
 
     public async Task<byte[]> ExportCompetencySummaryPdfAsync(string ownerId, int? workspaceId, CancellationToken ct)
     {
         // In CompeteDesk, "competency" maps best to a Workspace execution summary.
         var ws = workspaceId.HasValue
-            ? await _db.Workspaces.AsNoTracking().FirstOrDefaultAsync(x => x.Id == workspaceId && x.OwnerId == ownerId, ct)
+            ? await _workspaceAccess.GetAccessibleWorkspaceAsync(ownerId, workspaceId.Value, ct)
             : null;
 
         var title = ws == null ? "CompeteDesk Summary" : $"Workspace Summary: {ws.Name}";
 
-        var strategies = await _db.Strategies.AsNoTracking()
-            .Where(s => s.OwnerId == ownerId && (!workspaceId.HasValue || s.WorkspaceId == workspaceId))
+        var strategies = await StrategiesScope(ownerId)
+            .Where(s => !workspaceId.HasValue || s.WorkspaceId == workspaceId)
             .OrderByDescending(s => s.Priority)
             .ThenBy(s => s.Name)
             .Take(15)
             .ToListAsync(ct);
 
-        var actions = await _db.Actions.AsNoTracking()
-            .Where(a => a.OwnerId == ownerId && (!workspaceId.HasValue || a.WorkspaceId == workspaceId))
+        var actions = await ActionsScope(ownerId)
+            .Where(a => !workspaceId.HasValue || a.WorkspaceId == workspaceId)
             .ToListAsync(ct);
 
-        var habits = await _db.Habits.AsNoTracking()
-            .Where(h => h.OwnerId == ownerId && h.IsActive && (!workspaceId.HasValue || h.WorkspaceId == workspaceId))
+        var habits = await HabitsScope(ownerId)
+            .Where(h => h.IsActive && (!workspaceId.HasValue || h.WorkspaceId == workspaceId))
             .OrderBy(h => h.Title)
             .Take(15)
             .ToListAsync(ct);
@@ -83,21 +108,21 @@ public sealed class ExportReportService
         var from = now.Date.AddDays(-30);
 
         var ws = workspaceId.HasValue
-            ? await _db.Workspaces.AsNoTracking().FirstOrDefaultAsync(x => x.Id == workspaceId && x.OwnerId == ownerId, ct)
+            ? await _workspaceAccess.GetAccessibleWorkspaceAsync(ownerId, workspaceId.Value, ct)
             : null;
 
         var title = ws == null ? "Progress Report (Last 30 Days)" : $"Progress Report: {ws.Name} (Last 30 Days)";
 
-        var actionTotal = await _db.Actions.AsNoTracking()
-            .Where(a => a.OwnerId == ownerId && (!workspaceId.HasValue || a.WorkspaceId == workspaceId))
+        var actionTotal = await ActionsScope(ownerId)
+            .Where(a => !workspaceId.HasValue || a.WorkspaceId == workspaceId)
             .CountAsync(ct);
 
-        var actionDone = await _db.Actions.AsNoTracking()
-            .Where(a => a.OwnerId == ownerId && a.Status == "Completed" && (!workspaceId.HasValue || a.WorkspaceId == workspaceId))
+        var actionDone = await ActionsScope(ownerId)
+            .Where(a => a.Status == "Completed" && (!workspaceId.HasValue || a.WorkspaceId == workspaceId))
             .CountAsync(ct);
 
         var checkins = await _db.HabitCheckins.AsNoTracking()
-            .Where(c => c.OwnerId == ownerId && c.OccurredOnUtc >= from)
+            .Where(c => c.OccurredOnUtc >= from && (!workspaceId.HasValue || _db.Habits.Any(h => h.Id == c.HabitId && h.WorkspaceId == workspaceId)))
             .ToListAsync(ct);
 
         var checkinDays = checkins.Select(c => c.OccurredOnUtc.Date).Distinct().Count();
@@ -107,7 +132,7 @@ public sealed class ExportReportService
         // Also, label/unit come from the Definition navigation.
         var metrics = await _db.KeyMetricEntries.AsNoTracking()
             .Include(m => m.Definition)
-            .Where(m => m.OwnerId == ownerId && m.DateUtc >= from)
+            .Where(m => m.OwnerId == ownerId && m.DateUtc >= from && (!workspaceId.HasValue || m.WorkspaceId == workspaceId))
             .OrderByDescending(m => m.DateUtc)
             .Take(10)
             .ToListAsync(ct);
@@ -143,8 +168,8 @@ public sealed class ExportReportService
 
     public async Task<byte[]> ExportStrategiesPdfAsync(string ownerId, int? workspaceId, CancellationToken ct)
     {
-        var strategies = await _db.Strategies.AsNoTracking()
-            .Where(s => s.OwnerId == ownerId && (!workspaceId.HasValue || s.WorkspaceId == workspaceId))
+        var strategies = await StrategiesScope(ownerId)
+            .Where(s => !workspaceId.HasValue || s.WorkspaceId == workspaceId)
             .OrderByDescending(s => s.Priority)
             .ThenBy(s => s.Name)
             .ToListAsync(ct);
@@ -163,8 +188,8 @@ public sealed class ExportReportService
 
     public async Task<byte[]> ExportStrategiesCsvAsync(string ownerId, int? workspaceId, CancellationToken ct)
     {
-        var rows = await _db.Strategies.AsNoTracking()
-            .Where(s => s.OwnerId == ownerId && (!workspaceId.HasValue || s.WorkspaceId == workspaceId))
+        var rows = await StrategiesScope(ownerId)
+            .Where(s => !workspaceId.HasValue || s.WorkspaceId == workspaceId)
             .OrderByDescending(s => s.Priority)
             .ThenBy(s => s.Name)
             .Select(s => new
@@ -204,8 +229,8 @@ public sealed class ExportReportService
     public async Task<byte[]> ExportMonthlySummaryPdfAsync(string ownerId, int? workspaceId, CancellationToken ct)
     {
         var from = DateTime.UtcNow.Date.AddDays(-30);
-        var strategies = await _db.Strategies.AsNoTracking()
-            .Where(s => s.OwnerId == ownerId && (!workspaceId.HasValue || s.WorkspaceId == workspaceId))
+        var strategies = await StrategiesScope(ownerId)
+            .Where(s => !workspaceId.HasValue || s.WorkspaceId == workspaceId)
             .ToListAsync(ct);
 
         var created = strategies.Count(s => s.CreatedAtUtc >= from);

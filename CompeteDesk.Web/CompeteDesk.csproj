@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefaultItemExcludes>$(DefaultItemExcludes);CompeteDesk.Data/**;CompeteDesk.Domain/**;**/bin/**;**/obj/**;App_Data/**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);CompeteDesk.Data/**;CompeteDesk.Domain/**;**/bin/**;**/obj/**;App_Data/**;app.db</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

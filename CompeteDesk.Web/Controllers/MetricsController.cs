@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CompeteDesk.Data;
 using CompeteDesk.Models;
+using CompeteDesk.Services;
 using CompeteDesk.ViewModels.Metrics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,11 +20,13 @@ public sealed class MetricsController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly WorkspaceAccessService _workspaceAccess;
 
-    public MetricsController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
+    public MetricsController(ApplicationDbContext db, UserManager<IdentityUser> userManager, WorkspaceAccessService workspaceAccess)
     {
         _db = db;
         _userManager = userManager;
+        _workspaceAccess = workspaceAccess;
     }
 
     // GET: /Metrics
@@ -83,6 +86,16 @@ public sealed class MetricsController : Controller
         var priorStartUtc = startUtc - window;
         var priorEndUtc = startUtc;
 
+        var accessibleWorkspaceIds = _workspaceAccess.AccessibleWorkspaceIds(userId);
+        var strategiesScope = _db.Strategies.AsNoTracking().Where(s => s.OwnerId == userId || (s.WorkspaceId != null && accessibleWorkspaceIds.Contains(s.WorkspaceId.Value)));
+        var actionsScope = _db.ActionItems.AsNoTracking().Where(a => a.OwnerId == userId || (a.WorkspaceId != null && accessibleWorkspaceIds.Contains(a.WorkspaceId.Value)));
+        var habitsScope = _db.Habits.AsNoTracking().Where(h => h.OwnerId == userId || (h.WorkspaceId != null && h.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(h.WorkspaceId.Value)));
+        var intelScope = _db.WarIntel.AsNoTracking().Where(i => i.OwnerId == userId || (i.WorkspaceId != null && accessibleWorkspaceIds.Contains(i.WorkspaceId.Value)));
+        var plansScope = _db.WarPlans.AsNoTracking().Where(p => p.OwnerId == userId || (p.WorkspaceId != null && accessibleWorkspaceIds.Contains(p.WorkspaceId.Value)));
+        var webReportsScope = _db.WebsiteAnalysisReports.AsNoTracking().Where(r => r.OwnerId == userId || (r.WorkspaceId != null && accessibleWorkspaceIds.Contains(r.WorkspaceId.Value)));
+        var bizReportsScope = _db.BusinessAnalysisReports.AsNoTracking().Where(r => r.OwnerId == userId || (r.WorkspaceId != null && r.WorkspaceId > 0 && accessibleWorkspaceIds.Contains(r.WorkspaceId.Value)));
+        var aiTracesScope = _db.DecisionTraces.AsNoTracking().Where(t => t.OwnerId == userId || (t.WorkspaceId != null && accessibleWorkspaceIds.Contains(t.WorkspaceId.Value)));
+
         // -------------------------
         // Metrics & Momentum (Key Metrics)
         // -------------------------
@@ -97,16 +110,16 @@ public sealed class MetricsController : Controller
         // Totals (match Dashboard "Overview" concepts)
         // -------------------------
         var totalWorkspaces = await _db.Workspaces.AsNoTracking().CountAsync(w => w.OwnerId == userId, ct);
-        var totalStrategies = await _db.Strategies.AsNoTracking().CountAsync(s => s.OwnerId == userId, ct);
-        var totalActions = await _db.ActionItems.AsNoTracking().CountAsync(a => a.OwnerId == userId, ct);
-        var totalActionsDone = await _db.ActionItems.AsNoTracking().CountAsync(a => a.OwnerId == userId && a.Status == "Done", ct);
-        var totalActionsOpen = await _db.ActionItems.AsNoTracking().CountAsync(a => a.OwnerId == userId && a.Status != "Done" && a.Status != "Archived", ct);
-        var totalHabits = await _db.Habits.AsNoTracking().CountAsync(h => h.OwnerId == userId, ct);
-        var totalWarIntel = await _db.WarIntel.AsNoTracking().CountAsync(i => i.OwnerId == userId, ct);
-        var totalWarPlans = await _db.WarPlans.AsNoTracking().CountAsync(p => p.OwnerId == userId, ct);
-        var totalWebReports = await _db.WebsiteAnalysisReports.AsNoTracking().CountAsync(r => r.OwnerId == userId, ct);
-        var totalBizReports = await _db.BusinessAnalysisReports.AsNoTracking().CountAsync(r => r.OwnerId == userId, ct);
-        var totalAiTraces = await _db.DecisionTraces.AsNoTracking().CountAsync(t => t.OwnerId == userId, ct);
+        var totalStrategies = await strategiesScope.CountAsync(ct);
+        var totalActions = await actionsScope.CountAsync(ct);
+        var totalActionsDone = await actionsScope.CountAsync(a => a.Status == "Done", ct);
+        var totalActionsOpen = await actionsScope.CountAsync(a => a.Status != "Done" && a.Status != "Archived", ct);
+        var totalHabits = await habitsScope.CountAsync(ct);
+        var totalWarIntel = await intelScope.CountAsync(ct);
+        var totalWarPlans = await plansScope.CountAsync(ct);
+        var totalWebReports = await webReportsScope.CountAsync(ct);
+        var totalBizReports = await bizReportsScope.CountAsync(ct);
+        var totalAiTraces = await aiTracesScope.CountAsync(ct);
 
         // -------------------------
         // New items in selected range vs prior
@@ -117,26 +130,26 @@ public sealed class MetricsController : Controller
         var priorWorkspaces = await _db.Workspaces.AsNoTracking()
             .CountAsync(w => w.OwnerId == userId && w.CreatedAtUtc >= priorStartUtc && w.CreatedAtUtc < priorEndUtc, ct);
 
-        var newStrategies = await _db.Strategies.AsNoTracking()
-            .CountAsync(s => s.OwnerId == userId && s.CreatedAtUtc >= startUtc && s.CreatedAtUtc < endUtc, ct);
-        var priorStrategies = await _db.Strategies.AsNoTracking()
-            .CountAsync(s => s.OwnerId == userId && s.CreatedAtUtc >= priorStartUtc && s.CreatedAtUtc < priorEndUtc, ct);
+        var newStrategies = await strategiesScope
+            .CountAsync(s => s.CreatedAtUtc >= startUtc && s.CreatedAtUtc < endUtc, ct);
+        var priorStrategies = await strategiesScope
+            .CountAsync(s => s.CreatedAtUtc >= priorStartUtc && s.CreatedAtUtc < priorEndUtc, ct);
 
-        var newActions = await _db.ActionItems.AsNoTracking()
-            .CountAsync(a => a.OwnerId == userId && a.CreatedAtUtc >= startUtc && a.CreatedAtUtc < endUtc, ct);
-        var priorActions = await _db.ActionItems.AsNoTracking()
-            .CountAsync(a => a.OwnerId == userId && a.CreatedAtUtc >= priorStartUtc && a.CreatedAtUtc < priorEndUtc, ct);
+        var newActions = await actionsScope
+            .CountAsync(a => a.CreatedAtUtc >= startUtc && a.CreatedAtUtc < endUtc, ct);
+        var priorActions = await actionsScope
+            .CountAsync(a => a.CreatedAtUtc >= priorStartUtc && a.CreatedAtUtc < priorEndUtc, ct);
 
         // Completion in selected range (based on items created in-range)
-        var newActionsDone = await _db.ActionItems.AsNoTracking()
-            .CountAsync(a => a.OwnerId == userId && a.CreatedAtUtc >= startUtc && a.CreatedAtUtc < endUtc && a.Status == "Done", ct);
-        var priorActionsDone = await _db.ActionItems.AsNoTracking()
-            .CountAsync(a => a.OwnerId == userId && a.CreatedAtUtc >= priorStartUtc && a.CreatedAtUtc < priorEndUtc && a.Status == "Done", ct);
+        var newActionsDone = await actionsScope
+            .CountAsync(a => a.CreatedAtUtc >= startUtc && a.CreatedAtUtc < endUtc && a.Status == "Done", ct);
+        var priorActionsDone = await actionsScope
+            .CountAsync(a => a.CreatedAtUtc >= priorStartUtc && a.CreatedAtUtc < priorEndUtc && a.Status == "Done", ct);
 
-        var newAiTraces = await _db.DecisionTraces.AsNoTracking()
-            .CountAsync(t => t.OwnerId == userId && t.CreatedAtUtc >= startUtc && t.CreatedAtUtc < endUtc, ct);
-        var priorAiTraces = await _db.DecisionTraces.AsNoTracking()
-            .CountAsync(t => t.OwnerId == userId && t.CreatedAtUtc >= priorStartUtc && t.CreatedAtUtc < priorEndUtc, ct);
+        var newAiTraces = await aiTracesScope
+            .CountAsync(t => t.CreatedAtUtc >= startUtc && t.CreatedAtUtc < endUtc, ct);
+        var priorAiTraces = await aiTracesScope
+            .CountAsync(t => t.CreatedAtUtc >= priorStartUtc && t.CreatedAtUtc < priorEndUtc, ct);
 
         // -------------------------
         // Buckets for charts
@@ -161,43 +174,43 @@ public sealed class MetricsController : Controller
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
-        var stratCreated = await _db.Strategies.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
+        var stratCreated = await strategiesScope
+            .Where(x => x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
-        var actionCreated = await _db.ActionItems.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
+        var actionCreated = await actionsScope
+            .Where(x => x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
-        var habitCreated = await _db.Habits.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
+        var habitCreated = await habitsScope
+            .Where(x => x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
-        var intelCreated = await _db.WarIntel.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
+        var intelCreated = await intelScope
+            .Where(x => x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
-        var planCreated = await _db.WarPlans.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
+        var planCreated = await plansScope
+            .Where(x => x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
-        var webRepCreated = await _db.WebsiteAnalysisReports.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
+        var webRepCreated = await webReportsScope
+            .Where(x => x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
-        var bizRepCreated = await _db.BusinessAnalysisReports.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
+        var bizRepCreated = await bizReportsScope
+            .Where(x => x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 
-        var aiCreated = await _db.DecisionTraces.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
+        var aiCreated = await aiTracesScope
+            .Where(x => x.CreatedAtUtc >= startUtc && x.CreatedAtUtc < endUtc)
             .Select(x => x.CreatedAtUtc)
             .ToListAsync(ct);
 

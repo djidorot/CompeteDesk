@@ -31,8 +31,9 @@ public class StrategiesController : Controller
     private readonly IMemoryCache _cache;
     private readonly ActiveWorkspaceService _activeWs;
     private readonly InAppNotificationService _notifications;
+    private readonly WorkspaceAccessService _workspaceAccess;
 
-    public StrategiesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, OpenAiChatClient openAi, IMemoryCache cache, ActiveWorkspaceService activeWs, InAppNotificationService notifications)
+    public StrategiesController(ApplicationDbContext db, UserManager<IdentityUser> userManager, OpenAiChatClient openAi, IMemoryCache cache, ActiveWorkspaceService activeWs, InAppNotificationService notifications, WorkspaceAccessService workspaceAccess)
     {
         _db = db;
         _userManager = userManager;
@@ -40,6 +41,7 @@ public class StrategiesController : Controller
         _cache = cache;
         _activeWs = activeWs;
         _notifications = notifications;
+        _workspaceAccess = workspaceAccess;
     }
 
     private async Task<string> GetUserIdAsync()
@@ -58,17 +60,17 @@ public class StrategiesController : Controller
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
+        var accessibleWorkspaceIds = _workspaceAccess.AccessibleWorkspaceIds(userId);
+
         var query = _db.Strategies
             .AsNoTracking()
-            .Where(x => x.OwnerId == userId);
+            .Where(x => x.OwnerId == userId || (x.WorkspaceId != null && accessibleWorkspaceIds.Contains(x.WorkspaceId.Value)));
 
         // Workspaces for filter dropdown
         var workspaces = await _cache.GetOrCreateAsync($"ws:list:{userId}", async entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(45);
-            return await _db.Workspaces
-                .AsNoTracking()
-                .Where(w => w.OwnerId == userId)
+            return await _workspaceAccess.AccessibleWorkspaces(userId)
                 .OrderBy(w => w.Name)
                 .Select(w => new { w.Id, w.Name })
                 .ToListAsync(ct);
@@ -146,13 +148,13 @@ public class StrategiesController : Controller
         var item = await _db.Strategies
             .AsNoTracking()
             .Include(x => x.Workspace)
-            .FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId);
+            .FirstOrDefaultAsync(x => x.Id == id && (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))));
 
         if (item == null) return NotFound();
 
         // Active strategy count in the same workspace (or across all, if none)
         var activeCountQuery = _db.Strategies.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.Status == "Active");
+            .Where(x => (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))) && x.Status == "Active");
 
         if (item.WorkspaceId != null)
         {
@@ -163,7 +165,7 @@ public class StrategiesController : Controller
 
         var comments = await _db.StrategyComments
             .AsNoTracking()
-            .Where(c => c.StrategyId == item.Id && c.OwnerId == userId)
+            .Where(c => c.StrategyId == item.Id)
             .OrderByDescending(c => c.CreatedAtUtc)
             .Take(20)
             .Select(c => new StrategyCommentItem
@@ -179,7 +181,7 @@ public class StrategiesController : Controller
         // - Completeness (0..40)
         // - Execution via action completion (0..60)
         var actionsQuery = _db.Actions.AsNoTracking()
-            .Where(a => a.OwnerId == userId && a.StrategyId == item.Id && a.Status != "Archived");
+            .Where(a => a.StrategyId == item.Id && a.Status != "Archived");
 
         var totalActions = await actionsQuery.CountAsync();
         var doneActions = await actionsQuery.CountAsync(a => a.Status == "Done");
@@ -243,7 +245,7 @@ public class StrategiesController : Controller
             model.WorkspaceId = activeWorkspaceId.Value;
 
         // If user has 0 strategies, gently suggest seeding.
-        ViewBag.HasAny = await _db.Strategies.AnyAsync(x => x.OwnerId == userId);
+        ViewBag.HasAny = await _db.Strategies.AnyAsync(x => x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value)));
 
         return View(model);
     }
@@ -283,6 +285,11 @@ public class StrategiesController : Controller
         model.SourceBook = string.IsNullOrWhiteSpace(model.SourceBook) ? null : model.SourceBook;
         model.StrategyType = string.IsNullOrWhiteSpace(model.StrategyType) ? "Growth" : model.StrategyType;
 
+        if (model.WorkspaceId.HasValue && model.WorkspaceId.Value > 0 && !await _workspaceAccess.CanAccessWorkspaceAsync(userId, model.WorkspaceId.Value))
+        {
+            ModelState.AddModelError(nameof(Strategy.WorkspaceId), "You do not have access to the selected workspace.");
+        }
+
         if (!ModelState.IsValid) return View(model);
 
         _db.Strategies.Add(model);
@@ -303,7 +310,7 @@ public class StrategiesController : Controller
         ViewData["UseSidebar"] = true;
 
         var userId = await GetUserIdAsync();
-        var item = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId);
+        var item = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))));
         return item == null ? NotFound() : View(item);
     }
 
@@ -322,11 +329,16 @@ public class StrategiesController : Controller
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
-        var item = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId);
+        var item = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))));
         if (item == null) return NotFound();
 
         // OwnerId is not part of the edit form. Ensure it doesn't block validation.
         ModelState.Remove(nameof(Strategy.OwnerId));
+
+        if (model.WorkspaceId.HasValue && model.WorkspaceId.Value > 0 && !await _workspaceAccess.CanAccessWorkspaceAsync(userId, model.WorkspaceId.Value))
+        {
+            ModelState.AddModelError(nameof(Strategy.WorkspaceId), "You do not have access to the selected workspace.");
+        }
 
         if (!ModelState.IsValid) return View(model);
 
@@ -364,7 +376,7 @@ public class StrategiesController : Controller
 
         var userId = await GetUserIdAsync();
         var item = await _db.Strategies.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId);
+            .FirstOrDefaultAsync(x => x.Id == id && (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))));
 
         return item == null ? NotFound() : View(item);
     }
@@ -378,7 +390,7 @@ public class StrategiesController : Controller
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
-        var item = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId);
+        var item = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))));
         if (item == null) return NotFound();
 
         _db.Strategies.Remove(item);
@@ -398,7 +410,7 @@ public class StrategiesController : Controller
 
         var strategy = await _db.Strategies
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId, ct);
+            .FirstOrDefaultAsync(x => x.Id == id && (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))), ct);
 
         if (strategy == null) return NotFound();
 
@@ -435,7 +447,7 @@ public class StrategiesController : Controller
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
-        var any = await _db.Strategies.AnyAsync(x => x.OwnerId == userId);
+        var any = await _db.Strategies.AnyAsync(x => x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value)));
         if (any) return RedirectToAction(nameof(Index));
 
         var now = DateTime.UtcNow;
@@ -514,7 +526,7 @@ public class StrategiesController : Controller
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
-        var strategy = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId, ct);
+        var strategy = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))), ct);
         if (strategy == null) return NotFound();
 
         // Minimal baseline if OpenAI isn't configured.
@@ -548,26 +560,26 @@ public class StrategiesController : Controller
         }
 
         var workspace = strategy.WorkspaceId != null
-            ? await _db.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.Id == strategy.WorkspaceId && w.OwnerId == userId, ct)
+            ? await _workspaceAccess.GetAccessibleWorkspaceAsync(userId, strategy.WorkspaceId.Value, ct)
             : null;
 
         // Pull a small amount of context to keep the prompt grounded and cheap.
         var recentIntel = await _db.WarIntel.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.WorkspaceId == strategy.WorkspaceId)
+            .Where(x => x.WorkspaceId == strategy.WorkspaceId)
             .OrderByDescending(x => x.ObservedAtUtc ?? x.CreatedAtUtc)
             .Select(x => new { x.Title, x.Subject, x.Signal, x.Confidence, x.Tags })
             .Take(6)
             .ToListAsync(ct);
 
         var activePlans = await _db.WarPlans.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.WorkspaceId == strategy.WorkspaceId && x.Status != "Archived")
+            .Where(x => x.WorkspaceId == strategy.WorkspaceId && x.Status != "Archived")
             .OrderByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
             .Select(x => new { x.Name, x.Objective, x.Approach, x.Status })
             .Take(3)
             .ToListAsync(ct);
 
         var existingActions = await _db.Actions.AsNoTracking()
-            .Where(x => x.OwnerId == userId && x.StrategyId == strategy.Id && x.Status != "Archived")
+            .Where(x => x.StrategyId == strategy.Id && x.Status != "Archived")
             .OrderByDescending(x => x.UpdatedAtUtc ?? x.CreatedAtUtc)
             .Select(x => new { x.Title, x.Status, x.Priority, x.DueAtUtc })
             .Take(8)
@@ -673,7 +685,7 @@ Rules:
         var userId = await GetUserIdAsync();
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
-        var strategy = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == userId, ct);
+        var strategy = await _db.Strategies.FirstOrDefaultAsync(x => x.Id == id && (x.OwnerId == userId || (x.WorkspaceId != null && _workspaceAccess.AccessibleWorkspaceIds(userId).Contains(x.WorkspaceId.Value))), ct);
         if (strategy == null) return NotFound();
 
         if (string.IsNullOrWhiteSpace(strategy.AiInsightsJson))

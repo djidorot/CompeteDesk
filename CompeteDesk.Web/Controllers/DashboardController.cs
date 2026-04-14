@@ -26,13 +26,15 @@ public class DashboardController : Controller
     private readonly UserManager<IdentityUser> _userManager;
     private readonly BusinessAnalysisService _biz;
     private readonly ActiveWorkspaceService _activeWs;
+    private readonly WorkspaceAccessService _workspaceAccess;
 
-    public DashboardController(ApplicationDbContext db, UserManager<IdentityUser> userManager, BusinessAnalysisService biz, ActiveWorkspaceService activeWs)
+    public DashboardController(ApplicationDbContext db, UserManager<IdentityUser> userManager, BusinessAnalysisService biz, ActiveWorkspaceService activeWs, WorkspaceAccessService workspaceAccess)
     {
         _db = db;
         _userManager = userManager;
         _biz = biz;
         _activeWs = activeWs;
+        _workspaceAccess = workspaceAccess;
     }
 
     /// <summary>
@@ -101,15 +103,13 @@ public class DashboardController : Controller
         {
             ws = await _db.Workspaces
                 .AsNoTracking()
-                .FirstOrDefaultAsync(w => w.Id == activeId.Value && w.OwnerId == userId, ct);
+                .FirstOrDefaultAsync(w => w.Id == activeId.Value, ct);
         }
 
         // Fallback: latest workspace for this user.
         if (ws is null)
         {
-            ws = await _db.Workspaces
-                .AsNoTracking()
-                .Where(w => w.OwnerId == userId)
+            ws = await _workspaceAccess.AccessibleWorkspaces(userId)
                 .OrderByDescending(w => w.UpdatedAtUtc ?? w.CreatedAtUtc)
                 .FirstOrDefaultAsync(ct);
 
@@ -206,19 +206,19 @@ public class DashboardController : Controller
         // Load core lists once (workspace-scoped)
         var strategies = await _db.Strategies
             .AsNoTracking()
-            .Where(s => s.OwnerId == userId && s.WorkspaceId == ws.Id && s.Status == "Active")
+            .Where(s => s.WorkspaceId == ws.Id && s.Status == "Active")
             .OrderByDescending(s => s.Priority)
             .ThenByDescending(s => s.UpdatedAtUtc ?? s.CreatedAtUtc)
             .ToListAsync(ct);
 
         var actions = await _db.Actions
             .AsNoTracking()
-            .Where(a => a.OwnerId == userId && a.WorkspaceId == ws.Id)
+            .Where(a => a.WorkspaceId == ws.Id)
             .ToListAsync(ct);
 
         var habits = await _db.Habits
             .AsNoTracking()
-            .Where(h => h.OwnerId == userId && h.WorkspaceId == ws.Id && h.IsActive)
+            .Where(h => h.WorkspaceId == ws.Id && h.IsActive)
             .OrderBy(h => h.Title)
             .ToListAsync(ct);
 
@@ -227,7 +227,7 @@ public class DashboardController : Controller
             ? new List<HabitCheckin>()
             : await _db.HabitCheckins
                 .AsNoTracking()
-                .Where(c => c.OwnerId == userId && habitIds.Contains(c.HabitId) && c.OccurredOnUtc >= start14)
+                .Where(c => habitIds.Contains(c.HabitId) && c.OccurredOnUtc >= start14)
                 .ToListAsync(ct);
 
         // ------------------------------------------------------------
@@ -325,10 +325,10 @@ public class DashboardController : Controller
 
         var intel7 = await _db.WarIntel
             .AsNoTracking()
-            .CountAsync(i => i.OwnerId == userId && i.WorkspaceId == ws.Id && i.CreatedAtUtc >= start7, ct);
+            .CountAsync(i => i.WorkspaceId == ws.Id && i.CreatedAtUtc >= start7, ct);
         var intelPrev7 = await _db.WarIntel
             .AsNoTracking()
-            .CountAsync(i => i.OwnerId == userId && i.WorkspaceId == ws.Id && i.CreatedAtUtc >= start7.AddDays(-7) && i.CreatedAtUtc < start7, ct);
+            .CountAsync(i => i.WorkspaceId == ws.Id && i.CreatedAtUtc >= start7.AddDays(-7) && i.CreatedAtUtc < start7, ct);
 
         var habitCompletions7 = habitCheckins.Count(c => c.OccurredOnUtc >= start7);
         var habitExpected7 = habits.Sum(h => (h.Frequency == "Weekly") ? h.TargetCount : h.TargetCount * 7);
@@ -363,19 +363,19 @@ public class DashboardController : Controller
 
         var websiteReports = await _db.WebsiteAnalysisReports
             .AsNoTracking()
-            .CountAsync(r => r.OwnerId == userId && r.WorkspaceId == ws.Id, ct);
+            .CountAsync(r => r.WorkspaceId == ws.Id, ct);
 
         var warIntelCount = await _db.WarIntel
             .AsNoTracking()
-            .CountAsync(i => i.OwnerId == userId && i.WorkspaceId == ws.Id, ct);
+            .CountAsync(i => i.WorkspaceId == ws.Id, ct);
 
         var warPlanCount = await _db.WarPlans
             .AsNoTracking()
-            .CountAsync(p => p.OwnerId == userId && p.WorkspaceId == ws.Id, ct);
+            .CountAsync(p => p.WorkspaceId == ws.Id, ct);
 
         var businessReports = await _db.BusinessAnalysisReports
             .AsNoTracking()
-            .CountAsync(r => r.OwnerId == userId && r.WorkspaceId == ws.Id, ct);
+            .CountAsync(r => r.WorkspaceId == ws.Id, ct);
 
         // Already set above from strategies list
 
@@ -444,7 +444,7 @@ public class DashboardController : Controller
 
         var latest = await _db.BusinessAnalysisReports
             .AsNoTracking()
-            .Where(r => r.OwnerId == userId && r.WorkspaceId == ws.Id)
+            .Where(r => r.WorkspaceId == ws.Id)
             .OrderByDescending(r => r.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 
@@ -510,9 +510,7 @@ public class DashboardController : Controller
 
     private async Task<List<WorkspaceSwitchItem>> LoadUserWorkspacesAsync(string userId, CancellationToken ct)
     {
-        return await _db.Workspaces
-            .AsNoTracking()
-            .Where(w => w.OwnerId == userId)
+        return await _workspaceAccess.AccessibleWorkspaces(userId)
             .OrderByDescending(w => w.UpdatedAtUtc ?? w.CreatedAtUtc)
             .Select(w => new WorkspaceSwitchItem { Id = w.Id, Name = w.Name })
             .ToListAsync(ct);
@@ -537,28 +535,28 @@ public class DashboardController : Controller
     private async Task<List<OverviewSummaryItem>> BuildOverviewSummaryAsync(string userId, int workspaceId, CancellationToken ct)
     {
         var strategiesActive = await _db.Strategies.AsNoTracking()
-            .CountAsync(s => s.OwnerId == userId && s.WorkspaceId == workspaceId && s.Status == "Active", ct);
+            .CountAsync(s => s.WorkspaceId == workspaceId && s.Status == "Active", ct);
 
         var totalActions = await _db.Actions.AsNoTracking()
-            .CountAsync(a => a.OwnerId == userId && a.WorkspaceId == workspaceId, ct);
+            .CountAsync(a => a.WorkspaceId == workspaceId, ct);
 
         var openActions = await _db.Actions.AsNoTracking()
-            .CountAsync(a => a.OwnerId == userId && a.WorkspaceId == workspaceId && a.Status != "Done", ct);
+            .CountAsync(a => a.WorkspaceId == workspaceId && a.Status != "Done", ct);
 
         var habitsActive = await _db.Habits.AsNoTracking()
-            .CountAsync(h => h.OwnerId == userId && h.WorkspaceId == workspaceId && h.IsActive, ct);
+            .CountAsync(h => h.WorkspaceId == workspaceId && h.IsActive, ct);
 
         var websiteReports = await _db.WebsiteAnalysisReports.AsNoTracking()
-            .CountAsync(r => r.OwnerId == userId && r.WorkspaceId == workspaceId, ct);
+            .CountAsync(r => r.WorkspaceId == workspaceId, ct);
 
         var warIntelCount = await _db.WarIntel.AsNoTracking()
-            .CountAsync(i => i.OwnerId == userId && i.WorkspaceId == workspaceId, ct);
+            .CountAsync(i => i.WorkspaceId == workspaceId, ct);
 
         var warPlanCount = await _db.WarPlans.AsNoTracking()
-            .CountAsync(p => p.OwnerId == userId && p.WorkspaceId == workspaceId, ct);
+            .CountAsync(p => p.WorkspaceId == workspaceId, ct);
 
         var businessReports = await _db.BusinessAnalysisReports.AsNoTracking()
-            .CountAsync(r => r.OwnerId == userId && r.WorkspaceId == workspaceId, ct);
+            .CountAsync(r => r.WorkspaceId == workspaceId, ct);
 
         // NeedsBusinessProfile is evaluated in Index; for summary refresh we keep the badge simple.
         return new()
@@ -823,7 +821,7 @@ public class DashboardController : Controller
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
         var ws = await _db.Workspaces
-            .Where(w => w.Id == workspaceId && w.OwnerId == userId)
+            .Where(w => w.Id == workspaceId && (w.OwnerId == userId || _db.WorkspaceMembers.Any(m => m.WorkspaceId == w.Id && m.UserId == userId)))
             .FirstOrDefaultAsync(ct);
 
         if (ws == null) return NotFound();
@@ -848,7 +846,7 @@ public class DashboardController : Controller
 
         var ws = await _db.Workspaces
             .AsNoTracking()
-            .FirstOrDefaultAsync(w => w.Id == workspaceId && w.OwnerId == userId, ct);
+            .FirstOrDefaultAsync(w => w.Id == workspaceId && (w.OwnerId == userId || _db.WorkspaceMembers.Any(m => m.WorkspaceId == w.Id && m.UserId == userId)), ct);
 
         if (ws == null) return NotFound();
         if (string.IsNullOrWhiteSpace(ws.BusinessType) || string.IsNullOrWhiteSpace(ws.Country))
